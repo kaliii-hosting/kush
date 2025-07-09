@@ -6,7 +6,7 @@ import FloatingProductInfo from './FloatingProductInfo'
 import * as THREE from 'three'
 import { Text, Box, RoundedBox, Html, MeshReflectorMaterial, PerspectiveCamera, useTexture, Shadow, useVideoTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, DepthOfField, Noise, Vignette, SSAO } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, DepthOfField, Noise, Vignette } from '@react-three/postprocessing'
 
 // Apple Store style shop scene with dark theme
 const ShopScene = ({ products, onProductSelect, scrollOffset }) => {
@@ -341,49 +341,43 @@ const RoomStructure = () => {
 // Product display as pure PNG
 const ProductDisplay = ({ product, position, onClick }) => {
   const [hovered, setHovered] = useState(false)
-  const meshRef = useRef()
   
   return (
     <group position={position}>
-      {/* Clickable area with visual feedback - moved forward for better interaction */}
-      <mesh
-        ref={meshRef}
-        position={[0, 0.8, 0.1]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onClick()
-        }}
-        onPointerOver={(e) => {
-          e.stopPropagation()
-          setHovered(true)
-          document.body.style.cursor = 'pointer'
-        }}
-        onPointerOut={() => {
-          setHovered(false)
-          document.body.style.cursor = 'auto'
-        }}
-      >
-        <boxGeometry args={[1.8, 2.2, 0.1]} />
-        <meshBasicMaterial transparent opacity={0} />
-      </mesh>
-      
-      {/* Product Image as pure PNG */}
+      {/* Product Image as pure PNG with click handling */}
       {product.imageUrl && (
         <Html 
           transform 
-          position={[0, 0.8, 0.01]} 
+          position={[0, 0.8, 0]} 
           scale={0.5}
-          style={{ pointerEvents: 'none' }}
           center
+          // Remove pointer-events: none to make it clickable
         >
           <div 
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log('Product clicked:', product.name)
+              onClick()
+            }}
+            onMouseEnter={() => {
+              setHovered(true)
+              document.body.style.cursor = 'pointer'
+            }}
+            onMouseLeave={() => {
+              setHovered(false)
+              document.body.style.cursor = 'auto'
+            }}
             style={{ 
               width: '200px', 
               height: '250px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              filter: hovered ? 'drop-shadow(0 0 20px rgba(76, 217, 100, 0.8))' : 'none'
+              cursor: 'pointer',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              // Remove border to maintain original appearance
             }}
           >
             <img 
@@ -392,19 +386,14 @@ const ProductDisplay = ({ product, position, onClick }) => {
               style={{ 
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                pointerEvents: 'none'
               }}
             />
           </div>
         </Html>
-      )}
-      
-      {/* Hover effect background */}
-      {hovered && (
-        <mesh position={[0, 0.8, -0.1]}>
-          <planeGeometry args={[1.8, 2.3]} />
-          <meshBasicMaterial color="#10b981" transparent opacity={0.1} />
-        </mesh>
       )}
       
       {/* Product shadow on counter */}
@@ -431,14 +420,15 @@ const Hero3DShop = () => {
     p.type === activeCategory && p.inStock !== false
   )
   
-  // Use all products if no filtered results
-  const displayProducts = filteredProducts.length > 0 ? filteredProducts : products
+  // Use all products if no filtered results and limit to 5
+  const allDisplayProducts = filteredProducts.length > 0 ? filteredProducts : products
+  const displayProducts = allDisplayProducts.slice(0, 5)
 
   // Handle horizontal scrolling with smooth momentum
   const handleScroll = (e) => {
     if (displayProducts.length <= 4) return // No need to scroll if few products
     
-    e.preventDefault()
+    // Don't prevent default for passive listeners
     const delta = e.deltaY * 0.5 || e.deltaX // Support both vertical and horizontal scroll
     const scrollSpeed = 0.01 // Adjusted for smoother scrolling
     const totalWidth = (displayProducts.length - 1) * 2.5
@@ -482,6 +472,7 @@ const Hero3DShop = () => {
     <section 
       className="relative h-screen w-full overflow-hidden bg-black pt-20"
       onWheel={handleScroll}
+      style={{ touchAction: 'none' }}
     >
       {/* 3D Scene */}
       <Canvas
@@ -490,8 +481,9 @@ const Hero3DShop = () => {
         gl={{ 
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          outputEncoding: THREE.sRGBEncoding 
+          outputColorSpace: THREE.SRGBColorSpace 
         }}
+        raycaster={{}}
       >
         <PerspectiveCamera
           makeDefault
@@ -519,13 +511,6 @@ const Hero3DShop = () => {
             focalLength={0.08} 
             bokehScale={2} 
             height={480} 
-          />
-          <SSAO 
-            samples={25} 
-            radius={0.05} 
-            intensity={10} 
-            luminanceInfluence={0.1} 
-            color="black" 
           />
           <Noise opacity={0.015} />
           <Vignette eskil={false} offset={0.1} darkness={0.4} />

@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import GlowingButton from './ui/GlowingButton';
 
 const JoinMovement = () => {
   return (
@@ -13,15 +14,12 @@ const JoinMovement = () => {
         
         {/* CTA Button with glow effect */}
         <div className="relative inline-block">
-          <a 
-            href="#get-started"
-            className="group relative bg-huly-blue hover:bg-huly-blue/90 text-white px-10 py-5 rounded-full text-[18px] font-medium transition-all duration-300 flex items-center gap-3 shadow-[0_0_40px_rgba(71,139,235,0.5)] hover:shadow-[0_0_60px_rgba(71,139,235,0.7)]"
+          <GlowingButton
+            onClick={() => window.location.href = '#get-started'}
+            className="text-[18px] font-medium px-10 py-5"
           >
             Get Early Access
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </a>
-          {/* Animated glow ring */}
-          <div className="absolute inset-0 rounded-full bg-huly-blue/20 blur-xl animate-pulse" />
+          </GlowingButton>
         </div>
 
         {/* Stats */}

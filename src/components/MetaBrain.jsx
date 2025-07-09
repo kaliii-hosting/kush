@@ -1,4 +1,5 @@
 import { Brain } from 'lucide-react';
+import GlowingButton from './ui/GlowingButton';
 
 const MetaBrain = () => {
   return (
@@ -52,13 +53,12 @@ const MetaBrain = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <a 
-            href="#learn-more"
-            className="inline-flex items-center gap-2 text-huly-orange hover:text-huly-orange/80 text-[16px] font-medium transition-colors"
+          <GlowingButton
+            onClick={() => window.location.href = '#learn-more'}
+            className="text-[16px] font-medium"
           >
-            Learn more about MetaBrain
-            <span className="text-[20px]">→</span>
-          </a>
+            Learn more about MetaBrain →
+          </GlowingButton>
         </div>
       </div>
     </section>

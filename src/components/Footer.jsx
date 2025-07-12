@@ -1,58 +1,108 @@
-import { Github, Twitter, Linkedin, Youtube, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Github, Twitter, Linkedin, Youtube, MessageCircle, Mail, MapPin, Phone } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  const footerLinks = {
+    Product: [
+      { name: 'Shop', href: '/shop' },
+      { name: 'Wholesale', href: '/wholesale' },
+      { name: 'About', href: '/about' },
+    ],
+    Resources: [
+      { name: 'Blog', href: '/blog' },
+      { name: 'Docs', href: '/docs' },
+      { name: 'Contact', href: '/contact' },
+    ],
+    Company: [
+      { name: 'About Us', href: '/about' },
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' },
+    ],
+  };
+
   const socialLinks = [
-    { icon: <Github className="w-5 h-5" />, href: "https://github.com/huly", label: "GitHub" },
-    { icon: <Twitter className="w-5 h-5" />, href: "https://twitter.com/huly", label: "Twitter" },
-    { icon: <MessageCircle className="w-5 h-5" />, href: "https://discord.gg/huly", label: "Discord" },
-    { icon: <Linkedin className="w-5 h-5" />, href: "https://linkedin.com/company/huly", label: "LinkedIn" },
-    { icon: <Youtube className="w-5 h-5" />, href: "https://youtube.com/@huly", label: "YouTube" }
+    { icon: <Github className="w-5 h-5" />, href: "https://github.com/kushie", label: "GitHub" },
+    { icon: <Twitter className="w-5 h-5" />, href: "https://twitter.com/kushie", label: "Twitter" },
+    { icon: <MessageCircle className="w-5 h-5" />, href: "https://discord.gg/kushie", label: "Discord" },
+    { icon: <Linkedin className="w-5 h-5" />, href: "https://linkedin.com/company/kushie", label: "LinkedIn" },
+    { icon: <Youtube className="w-5 h-5" />, href: "https://youtube.com/@kushie", label: "YouTube" }
   ];
 
   return (
-    <footer className="border-t border-huly-border bg-black">
-      <div className="max-w-[1312px] mx-auto px-5 lg:px-10 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Left side - Logo and copyright */}
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <a href="/" className="flex items-center">
-              <img 
-                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
-                alt="Kushie Logo"
-                className="h-8"
-              />
-            </a>
-            <span className="text-huly-text-light text-[14px]">
-              © {currentYear} Kushie. All rights reserved.
-            </span>
-          </div>
+    <footer className="bg-black border-t border-white/10 mb-16 md:mb-0">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Main footer content */}
+        <div className="py-12 lg:py-16">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
+            {/* Logo and description */}
+            <div className="col-span-2 md:col-span-1">
+              <Link to="/" className="flex items-center mb-4">
+                <img 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
+                  alt="Kushie Logo"
+                  className="h-8 w-auto"
+                />
+              </Link>
+              <p className="text-sm text-gray-400 mb-4">
+                Premium cannabis products delivered with quality and care.
+              </p>
+              {/* Social links */}
+              <div className="flex items-center gap-3">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label={social.label}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
 
-          {/* Center - Links */}
-          <div className="flex items-center gap-8">
-            <a href="/privacy" className="text-huly-text-light hover:text-white text-[14px] transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/terms" className="text-huly-text-light hover:text-white text-[14px] transition-colors">
-              Terms of Service
-            </a>
-          </div>
-
-          {/* Right side - Social links */}
-          <div className="flex items-center gap-4">
-            {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-huly-text-light hover:text-white transition-colors"
-                aria-label={social.label}
-              >
-                {social.icon}
-              </a>
+            {/* Footer links */}
+            {Object.entries(footerLinks).map(([category, links]) => (
+              <div key={category}>
+                <h3 className="text-sm font-semibold text-white mb-4">{category}</h3>
+                <ul className="space-y-3">
+                  {links.map((link) => (
+                    <li key={link.name}>
+                      <Link
+                        to={link.href}
+                        className="text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
+          </div>
+        </div>
+
+        {/* Bottom section */}
+        <div className="border-t border-white/10 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-400">
+              © {currentYear} Kushie. All rights reserved.
+            </p>
+            <div className="flex flex-wrap items-center gap-6">
+              <Link to="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">
+                Terms of Service
+              </Link>
+              <Link to="/cookies" className="text-sm text-gray-400 hover:text-white transition-colors">
+                Cookie Policy
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -233,7 +233,11 @@ const AdminDashboard = () => {
               <h1 className="text-xl font-bold text-white">Inventory Management</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-gray-400 text-sm">Admin Panel</span>
+              <img 
+                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
+                alt="Kushie Logo"
+                className="h-8 w-auto"
+              />
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"

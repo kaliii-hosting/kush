@@ -26,10 +26,19 @@ export const AdminAuthProvider = ({ children }) => {
     try {
       const result = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
       setAdminUser(result.user);
+      setError('');
       return true;
     } catch (error) {
       console.error('Admin sign in error:', error);
-      setError(error.message);
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+        console.warn('Admin account not found. Please create the admin account in Firebase.');
+        setError('Admin account not configured. Please contact support.');
+      } else if (error.code === 'auth/wrong-password') {
+        setError('Invalid admin credentials.');
+      } else {
+        setError(error.message);
+      }
       return false;
     }
   };
@@ -62,7 +71,7 @@ export const AdminAuthProvider = ({ children }) => {
   // Auto sign in admin if PIN authenticated
   useEffect(() => {
     const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
-    if (isAdminAuthenticated && !adminUser && !loading) {
+    if (isAdminAuthenticated && !adminUser && !loading && !error) {
       signInAdmin();
     }
   }, [adminUser, loading]);

@@ -51,12 +51,14 @@ const AdminDashboardEnhanced = () => {
       } flex flex-col`}>
         {/* Logo/Header */}
         <div className="p-6 border-b border-spotify-gray">
-          <div className="flex items-center justify-between">
-            <h1 className={`font-bold text-white transition-opacity ${
-              sidebarOpen ? 'opacity-100' : 'opacity-0'
-            }`}>
-              Admin Panel
-            </h1>
+          <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
+            {sidebarOpen && (
+              <img 
+                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
+                alt="Kushie Logo"
+                className="h-10 w-auto"
+              />
+            )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="text-gray-400 hover:text-white transition-colors"

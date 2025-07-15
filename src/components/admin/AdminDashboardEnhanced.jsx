@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Package, Globe, Home, Settings, Menu, X,
-  ShoppingBag, FileText, Users, MessageSquare, Music
+  ShoppingBag, FileText, Users, MessageSquare, Music, Database
 } from 'lucide-react';
 import ProductsPage from './ProductsPage';
 import WebsiteBuilder from './WebsiteBuilder';
-import HomepageManagement from './HomepageManagement';
+import WholesaleManagement from './WholesaleManagement';
 import MusicManagement from './MusicManagement';
 import BlogManagement from './BlogManagement';
 import UsersManagement from './UsersManagement';
+import StorageManagement from './StorageManagement';
 
 const AdminDashboardEnhanced = () => {
   const [activeSection, setActiveSection] = useState('products');
@@ -33,11 +34,12 @@ const AdminDashboardEnhanced = () => {
   // Menu items
   const menuItems = [
     { id: 'products', label: 'Products', icon: Package, component: ProductsPage },
+    { id: 'wholesale', label: 'Wholesale', icon: ShoppingBag, component: WholesaleManagement },
     { id: 'website', label: 'Website Builder', icon: Globe, component: WebsiteBuilder },
-    { id: 'homepage', label: 'Homepage Builder', icon: Home, component: HomepageManagement },
     { id: 'music', label: 'Music Player', icon: Music, component: MusicManagement },
     { id: 'blog', label: 'Blog Posts', icon: FileText, component: BlogManagement },
     { id: 'users', label: 'Users', icon: Users, component: UsersManagement },
+    { id: 'storage', label: 'Storage', icon: Database, component: StorageManagement },
   ];
 
   // Get current component

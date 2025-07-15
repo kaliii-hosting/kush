@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { ref, onValue } from 'firebase/database';
-import { database } from '../config/firebase';
+import { realtimeDb } from '../config/firebase';
 import { productsData } from '../data/productsData';
 
 const ProductsContext = createContext();
@@ -29,7 +29,7 @@ export const ProductsProvider = ({ children }) => {
     // Try to connect to Firebase Realtime Database
     try {
       console.log('ProductsContext: Connecting to Firebase Realtime Database...');
-      const productsRef = ref(database, 'products');
+      const productsRef = ref(realtimeDb, 'products');
       
       // Real-time listener for products
       const unsubscribe = onValue(productsRef, 

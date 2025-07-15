@@ -1,19 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductsContext';
+import { useAuth } from '../context/AuthContext';
+import { useBlog } from '../context/BlogContext';
+import SignIn from './auth/SignIn';
+import SignUp from './auth/SignUp';
 
 const SpotifyTopBar = ({ onCartClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { getCartItemCount } = useCart();
   const { products } = useProducts();
+  const { user, userData, logout } = useAuth();
+  const { posts } = useBlog();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
   const searchRef = useRef(null);
   const searchButtonRef = useRef(null);
   const cartItemCount = getCartItemCount();
@@ -110,6 +118,7 @@ const SpotifyTopBar = ({ onCartClick }) => {
   };
 
   return (
+    <>
     <header className="bg-black/95 backdrop-blur-md sticky top-0 z-50 border-b border-border">
       <div className="px-4 md:px-8 py-4">
         <div className="flex items-center justify-between">
@@ -191,23 +200,6 @@ const SpotifyTopBar = ({ onCartClick }) => {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-            {/* Navigation arrows - Desktop only */}
-            <div className="hidden md:flex items-center gap-2 mr-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="bg-gray-dark rounded-full p-2 hover:bg-gray transition-colors"
-                aria-label="Go back"
-              >
-                <ChevronLeft className="h-4 w-4 text-white" />
-              </button>
-              <button
-                onClick={() => navigate(1)}
-                className="bg-gray-dark rounded-full p-2 hover:bg-gray transition-colors"
-                aria-label="Go forward"
-              >
-                <ChevronRight className="h-4 w-4 text-white" />
-              </button>
-            </div>
 
             {/* Search button - Desktop only */}
             <button 
@@ -237,10 +229,15 @@ const SpotifyTopBar = ({ onCartClick }) => {
               )}
             </button>
             
-            {/* Notifications */}
-            <button className="bg-black/70 rounded-full p-2 hover:bg-black transition-colors">
+            {/* Blog/Notifications */}
+            <Link to="/blog" className="relative bg-black/70 rounded-full p-2 hover:bg-black transition-colors group">
               <Bell className="h-5 w-5 text-white" />
-            </button>
+              {posts.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-scale-in group-hover:scale-110 transition-transform">
+                  {posts.length > 9 ? '9+' : posts.length}
+                </span>
+              )}
+            </Link>
 
             {/* User menu */}
             <div className="relative">
@@ -257,19 +254,63 @@ const SpotifyTopBar = ({ onCartClick }) => {
               {/* Dropdown menu */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-dark rounded-md shadow-xl py-1 border border-border">
-                  <a href="/account" className="block px-4 py-3 text-sm text-white hover:bg-gray">
-                    Account
-                  </a>
-                  <a href="/profile" className="block px-4 py-3 text-sm text-white hover:bg-gray">
-                    Profile
-                  </a>
-                  <a href="/admin" className="block px-4 py-3 text-sm text-white hover:bg-gray">
-                    Admin Dashboard
-                  </a>
-                  <div className="border-t border-border"></div>
-                  <button className="block w-full text-left px-4 py-3 text-sm text-white hover:bg-gray">
-                    Log out
-                  </button>
+                  {user ? (
+                    <>
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="text-white font-semibold">{user.displayName || user.email}</p>
+                        <p className="text-xs text-spotify-text-subdued">{userData?.role || 'Customer'}</p>
+                      </div>
+                      <a href="/account" className="block px-4 py-3 text-sm text-white hover:bg-gray">
+                        Account
+                      </a>
+                      <a href="/profile" className="block px-4 py-3 text-sm text-white hover:bg-gray">
+                        Profile
+                      </a>
+                      <Link to="/wishlist" className="block px-4 py-3 text-sm text-white hover:bg-gray flex items-center gap-2">
+                        <Heart className="h-4 w-4" />
+                        My Wishlist
+                      </Link>
+                      <a href="/orders" className="block px-4 py-3 text-sm text-white hover:bg-gray">
+                        My Orders
+                      </a>
+                      <div className="border-t border-border"></div>
+                      <button 
+                        onClick={async () => {
+                          await logout();
+                          setShowUserMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 text-sm text-white hover:bg-gray flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Log out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowSignIn(true);
+                          setShowUserMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 text-sm text-white hover:bg-gray"
+                      >
+                        Sign In
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowSignUp(true);
+                          setShowUserMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 text-sm text-white hover:bg-gray"
+                      >
+                        Sign Up
+                      </button>
+                      <div className="border-t border-border"></div>
+                      <a href="/admin/login" className="block px-4 py-3 text-sm text-spotify-text-subdued hover:bg-gray">
+                        Admin Access
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -373,6 +414,25 @@ const SpotifyTopBar = ({ onCartClick }) => {
         )}
       </div>
     </header>
+
+    {/* Authentication Modals */}
+    <SignIn 
+      isOpen={showSignIn}
+      onClose={() => setShowSignIn(false)}
+      onSwitchToSignUp={() => {
+        setShowSignIn(false);
+        setShowSignUp(true);
+      }}
+    />
+    <SignUp 
+      isOpen={showSignUp}
+      onClose={() => setShowSignUp(false)}
+      onSwitchToSignIn={() => {
+        setShowSignUp(false);
+        setShowSignIn(true);
+      }}
+    />
+    </>
   );
 };
 

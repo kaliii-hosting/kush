@@ -1,57 +1,102 @@
 import './App.css'
 import './styles/typography.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Suspense } from 'react'
+import { Suspense, lazy } from 'react'
 import { ProductsProvider } from './context/ProductsContext'
 import { CartProvider } from './context/CartContext'
+import { PageContentProvider } from './context/PageContentContext'
+import { HomepageProvider } from './context/HomepageContext'
+import { AuthProvider } from './context/AuthContext'
+import { AdminAuthProvider } from './context/AdminAuthContext'
+import { MusicProvider } from './context/MusicContext'
+import { BlogProvider } from './context/BlogContext'
+import { WishlistProvider } from './context/WishlistContext'
 import SpotifyLayout from './components/SpotifyLayout'
 import SpotifyHome from './components/SpotifyHome'
-import AdminLogin from './components/admin/AdminLogin'
-import AdminDashboard from './components/admin/AdminDashboard'
-import About from './pages/About'
-import Shop from './pages/Shop'
-import Wholesale from './pages/Wholesale'
-import Contact from './pages/Contact'
 import AgeVerification from './components/AgeVerification'
-import Underage from './pages/Underage'
+import ScrollToTop from './components/ScrollToTop'
+import LoadingSpinner from './components/LoadingSpinner'
+
+// Import user sync utility (will auto-start syncing)
+import './utils/syncUsersToRealtimeDB'
+
+// Lazy load admin components
+const AdminLogin = lazy(() => import('./components/admin/AdminLogin'))
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'))
+const AdminDashboardEnhanced = lazy(() => import('./components/admin/AdminDashboardEnhanced'))
+
+// Lazy load pages
+const About = lazy(() => import('./pages/About'))
+const Shop = lazy(() => import('./pages/Shop'))
+const Wholesale = lazy(() => import('./pages/Wholesale'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Blog = lazy(() => import('./pages/Blog'))
+const Wishlist = lazy(() => import('./pages/Wishlist'))
+const Underage = lazy(() => import('./pages/Underage'))
 
 
 function App() {
   return (
-    <ProductsProvider>
-      <CartProvider>
-        <Router>
-          <div className="min-h-screen bg-black">
-          <AgeVerification />
-          <Routes>
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            
-            {/* Public Routes */}
-            <Route path="*" element={
-              <SpotifyLayout>
-                <Suspense fallback={
-                  <div className="flex items-center justify-center h-screen">
-                    <div className="text-white text-xl">Loading...</div>
-                  </div>
-                }>
-                  <Routes>
-                    <Route path="/" element={<SpotifyHome />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/wholesale" element={<Wholesale />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/underage" element={<Underage />} />
-                  </Routes>
-                </Suspense>
-              </SpotifyLayout>
-            } />
-          </Routes>
-        </div>
-      </Router>
-      </CartProvider>
-    </ProductsProvider>
+    <AuthProvider>
+      <AdminAuthProvider>
+        <ProductsProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <PageContentProvider>
+                <HomepageProvider>
+                  <MusicProvider>
+                    <BlogProvider>
+                      <Router>
+                    <ScrollToTop />
+                    <div className="min-h-screen bg-black">
+                    <AgeVerification />
+                    <Routes>
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminLogin />
+                  </Suspense>
+                } />
+                <Route path="/admin" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminDashboardEnhanced />
+                  </Suspense>
+                } />
+                <Route path="/admin/simple" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminDashboard />
+                  </Suspense>
+                } />
+                
+                {/* Public Routes */}
+                <Route path="*" element={
+                  <SpotifyLayout>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Routes>
+                        <Route path="/" element={<SpotifyHome />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/shop" element={<Shop />} />
+                        <Route path="/wholesale" element={<Wholesale />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/blog" element={<Blog />} />
+                        <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/underage" element={<Underage />} />
+                      </Routes>
+                    </Suspense>
+                  </SpotifyLayout>
+                } />
+              </Routes>
+            </div>
+                      </Router>
+                    </BlogProvider>
+                  </MusicProvider>
+                </HomepageProvider>
+              </PageContentProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </ProductsProvider>
+      </AdminAuthProvider>
+    </AuthProvider>
   )
 }
 

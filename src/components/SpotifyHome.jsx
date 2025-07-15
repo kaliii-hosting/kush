@@ -2,15 +2,21 @@ import { Link } from 'react-router-dom';
 import { Play, MoreHorizontal, ShoppingCart, TrendingUp, Sparkles, Award, Heart, Eye, Clock, Shuffle, ChevronLeft, ChevronRight, Music } from 'lucide-react';
 import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/CartContext';
+import { usePageContent } from '../context/PageContentContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useState, useRef } from 'react';
 import ProductModal from './ProductModal';
 
 const SpotifyHome = () => {
   const { products } = useProducts();
   const { addToCart, cart } = useCart();
+  const { pageContent } = usePageContent();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  
+  // Get homepage content from PageContentContext
+  const homeContent = pageContent?.home || {};
   
   const isInCart = (productId) => {
     return cart.some(item => item.id === productId);
@@ -45,33 +51,61 @@ const SpotifyHome = () => {
   };
 
 
-  // Organize products by category
+  // Organize products by category - Get 10 products for each section
   const featured = products.slice(0, 6);
-  const popular = products.slice(6, 11);
-  const newArrivals = products.slice(11, 16);
-  const recommended = products.slice(0, 5);
-  const trending = products.slice(5, 12);
+  const popular = products.slice(0, 10);
+  const newArrivals = products.slice(5, 15);
+  const recommended = products.slice(10, 20);
+  const trending = products.slice(0, 10);
+  const recentlyViewed = products.slice(8, 18);
+  const madeForYou = products.slice(3, 13);
 
   return (
     <div>
       {/* Hero Section with Video Background */}
       <div className="relative h-[85vh] -mt-16 mb-8 overflow-hidden">
         {/* Video Background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover scale-105"
-        >
-          <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01//background%20real.mp4" type="video/mp4" />
-        </video>
+        {homeContent.hero?.videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover scale-105"
+          >
+            <source src={homeContent.hero.videoUrl} type="video/mp4" />
+          </video>
+        )}
         
         {/* Multiple Gradient Overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         
-        {/* Clean hero with just video */}
+        {/* Hero content overlay */}
+        {homeContent.hero && (
+          <div className="relative h-full flex items-center justify-center text-center px-8">
+            <div className="max-w-4xl">
+              {homeContent.hero.title && (
+                <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
+                  {homeContent.hero.title}
+                </h1>
+              )}
+              {homeContent.hero.subtitle && (
+                <p className="text-xl md:text-2xl text-gray-300 mb-8">
+                  {homeContent.hero.subtitle}
+                </p>
+              )}
+              {homeContent.hero.buttonText && homeContent.hero.buttonLink && (
+                <Link
+                  to={homeContent.hero.buttonLink}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-semibold text-white hover:bg-primary-hover transition-colors"
+                >
+                  {homeContent.hero.buttonText}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -112,6 +146,7 @@ const SpotifyHome = () => {
                   src={product.imageUrl} 
                   alt={product.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               )}
             </div>
@@ -125,15 +160,17 @@ const SpotifyHome = () => {
 
       {/* Mini Hero Section 4 - Gold Cartridges */}
       <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/videos/Gold%20Cartridges%20Video.mp4" type="video/mp4" />
-        </video>
+        {homeContent.goldCartridges?.videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={homeContent.goldCartridges.videoUrl} type="video/mp4" />
+          </video>
+        )}
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
@@ -145,17 +182,19 @@ const SpotifyHome = () => {
               Premium Collection
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Gold Standard Cartridges
+              {homeContent.goldCartridges?.title || 'Gold Standard Cartridges'}
             </h2>
             <p className="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
-              Experience luxury with our gold series - pure, potent, and perfectly crafted.
+              {homeContent.goldCartridges?.subtitle || 'Experience luxury with our gold series - pure, potent, and perfectly crafted.'}
             </p>
-            <Link
-              to="/shop?collection=gold"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-600 px-8 py-3 text-base font-bold text-black hover:from-yellow-600 hover:to-yellow-700 transition-colors"
-            >
-              Discover Gold Series
-            </Link>
+            {homeContent.goldCartridges?.buttonText && (
+              <Link
+                to={homeContent.goldCartridges?.buttonLink || '/shop?collection=gold'}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-600 px-8 py-3 text-base font-bold text-black hover:from-yellow-600 hover:to-yellow-700 transition-colors"
+              >
+                {homeContent.goldCartridges.buttonText}
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -170,15 +209,17 @@ const SpotifyHome = () => {
 
       {/* Mini Hero Section 3 - Disposables Collection */}
       <div className="relative h-[55vh] -mx-8 mb-12 overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/videos/Dspsbls%20NeoGreen%20Video.mp4" type="video/mp4" />
-        </video>
+        {homeContent.disposables?.videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={homeContent.disposables.videoUrl} type="video/mp4" />
+          </video>
+        )}
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/50 to-transparent" />
@@ -187,19 +228,21 @@ const SpotifyHome = () => {
         <div className="relative h-full flex items-center justify-end px-8">
           <div className="max-w-2xl text-right">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Disposables Redefined
+              {homeContent.disposables?.title || 'Disposables Redefined'}
             </h2>
             <p className="text-xl text-gray-300 mb-6">
-              Premium disposable vapes with cutting-edge technology and exceptional flavors.
+              {homeContent.disposables?.subtitle || 'Premium disposable vapes with cutting-edge technology and exceptional flavors.'}
             </p>
             <div className="flex gap-4 justify-end">
-              <Link
-                to="/shop?category=disposables"
-                className="inline-flex items-center gap-2 rounded-full bg-spotify-green px-6 py-3 text-base font-semibold text-black hover:bg-spotify-green-hover transition-colors"
-              >
-                <Sparkles className="h-5 w-5" />
-                Shop Disposables
-              </Link>
+              {homeContent.disposables?.buttonText && (
+                <Link
+                  to={homeContent.disposables?.buttonLink || '/shop?category=disposables'}
+                  className="inline-flex items-center gap-2 rounded-full bg-spotify-green px-6 py-3 text-base font-semibold text-black hover:bg-spotify-green-hover transition-colors"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  {homeContent.disposables.buttonText}
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -217,21 +260,23 @@ const SpotifyHome = () => {
       <Section
         title="Made for you"
         subtitle="Based on your recent activity"
-        items={recommended}
+        items={madeForYou}
         showAll="/shop?filter=recommended"
       />
 
       {/* Mini Hero Section 1 - Premium Experience */}
       <div className="relative h-[60vh] -mx-8 mb-12 overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01//background%20video%201.mp4" type="video/mp4" />
-        </video>
+        {homeContent.premiumExperience?.videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={homeContent.premiumExperience.videoUrl} type="video/mp4" />
+          </video>
+        )}
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
@@ -240,25 +285,29 @@ const SpotifyHome = () => {
         <div className="relative h-full flex items-center px-8">
           <div className="max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Experience Premium Quality
+              {homeContent.premiumExperience?.title || 'Experience Premium Quality'}
             </h2>
             <p className="text-xl text-gray-300 mb-6">
-              Discover our exclusive collection of artisanal cannabis products, crafted with precision and care.
+              {homeContent.premiumExperience?.subtitle || 'Discover our exclusive collection of artisanal cannabis products, crafted with precision and care.'}
             </p>
             <div className="flex gap-4">
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-semibold text-white hover:bg-primary-hover transition-colors"
-              >
-                <Play className="h-5 w-5 fill-white" />
-                Explore Collection
-              </Link>
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-white px-6 py-3 text-base font-semibold text-white hover:bg-white hover:text-black transition-all"
-              >
-                Learn More
-              </Link>
+              {homeContent.premiumExperience?.buttonText && (
+                <Link
+                  to={homeContent.premiumExperience?.buttonLink || '/shop'}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-semibold text-white hover:bg-primary-hover transition-colors"
+                >
+                  <Play className="h-5 w-5 fill-white" />
+                  {homeContent.premiumExperience.buttonText}
+                </Link>
+              )}
+              {homeContent.premiumExperience?.secondaryButtonText && (
+                <Link
+                  to={homeContent.premiumExperience?.secondaryButtonLink || '/about'}
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-white px-6 py-3 text-base font-semibold text-white hover:bg-white hover:text-black transition-all"
+                >
+                  {homeContent.premiumExperience.secondaryButtonText}
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -268,8 +317,8 @@ const SpotifyHome = () => {
       <Section
         title="Recently viewed"
         subtitle="Pick up where you left off"
-        items={products.slice(0, 5)}
-        showAll="/recent"
+        items={recentlyViewed}
+        showAll="/shop?filter=recent"
       />
 
 
@@ -409,15 +458,17 @@ const SpotifyHome = () => {
 
       {/* Mini Hero Section 2 - Innovation Spotlight */}
       <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01//background%20video%202.mp4" type="video/mp4" />
-        </video>
+        {homeContent.innovation?.videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={homeContent.innovation.videoUrl} type="video/mp4" />
+          </video>
+        )}
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black" />
@@ -429,61 +480,35 @@ const SpotifyHome = () => {
               New Innovation
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              The Future of Cannabis is Here
+              {homeContent.innovation?.title || 'The Future of Cannabis is Here'}
             </h2>
             <p className="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
-              Cutting-edge extraction methods and innovative delivery systems for the ultimate experience.
+              {homeContent.innovation?.subtitle || 'Cutting-edge extraction methods and innovative delivery systems for the ultimate experience.'}
             </p>
-            <Link
-              to="/shop?filter=new"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-base font-bold text-black hover:bg-gray-100 transition-colors"
-            >
-              Shop New Arrivals
-            </Link>
+            {homeContent.innovation?.buttonText && (
+              <Link
+                to={homeContent.innovation?.buttonLink || '/shop?filter=new'}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-base font-bold text-black hover:bg-gray-100 transition-colors"
+              >
+                {homeContent.innovation.buttonText}
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
       {/* Awards & Recognition - Spotify Style */}
-      <div className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-spotify-light-gray to-spotify-light-gray p-8 group">
+      <div className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-spotify-light-gray to-spotify-light-gray p-6 md:p-8 group">
         {/* Background decoration */}
         <div className="absolute -right-20 -top-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         
-        <div className="relative flex flex-col lg:flex-row items-center gap-8">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-3 rounded-full shadow-xl">
-                <Award className="h-6 w-6 text-black" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Award-Winning Quality</h2>
-            </div>
-            <p className="text-spotify-text-subdued mb-6 leading-relaxed">
-              Recognized for excellence in cultivation, processing, and customer satisfaction.
-              Our commitment to quality has earned us numerous industry accolades.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {[
-                { title: 'Best Product', award: '2024 Cannabis Cup', icon: '🏆' },
-                { title: 'Excellence Award', award: 'Industry Leader', icon: '⭐' },
-                { title: 'Top Rated', award: 'Customer Choice', icon: '❤️' }
-              ].map((item, index) => (
-                <div key={index} className="bg-black/30 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 hover:border-primary/50 transition-all hover:scale-105">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{item.icon}</span>
-                    <p className="text-xs text-spotify-text-subdued">{item.title}</p>
-                  </div>
-                  <p className="font-bold text-white">{item.award}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Award winning products showcase */}
-          <div className="flex items-center gap-6">
+        <div className="relative">
+          {/* Award winning product - Centered on mobile/tablet, positioned on desktop */}
+          <div className="flex justify-center mb-8 lg:hidden">
             <div className="text-center">
               <div className="relative">
-                <div className="w-40 h-40 rounded-full overflow-hidden shadow-2xl ring-4 ring-primary/30">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl ring-4 ring-primary/30">
                   {featured[0]?.imageUrl && (
                     <img 
                       src={featured[0].imageUrl} 
@@ -492,11 +517,63 @@ const SpotifyHome = () => {
                     />
                   )}
                 </div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-sm font-bold px-4 py-1 rounded-full shadow-lg">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-xs md:text-sm font-bold px-3 md:px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
                   Winner
                 </div>
               </div>
-              <p className="text-white font-semibold mt-4">{featured[0]?.name}</p>
+              <p className="text-white font-semibold mt-4 text-sm md:text-base">{featured[0]?.name}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            {/* Content Section */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-3 rounded-full shadow-xl">
+                  <Award className="h-5 w-5 md:h-6 md:w-6 text-black" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold text-white">Award-Winning Quality</h2>
+              </div>
+              <p className="text-spotify-text-subdued mb-6 leading-relaxed text-sm md:text-base max-w-2xl mx-auto lg:mx-0">
+                Recognized for excellence in cultivation, processing, and customer satisfaction.
+                Our commitment to quality has earned us numerous industry accolades.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2 md:gap-3">
+                {[
+                  { title: 'Best Product', award: '2024 Cannabis Cup', icon: '🏆' },
+                  { title: 'Excellence Award', award: 'Industry Leader', icon: '⭐' },
+                  { title: 'Top Rated', award: 'Customer Choice', icon: '❤️' }
+                ].map((item, index) => (
+                  <div key={index} className="bg-black/30 backdrop-blur-sm rounded-xl px-3 md:px-5 py-2 md:py-3 border border-white/10 hover:border-primary/50 transition-all hover:scale-105">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base md:text-lg">{item.icon}</span>
+                      <p className="text-xs text-spotify-text-subdued">{item.title}</p>
+                    </div>
+                    <p className="font-bold text-white text-sm md:text-base">{item.award}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Award winning product - Desktop only (positioned on right) */}
+            <div className="hidden lg:flex items-center gap-6">
+              <div className="text-center">
+                <div className="relative">
+                  <div className="w-40 h-40 rounded-full overflow-hidden shadow-2xl ring-4 ring-primary/30">
+                    {featured[0]?.imageUrl && (
+                      <img 
+                        src={featured[0].imageUrl} 
+                        alt={featured[0].name}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-sm font-bold px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
+                    Winner
+                  </div>
+                </div>
+                <p className="text-white font-semibold mt-4">{featured[0]?.name}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -529,7 +606,11 @@ const Section = ({ title, subtitle, items, showAll }) => {
 
   const scroll = (direction) => {
     if (scrollRef.current) {
-      const scrollAmount = 300;
+      // Calculate the width of 6 items
+      const itemWidth = scrollRef.current.firstChild?.offsetWidth || 200;
+      const gap = 24; // gap-6 = 1.5rem = 24px
+      const scrollAmount = (itemWidth + gap) * 6;
+      
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -587,6 +668,7 @@ const Section = ({ title, subtitle, items, showAll }) => {
 // Product card component with Spotify styling
 const ProductCard = ({ product }) => {
   const { addToCart, cart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   
   const isInCart = (productId) => {
@@ -599,10 +681,16 @@ const ProductCard = ({ product }) => {
     addToCart(product);
   };
   
+  const handleToggleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product.id);
+  };
+  
   return (
     <Link
       to="/shop"
-      className="flex-shrink-0 w-[180px] md:w-[200px]"
+      className="flex-shrink-0 w-[calc((100%-5*1.5rem)/6)] min-w-[150px] max-w-[200px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -614,27 +702,36 @@ const ProductCard = ({ product }) => {
                 src={product.imageUrl} 
                 alt={product.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             )}
           </div>
           
-          {/* Spotify-style play/cart button */}
-          <div className={`absolute bottom-2 right-2 transition-all duration-300 ${
+          {/* Hover actions - Heart and Cart buttons */}
+          <div className={`absolute bottom-2 right-2 flex gap-2 transition-all duration-300 ${
             isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}>
             <button 
+              onClick={handleToggleWishlist}
+              className={`rounded-full p-2.5 shadow-2xl hover:scale-110 transition-all ${
+                isInWishlist(product.id)
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white/90 backdrop-blur-sm text-black hover:bg-white'
+              }`}
+              title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart className="h-4 w-4" fill={isInWishlist(product.id) ? "currentColor" : "none"} />
+            </button>
+            <button 
               onClick={(e) => handleAddToCart(product, e)}
-              className={`rounded-full p-3 shadow-2xl hover:scale-110 transition-all ${
+              className={`rounded-full p-2.5 shadow-2xl hover:scale-110 transition-all ${
                 isInCart(product.id)
                   ? 'bg-white text-black'
                   : 'bg-spotify-green text-black hover:bg-spotify-green-hover'
               }`}
+              title={isInCart(product.id) ? 'In cart' : 'Add to cart'}
             >
-              {isInCart(product.id) ? (
-                <ShoppingCart className="h-5 w-5" fill="currentColor" />
-              ) : (
-                <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
-              )}
+              <ShoppingCart className="h-4 w-4" fill={isInCart(product.id) ? "currentColor" : "none"} />
             </button>
           </div>
         </div>

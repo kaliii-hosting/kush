@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,13 +17,12 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-console.log('Firebase: App initialized with config:', firebaseConfig);
 
 // Initialize services
 export const database = getDatabase(app);
-console.log('Firebase: Realtime Database initialized');
-
-export const db = database; // Keep db export for backward compatibility
+export const db = getFirestore(app); // Firestore for user data
+export const realtimeDb = database; // Realtime Database for existing features
 export const storage = getStorage(app);
+export const auth = getAuth(app);
 
 export default app;

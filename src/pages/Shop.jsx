@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, Filter, X, Eye } from 'lucide-react';
+import { useWishlist } from '../context/WishlistContext';
+import { ShoppingCart, Filter, X, Eye, Heart } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import ProductModal from '../components/ProductModal';
 
 const Shop = () => {
   const { products, loading } = useProducts();
   const { addToCart, cart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -72,6 +74,11 @@ const Shop = () => {
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     addToCart(product);
+  };
+
+  const handleToggleWishlist = (product, e) => {
+    e.stopPropagation();
+    toggleWishlist(product);
   };
 
   const handleProductClick = (product) => {
@@ -174,6 +181,17 @@ const Shop = () => {
                         title="Quick view"
                       >
                         <Eye className="h-5 w-5 text-black" />
+                      </button>
+                      <button
+                        onClick={(e) => handleToggleWishlist(product, e)}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-2xl transition-all hover:scale-110 ${
+                          isInWishlist(product.id)
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-white/90 text-black hover:bg-white'
+                        }`}
+                        title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                      >
+                        <Heart className="h-4 w-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
                       </button>
                       <button
                         onClick={(e) => handleAddToCart(product, e)}

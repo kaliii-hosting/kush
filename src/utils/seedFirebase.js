@@ -1,6 +1,6 @@
 // Script to seed Firebase with initial products
 import { ref, set } from 'firebase/database';
-import { database } from '../config/firebase';
+import { realtimeDb } from '../config/firebase';
 import { productsData } from '../data/productsData';
 
 export const seedFirebaseProducts = async () => {
@@ -19,7 +19,7 @@ export const seedFirebaseProducts = async () => {
     });
 
     // Write all products at once
-    const productsRef = ref(database, 'products');
+    const productsRef = ref(realtimeDb, 'products');
     await set(productsRef, productsObj);
     
     console.log('Firebase seeded successfully with products:', productsObj);

@@ -1,0 +1,248 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
+
+const AuthContext = createContext({});
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Google provider
+  const googleProvider = new GoogleAuthProvider();
+
+  // Create user document in Firestore
+  const createUserDocument = async (user) => {
+    if (!user) return null;
+    
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        const userData = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || '',
+          photoURL: user.photoURL || '',
+          role: 'customer', // Default role
+          createdAt: serverTimestamp(),
+          lastLoginAt: serverTimestamp(),
+          isOnline: true,
+          preferences: {
+            newsletter: false,
+            notifications: true
+          }
+        };
+
+        await setDoc(userRef, userData);
+        return userData;
+      } else {
+        // Update last login and online status
+        try {
+          await updateDoc(userRef, {
+            lastLoginAt: serverTimestamp(),
+            isOnline: true
+          });
+        } catch (updateError) {
+          console.log('Could not update last login:', updateError);
+        }
+        return userSnap.data();
+      }
+    } catch (error) {
+      console.error('Error creating/updating user document:', error);
+      // Don't throw the error, just log it
+      // User can still use the app even if Firestore document creation fails
+      return null;
+    }
+  };
+
+  // Set user offline status
+  const setUserOffline = async (userId) => {
+    if (userId) {
+      try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          isOnline: false,
+          lastSeenAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.log('Could not update offline status:', error);
+      }
+    }
+  };
+
+  // Sign up with email and password
+  const signUp = async (email, password, displayName) => {
+    try {
+      setError('');
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update display name
+      if (displayName) {
+        await updateProfile(result.user, { displayName });
+      }
+
+      // Create user document
+      await createUserDocument(result.user);
+      
+      return result.user;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Sign in with email and password
+  const signIn = async (email, password) => {
+    try {
+      setError('');
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      await createUserDocument(result.user);
+      return result.user;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Sign in with Google
+  const signInWithGoogle = async () => {
+    try {
+      setError('');
+      // Try popup first, fallback to redirect if it fails
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        await createUserDocument(result.user);
+        return result.user;
+      } catch (popupError) {
+        // If popup blocked or COOP error, use redirect
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.message.includes('Cross-Origin-Opener-Policy')) {
+          await signInWithRedirect(auth, googleProvider);
+          return null; // Redirect will reload the page
+        }
+        throw popupError;
+      }
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Sign out
+  const logout = async () => {
+    try {
+      await setUserOffline(user?.uid);
+      await signOut(auth);
+      setUser(null);
+      setUserData(null);
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Handle redirect result
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          await createUserDocument(result.user);
+        }
+      } catch (error) {
+        console.error('Redirect error:', error);
+        setError(error.message);
+      }
+    };
+    
+    handleRedirectResult();
+  }, []);
+
+  // Listen to auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (user) {
+          setUser(user);
+          // Fetch user data from Firestore
+          try {
+            const userRef = doc(db, 'users', user.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              setUserData(userSnap.data());
+            } else {
+              // Create user document if it doesn't exist
+              const newUserData = await createUserDocument(user);
+              setUserData(newUserData);
+            }
+          } catch (firestoreError) {
+            console.log('Could not fetch user data:', firestoreError);
+            setUserData(null);
+          }
+        } else {
+          setUser(null);
+          setUserData(null);
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Set user offline on window close
+    const handleBeforeUnload = () => {
+      if (user?.uid) {
+        setUserOffline(user.uid);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user?.uid]);
+
+  const value = {
+    user,
+    userData,
+    loading,
+    error,
+    signUp,
+    signIn,
+    signInWithGoogle,
+    logout
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};

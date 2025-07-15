@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Lock, AlertCircle, Delete } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const AdminLogin = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const inputRef = useRef(null);
+  const { signInAdmin } = useAdminAuth();
   
   const ADMIN_PIN = '1973';
+
+  useEffect(() => {
+    // Focus on invisible input for keyboard support
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const handleNumberClick = (num) => {
     if (pin.length < 4) {
@@ -18,9 +28,16 @@ const AdminLogin = () => {
       // Auto-submit when 4 digits are entered
       if (newPin.length === 4) {
         if (newPin === ADMIN_PIN) {
-          // Set admin session
-          localStorage.setItem('adminAuthenticated', 'true');
-          navigate('/admin/dashboard');
+          // Set admin session (temporary - will be cleared on page refresh)
+          sessionStorage.setItem('adminAuthenticated', 'true');
+          // Sign in admin Firebase account
+          signInAdmin().then(() => {
+            navigate('/admin');
+          }).catch((err) => {
+            console.error('Admin Firebase sign in failed:', err);
+            // Still navigate even if Firebase fails
+            navigate('/admin');
+          });
         } else {
           setError('Incorrect PIN');
           setTimeout(() => {
@@ -42,8 +59,38 @@ const AdminLogin = () => {
     setError('');
   };
 
+  const handleKeyPress = (e) => {
+    // Handle number keys
+    if (e.key >= '0' && e.key <= '9') {
+      e.preventDefault();
+      handleNumberClick(e.key);
+    }
+    // Handle backspace/delete
+    else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      handleDelete();
+    }
+    // Handle escape to clear
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleClear();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      {/* Hidden input for keyboard support */}
+      <input
+        ref={inputRef}
+        type="text"
+        value={pin}
+        onChange={() => {}} // Controlled by handleKeyPress
+        onKeyDown={handleKeyPress}
+        className="absolute opacity-0 pointer-events-none"
+        maxLength={4}
+        autoFocus
+      />
+      
       <div className="max-w-sm w-full">
         <div className="bg-gray-800 rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
@@ -52,6 +99,7 @@ const AdminLogin = () => {
             </div>
             <h2 className="text-3xl font-bold text-white">Admin Access</h2>
             <p className="text-gray-400 mt-2">Enter PIN to continue</p>
+            <p className="text-gray-500 text-xs mt-1">Use keyboard or click numbers</p>
           </div>
 
           {/* PIN Display */}

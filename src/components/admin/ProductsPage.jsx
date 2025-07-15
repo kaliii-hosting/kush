@@ -1,30 +1,22 @@
 import { useState, useEffect } from 'react';
 import { ref, onValue, push, update, remove } from 'firebase/database';
 import { realtimeDb } from '../../config/firebase';
-import { useNavigate } from 'react-router-dom';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
-import { LogOut, Package, Plus, BarChart3, Database } from 'lucide-react';
+import { Plus, Database, BarChart3, Package } from 'lucide-react';
 import { seedFirebaseProducts } from '../../utils/seedFirebase';
 
-const AdminDashboard = () => {
+const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [isUsingFirebase, setIsUsingFirebase] = useState(false);
-  const navigate = useNavigate();
 
-  // Check auth state
   useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
-    if (!isAuthenticated) {
-      navigate('/admin/login');
-    } else {
-      fetchProducts();
-    }
-  }, [navigate]);
+    fetchProducts();
+  }, []);
 
   // Fetch products from Firebase Realtime Database or localStorage
   const fetchProducts = () => {
@@ -181,12 +173,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle logout
-  const handleLogout = () => {
-    sessionStorage.removeItem('adminAuthenticated');
-    navigate('/admin/login');
-  };
-
   // Seed database with sample products
   const handleSeedDatabase = async () => {
     if (window.confirm('This will add sample products to Firebase. Continue?')) {
@@ -216,167 +202,142 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-white text-xl">Loading products...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-green-400" />
-              <h1 className="text-xl font-bold text-white">Inventory Management</h1>
+    <div>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-4 bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg">
+          {successMessage}
+        </div>
+      )}
+      
+      {/* Firebase Notice */}
+      {!isUsingFirebase && (
+        <div className="mb-4 bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg">
+          <p className="font-semibold">Notice: Using Local Storage</p>
+          <p className="text-sm mt-1">
+            Firebase connection not established. Products are being stored locally in your browser. 
+            Check your Firebase Realtime Database configuration.
+          </p>
+        </div>
+      )}
+      
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Total</p>
+              <p className="text-2xl font-bold text-white">{stats.total}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-400 text-sm">Admin Panel</span>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <LogOut size={18} />
-                Logout
-              </button>
-            </div>
+            <BarChart3 className="w-6 h-6 text-gray-600" />
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-4 bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg">
-            {successMessage}
-          </div>
-        )}
-        
-        {/* Firebase Notice */}
-        {!isUsingFirebase && (
-          <div className="mb-4 bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg">
-            <p className="font-semibold">Notice: Using Local Storage</p>
-            <p className="text-sm mt-1">
-              Firebase connection not established. Products are being stored locally in your browser. 
-              Check your Firebase Realtime Database configuration.
-            </p>
-          </div>
-        )}
-        
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Total</p>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
-              </div>
-              <BarChart3 className="w-6 h-6 text-gray-600" />
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Flower</p>
+              <p className="text-2xl font-bold text-green-400">{stats.flower}</p>
             </div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Flower</p>
-                <p className="text-2xl font-bold text-green-400">{stats.flower}</p>
-              </div>
-              <Package className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Prerolls</p>
-                <p className="text-2xl font-bold text-orange-400">{stats.preroll}</p>
-              </div>
-              <Package className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Infused</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.infusedPreroll}</p>
-              </div>
-              <Package className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Vaporizers</p>
-                <p className="text-2xl font-bold text-blue-400">{stats.vaporizers}</p>
-              </div>
-              <Package className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs">Other</p>
-                <p className="text-2xl font-bold text-gray-400">{stats.other}</p>
-              </div>
-              <Package className="w-6 h-6 text-gray-600" />
-            </div>
+            <Package className="w-6 h-6 text-green-600" />
           </div>
         </div>
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Prerolls</p>
+              <p className="text-2xl font-bold text-orange-400">{stats.preroll}</p>
+            </div>
+            <Package className="w-6 h-6 text-orange-600" />
+          </div>
+        </div>
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Infused</p>
+              <p className="text-2xl font-bold text-purple-400">{stats.infusedPreroll}</p>
+            </div>
+            <Package className="w-6 h-6 text-purple-600" />
+          </div>
+        </div>
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Vaporizers</p>
+              <p className="text-2xl font-bold text-blue-400">{stats.vaporizers}</p>
+            </div>
+            <Package className="w-6 h-6 text-blue-600" />
+          </div>
+        </div>
+        <div className="bg-spotify-light-gray rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-xs">Other</p>
+              <p className="text-2xl font-bold text-gray-400">{stats.other}</p>
+            </div>
+            <Package className="w-6 h-6 text-gray-600" />
+          </div>
+        </div>
+      </div>
 
-        {/* Add Product Button */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Products Inventory</h2>
-          <div className="flex gap-2">
-            {products.length === 0 && (
-              <button
-                onClick={handleSeedDatabase}
-                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Database size={20} />
-                Seed Database
-              </button>
-            )}
+      {/* Add Product Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">Products Inventory</h2>
+        <div className="flex gap-2">
+          {products.length === 0 && (
             <button
-              onClick={() => {
-                setEditingProduct(null);
-                setShowForm(true);
-              }}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+              onClick={handleSeedDatabase}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              <Plus size={20} />
-              Add Product
+              <Database size={20} />
+              Seed Database
             </button>
-          </div>
-        </div>
-
-        {/* Product Form Modal */}
-        {showForm && (
-          <ProductForm
-            product={editingProduct}
-            onSubmit={editingProduct 
-              ? (data) => handleUpdateProduct(editingProduct.id, data)
-              : handleAddProduct
-            }
-            onCancel={() => {
-              setShowForm(false);
+          )}
+          <button
+            onClick={() => {
               setEditingProduct(null);
+              setShowForm(true);
             }}
-          />
-        )}
+            className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black px-4 py-2 rounded-lg transition-colors font-medium"
+          >
+            <Plus size={20} />
+            Add Product
+          </button>
+        </div>
+      </div>
 
-        {/* Products List */}
-        <ProductList
-          products={products}
-          onEdit={(product) => {
-            setEditingProduct(product);
-            setShowForm(true);
+      {/* Product Form Modal */}
+      {showForm && (
+        <ProductForm
+          product={editingProduct}
+          onSubmit={editingProduct 
+            ? (data) => handleUpdateProduct(editingProduct.id, data)
+            : handleAddProduct
+          }
+          onCancel={() => {
+            setShowForm(false);
+            setEditingProduct(null);
           }}
-          onDelete={handleDeleteProduct}
         />
-      </main>
+      )}
+
+      {/* Products List */}
+      <ProductList
+        products={products}
+        onEdit={(product) => {
+          setEditingProduct(product);
+          setShowForm(true);
+        }}
+        onDelete={handleDeleteProduct}
+      />
     </div>
   );
 };
 
-export default AdminDashboard;
+export default ProductsPage;

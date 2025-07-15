@@ -1,0 +1,84 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config/firebase';
+
+const AdminAuthContext = createContext({});
+
+export const useAdminAuth = () => {
+  const context = useContext(AdminAuthContext);
+  if (!context) {
+    throw new Error('useAdminAuth must be used within an AdminAuthProvider');
+  }
+  return context;
+};
+
+// Admin credentials - In production, this should be stored securely
+const ADMIN_EMAIL = 'admin@kushie.com';
+const ADMIN_PASSWORD = 'KushieAdmin2024!'; // Change this to a secure password
+
+export const AdminAuthProvider = ({ children }) => {
+  const [adminUser, setAdminUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Sign in admin silently when PIN is verified
+  const signInAdmin = async () => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+      setAdminUser(result.user);
+      return true;
+    } catch (error) {
+      console.error('Admin sign in error:', error);
+      setError(error.message);
+      return false;
+    }
+  };
+
+  // Sign out admin
+  const signOutAdmin = async () => {
+    try {
+      await signOut(auth);
+      setAdminUser(null);
+      localStorage.removeItem('adminAuthenticated');
+    } catch (error) {
+      console.error('Admin sign out error:', error);
+    }
+  };
+
+  // Check if admin is authenticated
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email === ADMIN_EMAIL) {
+        setAdminUser(user);
+      } else {
+        setAdminUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Auto sign in admin if PIN authenticated
+  useEffect(() => {
+    const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
+    if (isAdminAuthenticated && !adminUser && !loading) {
+      signInAdmin();
+    }
+  }, [adminUser, loading]);
+
+  const value = {
+    adminUser,
+    loading,
+    error,
+    signInAdmin,
+    signOutAdmin,
+    isAdminAuthenticated: !!adminUser
+  };
+
+  return (
+    <AdminAuthContext.Provider value={value}>
+      {children}
+    </AdminAuthContext.Provider>
+  );
+};

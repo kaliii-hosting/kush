@@ -32,6 +32,7 @@ const Wholesale = lazy(() => import('./pages/Wholesale'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Blog = lazy(() => import('./pages/Blog'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
+const Account = lazy(() => import('./pages/Account'))
 const Underage = lazy(() => import('./pages/Underage'))
 
 
@@ -80,6 +81,7 @@ function App() {
                         <Route path="/contact" element={<Contact />} />
                         <Route path="/blog" element={<Blog />} />
                         <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/account" element={<Account />} />
                         <Route path="/underage" element={<Underage />} />
                       </Routes>
                     </Suspense>

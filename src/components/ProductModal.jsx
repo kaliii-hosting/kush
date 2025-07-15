@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingCart, Heart, Share2, TrendingUp, Award, Shield, ChevronLeft, ChevronRight, Star, Check, Truck, Clock, RotateCcw } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Heart, Share2, TrendingUp, Award, Shield, ChevronLeft, ChevronRight, Star, Check, Truck, Clock, RotateCcw, BookmarkCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useProducts } from '../context/ProductsContext';
 import { Link } from 'react-router-dom';
+import CartSlideOut from './CartSlideOut';
+import WishlistSlideOut from './WishlistSlideOut';
 
-const ProductModal = ({ product, isOpen, onClose }) => {
-  const { addToCart, cart, updateQuantity } = useCart();
+const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
+  const { addToCart, cart, updateQuantity, getCartItemCount } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const { products } = useProducts();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showImageZoom, setShowImageZoom] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showCartSlideOut, setShowCartSlideOut] = useState(false);
+  const [showWishlistSlideOut, setShowWishlistSlideOut] = useState(false);
+  const cartItemCount = getCartItemCount();
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -77,6 +84,49 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
   const relatedProducts = getRelatedProducts();
 
+  // Handle cart click
+  const handleCartClick = () => {
+    setShowCartSlideOut(true);
+  };
+
+  // Handle wishlist click
+  const handleWishlistClick = () => {
+    setShowWishlistSlideOut(true);
+  };
+
+  // Handle share functionality
+  const handleShare = async () => {
+    const shareData = {
+      title: product.name,
+      text: `Check out this amazing ${product.type || 'cannabis product'}: ${product.name}`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback to custom share modal
+        setShowShareModal(true);
+      }
+    } catch (error) {
+      console.log('Share failed:', error);
+      // Fallback to custom share modal
+      setShowShareModal(true);
+    }
+  };
+
+  // Copy link to clipboard
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here
+      console.log('Link copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black z-50 overflow-y-auto">
       {/* Header */}
@@ -91,13 +141,44 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           </button>
           
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+            {/* Cart Button */}
+            <button 
+              onClick={handleCartClick}
+              className="relative p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+              title="View Cart"
             >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-white'}`} />
+              <ShoppingCart className="h-5 w-5 text-white" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItemCount > 9 ? '9+' : cartItemCount}
+                </span>
+              )}
             </button>
-            <button className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors">
+            
+            {/* Wishlist Toggle Button */}
+            <button
+              onClick={() => toggleWishlist(product.id)}
+              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+              title={isInWishlist(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            >
+              <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-white'}`} />
+            </button>
+            
+            {/* Wishlist Navigation Button */}
+            <button
+              onClick={handleWishlistClick}
+              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+              title="View Wishlist"
+            >
+              <BookmarkCheck className="h-5 w-5 text-white" />
+            </button>
+            
+            {/* Share Button */}
+            <button 
+              onClick={handleShare}
+              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+              title="Share Product"
+            >
               <Share2 className="h-5 w-5 text-white" />
             </button>
             <button
@@ -115,6 +196,37 @@ const ProductModal = ({ product, isOpen, onClose }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
           {/* Left Column - Images */}
           <div>
+            {/* Mobile Product Info - Show only on mobile */}
+            <div className="lg:hidden mb-4">
+              <h1 className="text-xl font-bold text-white mb-2">{product.name}</h1>
+              <p className="text-sm text-spotify-text-subdued mb-3">{product.type || 'Premium Cannabis Product'}</p>
+              
+              {/* Rating */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                  ))}
+                </div>
+                <span className="text-spotify-text-subdued text-sm">4.8 (324)</span>
+              </div>
+              
+              {/* Price */}
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl font-bold text-primary">${product.price}</span>
+                {product.originalPrice && (
+                  <>
+                    <span className="text-lg text-spotify-text-subdued line-through">
+                      ${product.originalPrice}
+                    </span>
+                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      Save {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            
             {/* Main Image */}
             <div className="relative bg-spotify-gray rounded-xl overflow-hidden mb-4 group">
               <div 
@@ -180,8 +292,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
           {/* Right Column - Product Info */}
           <div>
-            {/* Product Title and Rating */}
-            <div className="mb-6">
+            {/* Product Title and Rating - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:block mb-6">
               <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">{product.name}</h1>
               <p className="text-base lg:text-lg text-spotify-text-subdued mb-4">{product.type || 'Premium Cannabis Product'}</p>
               
@@ -286,32 +398,45 @@ const ProductModal = ({ product, isOpen, onClose }) => {
               </button>
             </div>
 
-            {/* Product Highlights */}
-            <div className="bg-spotify-gray rounded-xl p-4 lg:p-5 mb-4">
-              <h3 className="text-base lg:text-lg font-semibold text-white mb-3">Product Highlights</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
-                  <span className="text-spotify-text-subdued">Lab tested for purity and potency</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
-                  <span className="text-spotify-text-subdued">Organically grown without pesticides</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
-                  <span className="text-spotify-text-subdued">Hand-trimmed and carefully cured</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
-                  <span className="text-spotify-text-subdued">Sealed for maximum freshness</span>
-                </li>
-              </ul>
+          </div>
+        </div>
+
+        {/* Product Highlights - Full Width */}
+        <div className="mt-8 bg-spotify-gray rounded-xl p-6 lg:p-8">
+          <h3 className="text-xl lg:text-2xl font-semibold text-white mb-6">Product Highlights</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex items-start gap-3">
+              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
+              <div>
+                <h4 className="text-white font-medium mb-1">Lab Tested</h4>
+                <span className="text-spotify-text-subdued text-sm">Purity and potency verified</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
+              <div>
+                <h4 className="text-white font-medium mb-1">Organic</h4>
+                <span className="text-spotify-text-subdued text-sm">Grown without pesticides</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
+              <div>
+                <h4 className="text-white font-medium mb-1">Hand-Trimmed</h4>
+                <span className="text-spotify-text-subdued text-sm">Carefully cured for quality</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
+              <div>
+                <h4 className="text-white font-medium mb-1">Fresh Sealed</h4>
+                <span className="text-spotify-text-subdued text-sm">Maximum freshness guaranteed</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Product Information Tabs */}
+        {/* Product Information */}
         <div className="mt-12 bg-spotify-gray rounded-xl p-6 lg:p-8">
           <div className="border-b border-spotify-card-hover mb-6">
             <div className="flex gap-8 overflow-x-auto">
@@ -319,13 +444,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                 Description
               </button>
               <button className="pb-4 px-1 border-b-2 border-transparent text-spotify-text-subdued hover:text-white font-semibold whitespace-nowrap transition-colors">
-                Specifications
-              </button>
-              <button className="pb-4 px-1 border-b-2 border-transparent text-spotify-text-subdued hover:text-white font-semibold whitespace-nowrap transition-colors">
                 Lab Results
-              </button>
-              <button className="pb-4 px-1 border-b-2 border-transparent text-spotify-text-subdued hover:text-white font-semibold whitespace-nowrap transition-colors">
-                Reviews (324)
               </button>
             </div>
           </div>
@@ -442,6 +561,104 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           </button>
         </div>
       )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/80 z-60 flex items-center justify-center p-4">
+          <div className="bg-spotify-light-gray rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Share Product</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+              >
+                <X className="h-5 w-5 text-white" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-spotify-text-subdued text-sm mb-2">Product Link</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={window.location.href}
+                    readOnly
+                    className="flex-1 bg-spotify-gray text-white px-3 py-2 rounded-lg text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      copyToClipboard(window.location.href);
+                      setShowShareModal(false);
+                    }}
+                    className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-spotify-text-subdued text-sm mb-3">Share via</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      const text = `Check out ${product.name} - ${window.location.href}`;
+                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                      setShowShareModal(false);
+                    }}
+                    className="bg-spotify-gray hover:bg-spotify-card-hover text-white p-3 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Twitter
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+                      setShowShareModal(false);
+                    }}
+                    className="bg-spotify-gray hover:bg-spotify-card-hover text-white p-3 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Facebook
+                  </button>
+                  <button
+                    onClick={() => {
+                      const text = `Check out ${product.name}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(`${text} - ${window.location.href}`)}`, '_blank');
+                      setShowShareModal(false);
+                    }}
+                    className="bg-spotify-gray hover:bg-spotify-card-hover text-white p-3 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    WhatsApp
+                  </button>
+                  <button
+                    onClick={() => {
+                      const subject = `Check out ${product.name}`;
+                      const body = `I found this amazing product: ${product.name}\n\n${window.location.href}`;
+                      window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                      setShowShareModal(false);
+                    }}
+                    className="bg-spotify-gray hover:bg-spotify-card-hover text-white p-3 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Email
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Slide-out */}
+      <CartSlideOut 
+        isOpen={showCartSlideOut} 
+        onClose={() => setShowCartSlideOut(false)} 
+      />
+
+      {/* Wishlist Slide-out */}
+      <WishlistSlideOut 
+        isOpen={showWishlistSlideOut} 
+        onClose={() => setShowWishlistSlideOut(false)} 
+      />
     </div>
   );
 };

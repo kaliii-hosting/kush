@@ -5,8 +5,9 @@ import { useWishlist } from '../context/WishlistContext';
 import { ShoppingCart, Filter, X, Eye, Heart } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import ProductModal from '../components/ProductModal';
+import ProductHoverActions from '../components/ProductHoverActions';
 
-const Shop = () => {
+const Shop = ({ onCartClick }) => {
   const { products, loading } = useProducts();
   const { addToCart, cart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -16,6 +17,7 @@ const Shop = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
 
   // Get search query from URL
   useEffect(() => {
@@ -158,6 +160,8 @@ const Shop = () => {
                 <div 
                   key={product.id} 
                   onClick={() => handleProductClick(product)}
+                  onMouseEnter={() => setHoveredProduct(product.id)}
+                  onMouseLeave={() => setHoveredProduct(null)}
                   className="group relative bg-card rounded-lg p-4 transition-all duration-300 hover:bg-card-hover cursor-pointer"
                 >
                   {/* Product Image */}
@@ -170,41 +174,12 @@ const Shop = () => {
                       />
                     )}
                     
-                    {/* Action Buttons */}
-                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleProductClick(product);
-                        }}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-2xl transition-all hover:scale-110 hover:bg-white"
-                        title="Quick view"
-                      >
-                        <Eye className="h-5 w-5 text-black" />
-                      </button>
-                      <button
-                        onClick={(e) => handleToggleWishlist(product, e)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-2xl transition-all hover:scale-110 ${
-                          isInWishlist(product.id)
-                            ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'bg-white/90 text-black hover:bg-white'
-                        }`}
-                        title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                      >
-                        <Heart className="h-4 w-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-                      </button>
-                      <button
-                        onClick={(e) => handleAddToCart(product, e)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-2xl transition-all hover:scale-110 ${
-                          isInCart(product.id)
-                            ? 'bg-white text-black hover:bg-gray-100'
-                            : 'bg-primary text-white hover:bg-primary-hover'
-                        }`}
-                        title={isInCart(product.id) ? 'In cart' : 'Add to cart'}
-                      >
-                        <ShoppingCart className="h-5 w-5" fill={isInCart(product.id) ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
+                    {/* Hover Actions with Feedback */}
+                    <ProductHoverActions 
+                      product={product}
+                      isHovered={hoveredProduct === product.id}
+                      onProductClick={() => handleProductClick(product)}
+                    />
                   </div>
 
                   {/* Product Info */}
@@ -262,6 +237,7 @@ const Shop = () => {
         product={selectedProduct}
         isOpen={showProductModal}
         onClose={handleCloseModal}
+        onCartClick={onCartClick}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart, Settings, User2, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductsContext';
 import { useAuth } from '../context/AuthContext';
@@ -260,17 +260,16 @@ const SpotifyTopBar = ({ onCartClick }) => {
                         <p className="text-white font-semibold">{user.displayName || user.email}</p>
                         <p className="text-xs text-spotify-text-subdued">{userData?.role || 'Customer'}</p>
                       </div>
-                      <a href="/account" className="block px-4 py-3 text-sm text-white hover:bg-gray">
+                      <a href="/account" className="block px-4 py-3 text-sm text-white hover:bg-gray flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
                         Account
-                      </a>
-                      <a href="/profile" className="block px-4 py-3 text-sm text-white hover:bg-gray">
-                        Profile
                       </a>
                       <Link to="/wishlist" className="block px-4 py-3 text-sm text-white hover:bg-gray flex items-center gap-2">
                         <Heart className="h-4 w-4" />
                         My Wishlist
                       </Link>
-                      <a href="/orders" className="block px-4 py-3 text-sm text-white hover:bg-gray">
+                      <a href="/orders" className="block px-4 py-3 text-sm text-white hover:bg-gray flex items-center gap-2">
+                        <Package className="h-4 w-4" />
                         My Orders
                       </a>
                       <div className="border-t border-border"></div>

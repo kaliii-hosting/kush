@@ -4,12 +4,14 @@ import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/CartContext';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import ProductModal from '../components/ProductModal';
+import ProductHoverActions from '../components/ProductHoverActions';
 
-const Wishlist = () => {
+const Wishlist = ({ onCartClick }) => {
   const { wishlistItems, removeFromWishlist, loading } = useWishlist();
   const { products } = useProducts();
   const { addToCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
 
   // Get wishlist products
   const wishlistProducts = products.filter(product => 
@@ -65,6 +67,8 @@ const Wishlist = () => {
               <div
                 key={product.id}
                 className="bg-spotify-light-gray rounded-lg overflow-hidden hover:bg-spotify-card-hover transition-all group"
+                onMouseEnter={() => setHoveredProduct(product.id)}
+                onMouseLeave={() => setHoveredProduct(null)}
               >
                 {/* Product Image */}
                 <div 
@@ -77,29 +81,12 @@ const Wishlist = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   
-                  {/* Hover Actions */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
-                      className="bg-primary text-white p-3 rounded-full hover:bg-primary-hover transition-colors"
-                      title="Add to cart"
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromWishlist(product.id);
-                      }}
-                      className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition-colors"
-                      title="Remove from wishlist"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </div>
+                  {/* Hover Actions with Feedback */}
+                  <ProductHoverActions 
+                    product={product}
+                    isHovered={hoveredProduct === product.id}
+                    onProductClick={() => setSelectedProduct(product)}
+                  />
                 </div>
 
                 {/* Product Info */}
@@ -131,6 +118,7 @@ const Wishlist = () => {
           product={selectedProduct}
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
+          onCartClick={onCartClick}
         />
       )}
     </div>

@@ -8,7 +8,13 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  updateProfile
+  updateProfile,
+  updatePassword,
+  sendPasswordResetEmail,
+  updateEmail,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -229,6 +235,119 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.uid]);
 
+  // Update user profile
+  const updateUserProfile = async (profileData) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      
+      // Update Firebase Auth profile
+      if (profileData.displayName !== undefined || profileData.photoURL !== undefined) {
+        await updateProfile(user, profileData);
+      }
+      
+      // Update Firestore document
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        ...profileData,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Refresh userData
+      const updatedDoc = await getDoc(userDocRef);
+      if (updatedDoc.exists()) {
+        setUserData(updatedDoc.data());
+      }
+      
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Change password
+  const changePassword = async (newPassword) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      await updatePassword(user, newPassword);
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Reset password
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Update email
+  const updateUserEmail = async (newEmail) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      await updateEmail(user, newEmail);
+      
+      // Update Firestore document
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        email: newEmail,
+        updatedAt: serverTimestamp()
+      });
+      
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Reauthenticate user
+  const reauthenticateUser = async (password) => {
+    try {
+      if (!user || !user.email) throw new Error('No user logged in');
+      const credential = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, credential);
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Update user preferences
+  const updateUserPreferences = async (preferences) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        preferences: {
+          ...userData?.preferences,
+          ...preferences
+        },
+        updatedAt: serverTimestamp()
+      });
+      
+      // Refresh userData
+      const updatedDoc = await getDoc(userDocRef);
+      if (updatedDoc.exists()) {
+        setUserData(updatedDoc.data());
+      }
+      
+      return true;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     userData,
@@ -237,7 +356,13 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signInWithGoogle,
-    logout
+    logout,
+    updateUserProfile,
+    changePassword,
+    resetPassword,
+    updateUserEmail,
+    reauthenticateUser,
+    updateUserPreferences
   };
 
   return (

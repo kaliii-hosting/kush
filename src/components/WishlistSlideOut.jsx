@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { X, Heart, ShoppingCart } from 'lucide-react';
+import { useWishlist } from '../context/WishlistContext';
+import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 
-const CartSlideOut = ({ isOpen, onClose }) => {
-  const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemCount } = useCart();
+const WishlistSlideOut = ({ isOpen, onClose }) => {
+  const { wishlistItems, removeFromWishlist } = useWishlist();
+  const { products } = useProducts();
+  const { addToCart } = useCart();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -18,8 +22,20 @@ const CartSlideOut = ({ isOpen, onClose }) => {
 
   if (!isVisible) return null;
 
-  const itemCount = getCartItemCount();
-  const total = getCartTotal();
+  // Get wishlist products
+  const wishlistProducts = products.filter(product => 
+    wishlistItems.includes(product.id)
+  );
+
+  const handleAddToCart = (product) => {
+    addToCart(product);
+  };
+
+  const handleRemoveFromWishlist = (productId) => {
+    removeFromWishlist(productId);
+  };
+
+  const itemCount = wishlistProducts.length;
 
   return (
     <>
@@ -31,7 +47,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
       
-      {/* Cart Slide-out */}
+      {/* Wishlist Slide-out */}
       <div 
         className={`fixed right-0 top-0 h-[calc(100vh-3rem)] sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
@@ -41,10 +57,10 @@ const CartSlideOut = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
             <div className="flex items-center gap-3">
-              <ShoppingCart className="h-6 w-6 text-white" />
-              <h2 className="text-xl font-bold text-white">Your Cart</h2>
+              <Heart className="h-6 w-6 text-red-500 fill-current" />
+              <h2 className="text-xl font-bold text-white">Your Wishlist</h2>
               {itemCount > 0 && (
-                <span className="bg-primary text-white text-sm font-bold px-2 py-1 rounded-full">
+                <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full">
                   {itemCount}
                 </span>
               )}
@@ -57,34 +73,34 @@ const CartSlideOut = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Cart Items */}
+          {/* Wishlist Items */}
           <div className="flex-1 overflow-y-auto">
-            {cart.length === 0 ? (
+            {wishlistProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full px-6">
-                <ShoppingCart className="h-16 w-16 text-gray mb-4" />
-                <p className="text-white text-lg font-bold mb-2">Your cart is empty</p>
+                <Heart className="h-16 w-16 text-gray mb-4" />
+                <p className="text-white text-lg font-bold mb-2">Your wishlist is empty</p>
                 <p className="text-text-secondary text-sm text-center mb-6">
-                  Add some products to get started
+                  Add products you love to keep track of them
                 </p>
                 <Link
                   to="/shop"
                   onClick={onClose}
-                  className="bg-primary text-white font-bold px-6 py-3 rounded-full hover:bg-primary-hover transition-colors"
+                  className="bg-red-500 text-white font-bold px-6 py-3 rounded-full hover:bg-red-600 transition-colors"
                 >
                   Browse Products
                 </Link>
               </div>
             ) : (
               <div className="p-6 space-y-4">
-                {cart.map((item) => (
-                  <div key={item.id} className="bg-card rounded-lg p-4">
+                {wishlistProducts.map((product) => (
+                  <div key={product.id} className="bg-card rounded-lg p-4">
                     <div className="flex gap-4">
                       {/* Product Image */}
                       <div className="w-20 h-20 bg-gray-dark rounded-md overflow-hidden flex-shrink-0">
-                        {item.imageUrl && (
+                        {product.imageUrl && (
                           <img 
-                            src={item.imageUrl} 
-                            alt={item.name}
+                            src={product.imageUrl} 
+                            alt={product.name}
                             className="w-full h-full object-cover"
                           />
                         )}
@@ -93,30 +109,22 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                       {/* Product Details */}
                       <div className="flex-1">
                         <h3 className="font-bold text-white text-sm mb-1 line-clamp-2">
-                          {item.name}
+                          {product.name}
                         </h3>
-                        <p className="text-primary font-bold mb-2">${item.price}</p>
+                        <p className="text-primary font-bold mb-2">${product.price}</p>
                         
-                        {/* Quantity Controls */}
+                        {/* Action Controls */}
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-8 h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
+                            onClick={() => handleAddToCart(product)}
+                            className="flex-1 bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2 px-3 rounded-full transition-colors flex items-center justify-center gap-1"
                           >
-                            <Minus className="h-4 w-4 text-white" />
-                          </button>
-                          <span className="text-white font-bold w-8 text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
-                          >
-                            <Plus className="h-4 w-4 text-white" />
+                            <ShoppingCart className="h-3 w-3" />
+                            Add to Cart
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="ml-auto text-text-secondary hover:text-white text-sm transition-colors"
+                            onClick={() => handleRemoveFromWishlist(product.id)}
+                            className="text-text-secondary hover:text-white text-sm transition-colors"
                           >
                             Remove
                           </button>
@@ -129,21 +137,22 @@ const CartSlideOut = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Footer with Total and Checkout */}
-          {cart.length > 0 && (
+          {/* Footer with Actions */}
+          {wishlistProducts.length > 0 && (
             <div className="border-t border-border p-6 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-white text-lg font-bold">Total</span>
-                <span className="text-primary text-2xl font-black">${total.toFixed(2)}</span>
+                <span className="text-white text-lg font-bold">Total Items</span>
+                <span className="text-red-500 text-2xl font-black">{itemCount}</span>
               </div>
               
               <div className="space-y-3">
-                <button
+                <Link
+                  to="/wishlist"
                   onClick={onClose}
-                  className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-hover transition-colors"
+                  className="block w-full text-center bg-red-500 text-white font-bold py-4 rounded-full hover:bg-red-600 transition-colors"
                 >
-                  Checkout
-                </button>
+                  View Full Wishlist
+                </Link>
                 <Link
                   to="/shop"
                   onClick={onClose}
@@ -160,4 +169,4 @@ const CartSlideOut = ({ isOpen, onClose }) => {
   );
 };
 
-export default CartSlideOut;
+export default WishlistSlideOut;

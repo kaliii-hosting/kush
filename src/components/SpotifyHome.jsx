@@ -6,14 +6,16 @@ import { usePageContent } from '../context/PageContentContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useState, useRef } from 'react';
 import ProductModal from './ProductModal';
+import ProductHoverActions from './ProductHoverActions';
 
-const SpotifyHome = () => {
+const SpotifyHome = ({ onCartClick }) => {
   const { products } = useProducts();
   const { addToCart, cart } = useCart();
   const { pageContent } = usePageContent();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [hoveredQuickPick, setHoveredQuickPick] = useState(null);
   
   // Get homepage content from PageContentContext
   const homeContent = pageContent?.home || {};
@@ -122,25 +124,14 @@ const SpotifyHome = () => {
       {/* Quick picks grid - Spotify style */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-12">
         {featured.map((product, index) => (
-          <Link
+          <div
             key={product.id}
-            to="/shop"
-            className="bg-spotify-light-gray/60 rounded flex items-center gap-3 pr-3 hover:bg-spotify-card-hover transition-all duration-200 group overflow-hidden relative"
+            className="bg-spotify-light-gray/60 rounded flex items-center gap-3 pr-3 hover:bg-spotify-card-hover transition-all duration-200 group overflow-hidden relative cursor-pointer"
+            onMouseEnter={() => setHoveredQuickPick(product.id)}
+            onMouseLeave={() => setHoveredQuickPick(null)}
+            onClick={() => handleProductClick(product)}
           >
-            {/* Play button overlay */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <div className="bg-primary rounded-full p-3 shadow-2xl transform translate-y-2 group-hover:translate-y-0 transition-transform pointer-events-auto"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleAddToCart(product, e);
-                }}
-              >
-                <ShoppingCart className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            
-            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary-dark/20 flex-shrink-0">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary-dark/20 flex-shrink-0 relative">
               {product.imageUrl && (
                 <img 
                   src={product.imageUrl} 
@@ -149,12 +140,19 @@ const SpotifyHome = () => {
                   loading="lazy"
                 />
               )}
+              
+              {/* Hover Actions with Feedback */}
+              <ProductHoverActions 
+                product={product}
+                isHovered={hoveredQuickPick === product.id}
+                onProductClick={() => handleProductClick(product)}
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-white text-sm truncate">{product.name}</p>
               <p className="text-xs text-spotify-text-subdued truncate">${product.price}</p>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -365,17 +363,12 @@ const SpotifyHome = () => {
                       Trending
                     </div>
                     
-                    {/* Quick Actions */}
-                    <div className={`absolute bottom-2 right-2 flex gap-2 transition-all duration-300 ${
-                      hoveredCard === `trending-${index}` ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                    }`}>
-                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                        <Eye className="h-4 w-4 text-black" />
-                      </button>
-                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                        <Heart className="h-4 w-4 text-black" />
-                      </button>
-                    </div>
+                    {/* Hover Actions with Feedback */}
+                    <ProductHoverActions 
+                      product={product}
+                      isHovered={hoveredCard === `trending-${index}`}
+                      onProductClick={() => handleProductClick(product)}
+                    />
                   </div>
                   
                   <h3 className="font-bold text-white mb-1">{product.name}</h3>
@@ -421,15 +414,12 @@ const SpotifyHome = () => {
                       Trending
                     </div>
                     
-                    {/* Quick Actions */}
-                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 transition-all duration-300">
-                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                        <Eye className="h-4 w-4 text-black" />
-                      </button>
-                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                        <Heart className="h-4 w-4 text-black" />
-                      </button>
-                    </div>
+                    {/* Hover Actions with Feedback */}
+                    <ProductHoverActions 
+                      product={product}
+                      isHovered={false}
+                      onProductClick={() => handleProductClick(product)}
+                    />
                   </div>
                   
                   <h3 className="font-bold text-white mb-1">{product.name}</h3>
@@ -585,6 +575,7 @@ const SpotifyHome = () => {
         product={selectedProduct}
         isOpen={showProductModal}
         onClose={handleCloseModal}
+        onCartClick={onCartClick}
       />
     </div>
   );
@@ -667,25 +658,7 @@ const Section = ({ title, subtitle, items, showAll }) => {
 
 // Product card component with Spotify styling
 const ProductCard = ({ product }) => {
-  const { addToCart, cart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
-  
-  const isInCart = (productId) => {
-    return cart.some(item => item.id === productId);
-  };
-  
-  const handleAddToCart = (product, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product);
-  };
-  
-  const handleToggleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleWishlist(product.id);
-  };
   
   return (
     <Link
@@ -707,33 +680,11 @@ const ProductCard = ({ product }) => {
             )}
           </div>
           
-          {/* Hover actions - Heart and Cart buttons */}
-          <div className={`absolute bottom-2 right-2 flex gap-2 transition-all duration-300 ${
-            isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-          }`}>
-            <button 
-              onClick={handleToggleWishlist}
-              className={`rounded-full p-2.5 shadow-2xl hover:scale-110 transition-all ${
-                isInWishlist(product.id)
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white/90 backdrop-blur-sm text-black hover:bg-white'
-              }`}
-              title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-            >
-              <Heart className="h-4 w-4" fill={isInWishlist(product.id) ? "currentColor" : "none"} />
-            </button>
-            <button 
-              onClick={(e) => handleAddToCart(product, e)}
-              className={`rounded-full p-2.5 shadow-2xl hover:scale-110 transition-all ${
-                isInCart(product.id)
-                  ? 'bg-white text-black'
-                  : 'bg-spotify-green text-black hover:bg-spotify-green-hover'
-              }`}
-              title={isInCart(product.id) ? 'In cart' : 'Add to cart'}
-            >
-              <ShoppingCart className="h-4 w-4" fill={isInCart(product.id) ? "currentColor" : "none"} />
-            </button>
-          </div>
+          {/* Hover Actions with Feedback */}
+          <ProductHoverActions 
+            product={product}
+            isHovered={isHovered}
+          />
         </div>
         
         <div>

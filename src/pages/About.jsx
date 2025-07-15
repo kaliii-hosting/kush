@@ -1,5 +1,7 @@
 import { usePageContent } from '../context/PageContentContext';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Play, Package } from 'lucide-react';
 import * as THREE from 'three';
 import '../styles/about-animation.css';
 
@@ -939,47 +941,257 @@ const About = () => {
         
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 relative z-10">
-        {/* Mission Section */}
-        {content.mission && (
-          <div className="mb-16 text-center">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              {content.mission.title}
-            </h2>
-            <p className="text-xl text-spotify-text-subdued mb-6 max-w-3xl mx-auto">
-              {content.mission.subtitle}
-            </p>
-            <p className="text-lg text-spotify-text-subdued max-w-4xl mx-auto">
-              {content.mission.description}
-            </p>
-          </div>
-        )}
-
-        {/* Values Section */}
-        {content.values && content.values.items && (
-          <div className="mb-16">
-            <h2 className="text-4xl font-bold text-white mb-12 text-center">
-              {content.values.title}
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {content.values.items.map((value, index) => (
-                <div key={index} className="bg-spotify-light-gray rounded-lg p-6 hover:bg-spotify-card-hover transition-colors">
-                  <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center mb-4">
-                    <span className="text-xl font-bold text-black">✓</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {value.title}
-                  </h3>
-                  <p className="text-spotify-text-subdued">
-                    {value.description}
+      {/* Main Content - Matching Screenshots */}
+      <div className="bg-black">
+        
+        {/* Section 1: The Birth of a Green Dream */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <span className="inline-block px-4 py-2 rounded-full text-sm font-semibold mb-6" 
+                      style={{ backgroundColor: '#CB6015', color: 'white' }}>
+                  Our Story
+                </span>
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-10">
+                  The Birth of a Green Dream
+                </h1>
+                <div className="space-y-6">
+                  <p className="text-lg text-gray-300 leading-relaxed">
+                    Kushie Brand emerged from the sun-soaked streets of Los Angeles, where passion met California's legendary cannabis culture.
+                  </p>
+                  <p className="text-lg text-gray-300 leading-relaxed">
+                    Founded by local connoisseurs who soaked up LA's underground scene—from Venice Beach drum circles to Hollywood Hills house parties—Kushie is a love letter to the Golden State's pioneering spirit.
                   </p>
                 </div>
-              ))}
+              </div>
+              <div className="relative">
+                <img 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Screenshot_6_1752607561197_v55n0us.jpg"
+                  alt="Kushie Brand Story"
+                  className="w-full rounded-lg shadow-2xl"
+                />
+              </div>
             </div>
           </div>
-        )}
+        </section>
 
-        {/* Additional content sections can be added here */}
+        {/* Section 2: Rolling Papers & True West Coast */}
+        <section className="py-20 px-4 md:px-8 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="order-2 lg:order-1">
+                <img 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Screenshot_5_1752608083133_6u2c3km.jpg"
+                  alt="West Coast Cannabis Culture"
+                  className="w-full rounded-lg shadow-2xl"
+                />
+              </div>
+              <div className="order-1 lg:order-2">
+                <div className="space-y-8">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                      Rolling Papers Full of Dreams
+                    </h2>
+                    <p className="text-gray-300 leading-relaxed">
+                      The founders, armed with an unshakeable belief that cannabis deserved better than corporate sanitization, set out to create a brand that honored both the plant's rich heritage and its bright future.
+                    </p>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                      True West Coast Culture
+                    </h2>
+                    <p className="text-gray-300 leading-relaxed">
+                      Their mission was simple yet revolutionary: bring premium cannabis products to market while maintaining the authenticity, community spirit, and genuine care that defined true West Coast cannabis culture.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 3: California Standard of Excellence */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-10">
+                  California Standard of Excellence
+                </h2>
+                <div className="space-y-6">
+                  <p className="text-lg text-gray-300 leading-relaxed">
+                    Kushie understood that entering the legal cannabis market wasn't just about compliance and profit margins—it was about channeling that quintessential California vibe where innovation meets relaxation.
+                  </p>
+                  <p className="text-lg text-gray-300 leading-relaxed">
+                    Drawing inspiration from LA's diverse neighborhoods and perfect growing climate, Kushie carved out its niche as the brand that embodied the Golden State's cannabis renaissance.
+                  </p>
+                  <p className="text-lg text-gray-300 leading-relaxed">
+                    From meticulously cured flower that rivals Napa Valley's attention to terroir, to precisely dosed edibles inspired by LA's world-class culinary scene, every Kushie product reflects genuine, sun-kissed enthusiasm.
+                  </p>
+                </div>
+              </div>
+              <div className="relative">
+                <img 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/dsc04750_1752609170170_7xapy47.jpg"
+                  alt="California Cannabis Excellence"
+                  className="w-full rounded-lg shadow-2xl"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 4: Video Gallery */}
+        <section className="py-20 px-4 md:px-8 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 text-center">
+              Experience Kushie
+            </h2>
+            <p className="text-xl text-gray-300 mb-12 text-center max-w-3xl mx-auto">
+              Take a glimpse into our world of premium cannabis cultivation and craftsmanship
+            </p>
+            
+            {/* Desktop: 4 videos side by side */}
+            <div className="hidden md:grid md:grid-cols-4 gap-4">
+              <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                <video 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4"
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <h3 className="text-white font-semibold">Vending Machine</h3>
+                </div>
+              </div>
+              
+              <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                <video 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4"
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <h3 className="text-white font-semibold">Disposables</h3>
+                </div>
+              </div>
+              
+              <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                <video 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Gashapon_Prerolls_1752609450843_t53l74h.mp4"
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <h3 className="text-white font-semibold">Gashapon Prerolls</h3>
+                </div>
+              </div>
+              
+              <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                <video 
+                  src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/1g_8bit_1752609356871_v8m7poa.mp4"
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <h3 className="text-white font-semibold">8-Bit Collection</h3>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mobile: Swipeable carousel */}
+            <div className="md:hidden">
+              <div className="relative">
+                <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                  <div className="flex-shrink-0 w-full snap-center">
+                    <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
+                      <video 
+                        src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4"
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <h3 className="text-white font-semibold text-lg">Vending Machine</h3>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-shrink-0 w-full snap-center">
+                    <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
+                      <video 
+                        src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4"
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <h3 className="text-white font-semibold text-lg">Disposables</h3>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-shrink-0 w-full snap-center">
+                    <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
+                      <video 
+                        src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Gashapon_Prerolls_1752609450843_t53l74h.mp4"
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <h3 className="text-white font-semibold text-lg">Gashapon Prerolls</h3>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-shrink-0 w-full snap-center">
+                    <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
+                      <video 
+                        src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/1g_8bit_1752609356871_v8m7poa.mp4"
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <h3 className="text-white font-semibold text-lg">8-Bit Collection</h3>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Mobile scroll indicators */}
+                <div className="flex justify-center mt-4 gap-2">
+                  <div className="w-2 h-2 rounded-full bg-spotify-green"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   );

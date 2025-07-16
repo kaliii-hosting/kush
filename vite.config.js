@@ -23,9 +23,27 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
+    // Inline assets smaller than 10kb
+    assetsInlineLimit: 10240,
+    // Generate source maps for production debugging
+    sourcemap: false,
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
   },
   // Optimize deps
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'firebase/app', 'firebase/auth', 'firebase/firestore'],
   },
+  // Server configuration for better development performance
+  server: {
+    headers: {
+      'Cache-Control': 'public, max-age=31536000',
+    }
+  },
+  // Preview server configuration
+  preview: {
+    headers: {
+      'Cache-Control': 'public, max-age=31536000',
+    }
+  }
 })

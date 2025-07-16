@@ -2,42 +2,56 @@ import { useEffect } from 'react';
 
 const useResourcePreloader = () => {
   useEffect(() => {
-    // Preload critical images
-    const preloadImages = [
-      // Add your critical hero images here
+    // Critical videos to preload
+    const preloadVideos = [
+      'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4',
+      'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4',
+      'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Gashapon_Prerolls_1752609450843_t53l74h.mp4',
+      'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/1g_8bit_1752609356871_v8m7poa.mp4'
     ];
 
-    preloadImages.forEach(src => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = src;
-      document.head.appendChild(link);
+    // Preload videos
+    preloadVideos.forEach(src => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.src = src;
+      video.load();
     });
 
-    // Preconnect to external domains
+    // Warm up Firebase connection
+    fetch('https://kushie-b69fb-default-rtdb.firebaseio.com/.json', { 
+      method: 'HEAD',
+      mode: 'no-cors' 
+    }).catch(() => {});
+
+    // Preconnect to external domains (already in HTML but adding for redundancy)
     const domains = [
       'https://fchtwxunzmkzbnibqbwl.supabase.co',
       'https://fonts.googleapis.com',
-      'https://fonts.gstatic.com'
+      'https://fonts.gstatic.com',
+      'https://kushie-b69fb.firebaseapp.com',
+      'https://kushie-b69fb-default-rtdb.firebaseio.com'
     ];
 
     domains.forEach(domain => {
-      const link = document.createElement('link');
-      link.rel = 'preconnect';
-      link.href = domain;
-      document.head.appendChild(link);
+      const existing = document.querySelector(`link[rel="preconnect"][href="${domain}"]`);
+      if (!existing) {
+        const link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = domain;
+        if (domain.includes('fonts.gstatic')) {
+          link.crossOrigin = 'anonymous';
+        }
+        document.head.appendChild(link);
+      }
     });
 
-    // Prefetch DNS for domains we'll use
-    const dnsPrefetchDomains = [
-      'https://fchtwxunzmkzbnibqbwl.supabase.co'
-    ];
-
-    dnsPrefetchDomains.forEach(domain => {
+    // Prefetch next likely navigation
+    const prefetchPages = ['/shop', '/about'];
+    prefetchPages.forEach(page => {
       const link = document.createElement('link');
-      link.rel = 'dns-prefetch';
-      link.href = domain;
+      link.rel = 'prefetch';
+      link.href = page;
       document.head.appendChild(link);
     });
   }, []);

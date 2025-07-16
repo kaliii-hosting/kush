@@ -7,8 +7,6 @@ import { useWishlist } from '../context/WishlistContext';
 import { useState, useRef } from 'react';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
-import LazyVideo from './LazyVideo';
-import LazyImage from './LazyImage';
 
 const SpotifyHome = ({ onCartClick }) => {
   const { products } = useProducts();
@@ -70,16 +68,17 @@ const SpotifyHome = ({ onCartClick }) => {
       <div className="relative h-[85vh] -mt-16 mb-8 overflow-hidden">
         {/* Video Background */}
         {homeContent.hero?.videoUrl && (
-          <LazyVideo
+          <video
             src={homeContent.hero.videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover scale-105"
-            threshold={0.1}
-            rootMargin="100px"
-          />
+          >
+            <source src={homeContent.hero.videoUrl} type="video/mp4" />
+          </video>
         )}
         
         {/* Multiple Gradient Overlays for depth */}
@@ -136,12 +135,12 @@ const SpotifyHome = ({ onCartClick }) => {
           >
             <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary-dark/20 flex-shrink-0 relative">
               {product.imageUrl && (
-                <LazyImage 
+                <img 
                   src={product.imageUrl} 
                   alt={product.name}
                   className="w-full h-full object-cover"
-                  threshold={0.1}
-                  rootMargin="50px"
+                  loading="eager"
+                  fetchpriority="high"
                 />
               )}
               
@@ -163,16 +162,17 @@ const SpotifyHome = ({ onCartClick }) => {
       {/* Mini Hero Section 4 - Gold Cartridges */}
       <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
         {homeContent.goldCartridges?.videoUrl && (
-          <LazyVideo
+          <video
             src={homeContent.goldCartridges.videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
-            threshold={0.1}
-            rootMargin="200px"
-          />
+          >
+            <source src={homeContent.goldCartridges.videoUrl} type="video/mp4" />
+          </video>
         )}
         
         {/* Gradient Overlay */}
@@ -213,16 +213,17 @@ const SpotifyHome = ({ onCartClick }) => {
       {/* Mini Hero Section 3 - Disposables Collection */}
       <div className="relative h-[55vh] -mx-8 mb-12 overflow-hidden">
         {homeContent.disposables?.videoUrl && (
-          <LazyVideo
+          <video
             src={homeContent.disposables.videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
-            threshold={0.1}
-            rootMargin="200px"
-          />
+          >
+            <source src={homeContent.disposables.videoUrl} type="video/mp4" />
+          </video>
         )}
         
         {/* Gradient Overlay */}
@@ -271,16 +272,17 @@ const SpotifyHome = ({ onCartClick }) => {
       {/* Mini Hero Section 1 - Premium Experience */}
       <div className="relative h-[60vh] -mx-8 mb-12 overflow-hidden">
         {homeContent.premiumExperience?.videoUrl && (
-          <LazyVideo
+          <video
             src={homeContent.premiumExperience.videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
-            threshold={0.1}
-            rootMargin="200px"
-          />
+          >
+            <source src={homeContent.premiumExperience.videoUrl} type="video/mp4" />
+          </video>
         )}
         
         {/* Gradient Overlay */}
@@ -358,12 +360,11 @@ const SpotifyHome = ({ onCartClick }) => {
                 <div className="bg-card rounded-lg p-4 transition-all duration-300 hover:bg-card-hover hover:scale-105 hover:shadow-xl">
                   <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
                     {product.imageUrl && (
-                      <LazyImage 
+                      <img 
                         src={product.imageUrl} 
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        threshold={0.05}
-                        rootMargin="100px"
+                        loading="eager"
                       />
                     )}
                     {/* Trending Badge */}
@@ -411,12 +412,11 @@ const SpotifyHome = ({ onCartClick }) => {
                 <div className="bg-card rounded-lg p-4 transition-all duration-300 hover:bg-card-hover hover:scale-105 hover:shadow-xl">
                   <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
                     {product.imageUrl && (
-                      <LazyImage 
+                      <img 
                         src={product.imageUrl} 
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        threshold={0.05}
-                        rootMargin="100px"
+                        loading="eager"
                       />
                     )}
                     {/* Trending Badge */}
@@ -460,16 +460,17 @@ const SpotifyHome = ({ onCartClick }) => {
       {/* Mini Hero Section 2 - Innovation Spotlight */}
       <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
         {homeContent.innovation?.videoUrl && (
-          <LazyVideo
+          <video
             src={homeContent.innovation.videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
-            threshold={0.1}
-            rootMargin="200px"
-          />
+          >
+            <source src={homeContent.innovation.videoUrl} type="video/mp4" />
+          </video>
         )}
         
         {/* Gradient Overlay */}
@@ -512,12 +513,11 @@ const SpotifyHome = ({ onCartClick }) => {
               <div className="relative">
                 <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl ring-4 ring-primary/30">
                   {featured[0]?.imageUrl && (
-                    <LazyImage 
+                    <img 
                       src={featured[0].imageUrl} 
                       alt={featured[0].name}
                       className="w-full h-full object-cover"
-                      threshold={0.1}
-                      rootMargin="50px"
+                      loading="eager"
                     />
                   )}
                 </div>
@@ -685,12 +685,11 @@ const ProductCard = ({ product }) => {
         <div className="relative mb-4">
           <div className="aspect-square bg-spotify-gray rounded-md overflow-hidden shadow-lg">
             {product.imageUrl && (
-              <LazyImage 
+              <img 
                 src={product.imageUrl} 
                 alt={product.name}
                 className="w-full h-full object-cover"
-                threshold={0.1}
-                rootMargin="50px"
+                loading="eager"
               />
             )}
           </div>

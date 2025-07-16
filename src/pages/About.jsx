@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Play, Package } from 'lucide-react';
 import * as THREE from 'three';
 import '../styles/about-animation.css';
+import LazyVideo from '../components/LazyVideo';
 
 const About = () => {
   const { pageContent, loading } = usePageContent();
@@ -1055,13 +1056,15 @@ const About = () => {
             {/* Desktop: 4 videos side by side */}
             <div className="hidden md:grid md:grid-cols-4 gap-4">
               <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                <video 
+                <LazyVideo 
                   src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4"
                   className="w-full h-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
+                  threshold={0.1}
+                  rootMargin="100px"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                   <h3 className="text-white font-semibold">Vending Machine</h3>
@@ -1069,13 +1072,15 @@ const About = () => {
               </div>
               
               <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                <video 
+                <LazyVideo 
                   src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4"
                   className="w-full h-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
+                  threshold={0.1}
+                  rootMargin="100px"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                   <h3 className="text-white font-semibold">Disposables</h3>
@@ -1083,13 +1088,15 @@ const About = () => {
               </div>
               
               <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                <video 
+                <LazyVideo 
                   src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Gashapon_Prerolls_1752609450843_t53l74h.mp4"
                   className="w-full h-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
+                  threshold={0.1}
+                  rootMargin="100px"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                   <h3 className="text-white font-semibold">Gashapon Prerolls</h3>
@@ -1097,13 +1104,15 @@ const About = () => {
               </div>
               
               <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                <video 
+                <LazyVideo 
                   src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/1g_8bit_1752609356871_v8m7poa.mp4"
                   className="w-full h-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
+                  threshold={0.1}
+                  rootMargin="100px"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                   <h3 className="text-white font-semibold">8-Bit Collection</h3>
@@ -1117,13 +1126,15 @@ const About = () => {
                 <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                   <div className="flex-shrink-0 w-full snap-center">
                     <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
-                      <video 
+                      <LazyVideo 
                         src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4"
                         className="w-full h-full object-cover"
                         autoPlay
                         loop
                         muted
                         playsInline
+                        threshold={0.1}
+                        rootMargin="100px"
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <h3 className="text-white font-semibold text-lg">Vending Machine</h3>
@@ -1133,13 +1144,15 @@ const About = () => {
                   
                   <div className="flex-shrink-0 w-full snap-center">
                     <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
-                      <video 
+                      <LazyVideo 
                         src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4"
                         className="w-full h-full object-cover"
                         autoPlay
                         loop
                         muted
                         playsInline
+                        threshold={0.1}
+                        rootMargin="100px"
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <h3 className="text-white font-semibold text-lg">Disposables</h3>
@@ -1149,13 +1162,15 @@ const About = () => {
                   
                   <div className="flex-shrink-0 w-full snap-center">
                     <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
-                      <video 
+                      <LazyVideo 
                         src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Gashapon_Prerolls_1752609450843_t53l74h.mp4"
                         className="w-full h-full object-cover"
                         autoPlay
                         loop
                         muted
                         playsInline
+                        threshold={0.1}
+                        rootMargin="100px"
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <h3 className="text-white font-semibold text-lg">Gashapon Prerolls</h3>
@@ -1165,13 +1180,15 @@ const About = () => {
                   
                   <div className="flex-shrink-0 w-full snap-center">
                     <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden mx-auto max-w-sm">
-                      <video 
+                      <LazyVideo 
                         src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/1g_8bit_1752609356871_v8m7poa.mp4"
                         className="w-full h-full object-cover"
                         autoPlay
                         loop
                         muted
                         playsInline
+                        threshold={0.1}
+                        rootMargin="100px"
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <h3 className="text-white font-semibold text-lg">8-Bit Collection</h3>

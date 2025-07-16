@@ -1,4 +1,5 @@
 import { Github } from 'lucide-react';
+import LazyVideo from './LazyVideo';
 
 const SyncWithGithub = () => {
   return (
@@ -44,20 +45,17 @@ const SyncWithGithub = () => {
           <div className="relative">
             <div className="relative rounded-[20px] overflow-hidden shadow-2xl">
               <div className="aspect-[4/3] bg-gradient-to-br from-gray-900 to-gray-800">
-                <video 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
+                <LazyVideo
+                  src="https://huly.io/videos/github-sync-video.mp4"
+                  poster="https://huly.io/images/github-sync-preview.jpg"
                   className="w-full h-full object-cover"
-                >
-                  <source src="https://huly.io/videos/github-sync-video.mp4" type="video/mp4" />
-                  <img 
-                    src="https://huly.io/images/github-sync-preview.jpg" 
-                    alt="GitHub Integration"
-                    className="w-full h-full object-cover"
-                  />
-                </video>
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  threshold={0.1}
+                  rootMargin="50px"
+                />
               </div>
             </div>
             {/* Gradient blur effect */}

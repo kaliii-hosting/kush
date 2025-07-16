@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, ShoppingBag, Package } from 'lucide-react';
 import { useProducts } from '../context/ProductsContext';
+import LazyVideo from './LazyVideo';
 import './InteractiveKeypad.css';
 
 const InteractiveKeypad = () => {
@@ -140,15 +141,16 @@ const InteractiveKeypad = () => {
         <div className="display-section">
           {displayContent === 'video' && (
             <div className="display-content">
-              <video
+              <LazyVideo
                 key={currentVideoIndex}
+                src={videos[currentVideoIndex].url}
+                className="display-video"
                 autoPlay
                 loop
                 muted
-                className="display-video"
-              >
-                <source src={videos[currentVideoIndex].url} type="video/mp4" />
-              </video>
+                threshold={0.1}
+                rootMargin="50px"
+              />
               <div className="display-overlay">
                 <h3 className="display-title">{videos[currentVideoIndex].title}</h3>
                 <p className="display-description">{videos[currentVideoIndex].description}</p>

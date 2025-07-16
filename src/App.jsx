@@ -16,6 +16,7 @@ import SpotifyHome from './components/SpotifyHome'
 import AgeVerification from './components/AgeVerification'
 import ScrollToTop from './components/ScrollToTop'
 import LoadingSpinner from './components/LoadingSpinner'
+import useResourcePreloader from './hooks/useResourcePreloader'
 
 // Import user sync utility (will auto-start syncing)
 import './utils/syncUsersToRealtimeDB'
@@ -37,6 +38,8 @@ const Underage = lazy(() => import('./pages/Underage'))
 
 
 function App() {
+  useResourcePreloader();
+  
   return (
     <AuthProvider>
       <AdminAuthProvider>

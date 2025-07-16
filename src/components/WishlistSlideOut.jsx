@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Heart, ShoppingCart } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useProducts } from '../context/ProductsContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { Link } from 'react-router-dom';
 
 const WishlistSlideOut = ({ isOpen, onClose }) => {

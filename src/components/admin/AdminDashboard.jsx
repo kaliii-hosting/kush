@@ -8,8 +8,21 @@ import { LogOut, Package, Plus, BarChart3, Database } from 'lucide-react';
 import { seedFirebaseProducts } from '../../utils/seedFirebase';
 
 const AdminDashboard = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with cached data if available
+  const getCachedProducts = () => {
+    try {
+      const localProducts = localStorage.getItem('localProducts');
+      if (localProducts) {
+        return JSON.parse(localProducts);
+      }
+    } catch (e) {
+      console.error('Error reading cached products:', e);
+    }
+    return [];
+  };
+
+  const [products, setProducts] = useState(getCachedProducts());
+  const [loading, setLoading] = useState(false); // Start with false if we have cached data
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
@@ -28,9 +41,15 @@ const AdminDashboard = () => {
 
   // Fetch products from Firebase Realtime Database or localStorage
   const fetchProducts = () => {
-    setLoading(true);
-    try {
-      const productsRef = ref(realtimeDb, 'products');
+    // Only show loading if we don't have cached products
+    if (products.length === 0) {
+      setLoading(true);
+    }
+    
+    // Delay Firebase connection to let UI render first
+    setTimeout(() => {
+      try {
+        const productsRef = ref(realtimeDb, 'products');
       
       // Set up real-time listener
       const unsubscribe = onValue(productsRef, 
@@ -59,13 +78,14 @@ const AdminDashboard = () => {
         }
       );
 
-      // Cleanup function
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('Error setting up Firebase listener:', error);
-      loadLocalProducts();
-      setLoading(false);
-    }
+        // Cleanup function
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error setting up Firebase listener:', error);
+        loadLocalProducts();
+        setLoading(false);
+      }
+    }, 100); // 100ms delay to let UI render first
   };
 
   // Load products from localStorage
@@ -230,7 +250,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Package className="w-8 h-8 text-green-400" />
-              <h1 className="text-xl font-bold text-white">Inventory Management</h1>
+              <h1 className="text-xl font-bold text-white">Local Inventory Management</h1>
             </div>
             <div className="flex items-center gap-4">
               <img 
@@ -328,9 +348,18 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Info Notice */}
+        <div className="mb-6 bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded-lg">
+          <p className="font-semibold">Local Inventory Products</p>
+          <p className="text-sm mt-1">
+            These products are displayed in the "Local Inventory" section at the bottom of the Wholesale page. 
+            They are separate from your Shopify products which appear in the main Shop page.
+          </p>
+        </div>
+
         {/* Add Product Button */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Products Inventory</h2>
+          <h2 className="text-2xl font-bold text-white">Local Products Inventory</h2>
           <div className="flex gap-2">
             {products.length === 0 && (
               <button

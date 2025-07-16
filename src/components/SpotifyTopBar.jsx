@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart, Settings, User2, Package } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { useProducts } from '../context/ProductsContext';
 import { useAuth } from '../context/AuthContext';
 import { useBlog } from '../context/BlogContext';
@@ -11,7 +11,7 @@ import SignUp from './auth/SignUp';
 const SpotifyTopBar = ({ onCartClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getCartItemCount } = useCart();
+  const { cartCount } = useCart();
   const { products } = useProducts();
   const { user, userData, logout } = useAuth();
   const { posts } = useBlog();
@@ -24,7 +24,7 @@ const SpotifyTopBar = ({ onCartClick }) => {
   const [showSignUp, setShowSignUp] = useState(false);
   const searchRef = useRef(null);
   const searchButtonRef = useRef(null);
-  const cartItemCount = getCartItemCount();
+  // cartCount is now available directly from useCart
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -222,9 +222,9 @@ const SpotifyTopBar = ({ onCartClick }) => {
               className="relative bg-black/70 rounded-full p-2 hover:bg-black transition-colors group"
             >
               <ShoppingCart className="h-5 w-5 text-white" />
-              {cartItemCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-scale-in group-hover:scale-110 transition-transform">
-                  {cartItemCount > 9 ? '9+' : cartItemCount}
+                  {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
             </button>

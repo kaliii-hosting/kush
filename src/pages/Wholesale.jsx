@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight } from 'lucide-react';
+import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart } from 'lucide-react';
+import { useEnhancedProducts } from '../context/EnhancedProductsContext';
+import { useCart } from '../context/ShopifyCartContext';
+import ProductModal from '../components/ProductModal';
 import './Wholesale.css';
 
 // States where we operate
@@ -13,11 +16,18 @@ const operatingStates = [
   { code: 'FL', name: 'Florida', link: '/wholesale/florida' }
 ];
 
-const Wholesale = () => {
+const Wholesale = ({ onCartClick }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
   const stateLayersRef = useRef([]);
+  
+  // Products state
+  const { firebaseProducts, loading } = useEnhancedProducts();
+  const { addToCart } = useCart();
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Initialize map
   useEffect(() => {
@@ -383,6 +393,121 @@ const Wholesale = () => {
           </div>
         </div>
       </section>
+
+      {/* Local Inventory Section */}
+      <section className="py-20 bg-black border-t border-border">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Local Inventory
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-gray-400">
+              Browse our complete local inventory available for wholesale orders
+            </p>
+          </div>
+
+          {/* Category Filter */}
+          <div className="mb-8 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-dark text-gray-400 hover:text-white'
+              }`}
+            >
+              All Products
+            </button>
+            {[...new Set(firebaseProducts.map(p => p.category).filter(Boolean))].map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-dark text-gray-400 hover:text-white'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {firebaseProducts
+                .filter(product => selectedCategory === 'all' || product.category === selectedCategory)
+                .map((product) => (
+                <div 
+                  key={product.id} 
+                  className="group relative bg-card rounded-lg p-4 transition-all duration-300 hover:bg-card-hover"
+                >
+                  {/* Product Image */}
+                  <div className="relative mb-4 aspect-square overflow-hidden rounded-md bg-gray-dark">
+                    {product.imageUrl && (
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    )}
+                    
+                    {/* Hover Actions */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedProduct(product);
+                          setShowProductModal(true);
+                        }}
+                        className="p-3 bg-white rounded-full text-black hover:bg-gray-200 transition-colors"
+                        title="Quick View"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product);
+                        }}
+                        className="p-3 bg-primary rounded-full text-white hover:bg-primary-hover transition-colors"
+                        title="Add to Cart"
+                      >
+                        <ShoppingCart className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div>
+                    <h3 className="font-bold text-white text-sm mb-1 line-clamp-2">{product.name}</h3>
+                    <p className="text-primary font-bold">${product.price}</p>
+                    {product.category && (
+                      <p className="text-xs text-gray-400 mt-1">{product.category}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Product Modal */}
+      <ProductModal 
+        product={selectedProduct}
+        isOpen={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setTimeout(() => setSelectedProduct(null), 300);
+        }}
+        onCartClick={onCartClick}
+      />
     </div>
   );
 };

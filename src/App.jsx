@@ -1,9 +1,9 @@
+import React, { Suspense, lazy } from 'react'
 import './App.css'
 import './styles/typography.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
 import { ProductsProvider } from './context/ProductsContext'
-import { CartProvider } from './context/CartContext'
+import { ShopifyCartProvider } from './context/ShopifyCartContext'
 import { PageContentProvider } from './context/PageContentContext'
 import { HomepageProvider } from './context/HomepageContext'
 import { AuthProvider } from './context/AuthContext'
@@ -11,6 +11,8 @@ import { AdminAuthProvider } from './context/AdminAuthContext'
 import { MusicProvider } from './context/MusicContext'
 import { BlogProvider } from './context/BlogContext'
 import { WishlistProvider } from './context/WishlistContext'
+import { ShopifyProvider } from './context/ShopifyContext'
+import { EnhancedProductsProvider } from './context/EnhancedProductsContext'
 import SpotifyLayout from './components/SpotifyLayout'
 import SpotifyHome from './components/SpotifyHome'
 import AgeVerification from './components/AgeVerification'
@@ -44,12 +46,14 @@ function App() {
     <AuthProvider>
       <AdminAuthProvider>
         <ProductsProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <PageContentProvider>
-                <HomepageProvider>
-                  <MusicProvider>
-                    <BlogProvider>
+          <ShopifyProvider>
+            <EnhancedProductsProvider>
+              <ShopifyCartProvider>
+                <WishlistProvider>
+                  <PageContentProvider>
+                    <HomepageProvider>
+                      <MusicProvider>
+                        <BlogProvider>
                       <Router>
                     <ScrollToTop />
                     <div className="min-h-screen bg-black">
@@ -93,12 +97,14 @@ function App() {
               </Routes>
             </div>
                       </Router>
-                    </BlogProvider>
-                  </MusicProvider>
-                </HomepageProvider>
-              </PageContentProvider>
-            </WishlistProvider>
-          </CartProvider>
+                        </BlogProvider>
+                      </MusicProvider>
+                    </HomepageProvider>
+                  </PageContentProvider>
+                </WishlistProvider>
+              </ShopifyCartProvider>
+            </EnhancedProductsProvider>
+          </ShopifyProvider>
         </ProductsProvider>
       </AdminAuthProvider>
     </AuthProvider>

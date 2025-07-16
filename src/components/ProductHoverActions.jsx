@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Check } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { useWishlist } from '../context/WishlistContext';
 
 const ProductHoverActions = ({ product, isHovered, onProductClick }) => {

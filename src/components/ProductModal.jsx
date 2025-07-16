@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingCart, Heart, Share2, TrendingUp, Award, Shield, ChevronLeft, ChevronRight, Star, Check, Truck, Clock, RotateCcw, BookmarkCheck } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { X, Plus, Minus, ShoppingCart, Heart, Share2, TrendingUp, Award, Shield, ChevronLeft, ChevronRight, Star, Check, Truck, Clock, RotateCcw, BookmarkCheck, Tag } from 'lucide-react';
+import { useCart } from '../context/ShopifyCartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { useProducts } from '../context/ProductsContext';
+import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { Link } from 'react-router-dom';
 import CartSlideOut from './CartSlideOut';
 import WishlistSlideOut from './WishlistSlideOut';
+import ProductVariantSelector from './ProductVariantSelector';
 
 const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
-  const { addToCart, cart, updateQuantity, getCartItemCount } = useCart();
+  const { addToCart, cart, updateQuantity, cartCount } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { products } = useProducts();
+  const { products } = useEnhancedProducts();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [showImageZoom, setShowImageZoom] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCartSlideOut, setShowCartSlideOut] = useState(false);
   const [showWishlistSlideOut, setShowWishlistSlideOut] = useState(false);
-  const cartItemCount = getCartItemCount();
+  const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
+
+  // Update selected variant when product changes
+  useEffect(() => {
+    if (product?.variants?.length > 0) {
+      setSelectedVariant(product.variants[0]);
+    }
+  }, [product]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -37,13 +45,22 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
   const cartItem = cart.find(item => item.id === product.id);
   const isInCart = !!cartItem;
 
-  const handleAddToCart = () => {
-    if (isInCart) {
-      updateQuantity(product.id, cartItem.quantity + quantity);
-    } else {
-      addToCart(product, quantity);
+  const handleAddToCart = async () => {
+    try {
+      if (product.source === 'shopify') {
+        // For Shopify products, add the selected variant
+        const variantToAdd = selectedVariant || product.variants?.[0];
+        if (variantToAdd) {
+          await addToCart({ ...product, selectedVariantId: variantToAdd.id }, quantity);
+        }
+      } else {
+        // For Firebase products, add as normal
+        await addToCart(product, quantity);
+      }
+      setQuantity(1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
     }
-    setQuantity(1);
   };
 
   const handleQuantityChange = (action) => {
@@ -54,13 +71,10 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
     }
   };
 
-  // Generate multiple images for demo
-  const images = [
-    product.imageUrl,
-    product.imageUrl, // Duplicate for demo
-    product.imageUrl, // Duplicate for demo
-    product.imageUrl, // Duplicate for demo
-  ];
+  // Get product images
+  const images = product.source === 'shopify' && product.images?.length > 0
+    ? product.images
+    : [product.imageUrl || '/placeholder.jpg'];
 
   const nextImage = () => {
     setActiveImage((prev) => (prev + 1) % images.length);
@@ -148,9 +162,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
               title="View Cart"
             >
               <ShoppingCart className="h-5 w-5 text-white" />
-              {cartItemCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemCount > 9 ? '9+' : cartItemCount}
+                  {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
             </button>
@@ -213,7 +227,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
               
               {/* Price */}
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-primary">${product.price}</span>
+                <span className="text-2xl font-bold text-primary">
+                  ${selectedVariant?.price || product.price}
+                </span>
                 {product.originalPrice && (
                   <>
                     <span className="text-lg text-spotify-text-subdued line-through">
@@ -311,7 +327,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
               
               {/* Price */}
               <div className="flex items-baseline gap-4">
-                <span className="text-3xl lg:text-4xl font-bold text-primary">${product.price}</span>
+                <span className="text-3xl lg:text-4xl font-bold text-primary">
+                  ${selectedVariant?.price || product.price}
+                </span>
                 {product.originalPrice && (
                   <>
                     <span className="text-xl lg:text-2xl text-spotify-text-subdued line-through">
@@ -357,8 +375,21 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
             <div className="bg-spotify-gray rounded-xl p-4 lg:p-5 mb-4">
               <div className="mb-4">
                 <p className="text-spotify-green font-medium mb-2">In Stock</p>
-                <p className="text-spotify-text-subdued text-sm">Ships from and sold by Kushie Cannabis Co.</p>
+                <p className="text-spotify-text-subdued text-sm">
+                  {product.source === 'shopify' ? `Ships from ${product.vendor || 'Kushie Store'}` : 'Ships from and sold by Kushie Cannabis Co.'}
+                </p>
               </div>
+
+              {/* Variant Selector for Shopify Products */}
+              {product.source === 'shopify' && product.variants && product.variants.length > 0 && (
+                <div className="mb-6">
+                  <ProductVariantSelector 
+                    product={product}
+                    selectedVariant={selectedVariant}
+                    onVariantSelect={setSelectedVariant}
+                  />
+                </div>
+              )}
 
               {/* Quantity Selector */}
               <div className="flex items-center gap-4 mb-4">

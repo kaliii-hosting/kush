@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWishlist } from '../context/WishlistContext';
 import { useProducts } from '../context/ProductsContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import ProductModal from '../components/ProductModal';
 import ProductHoverActions from '../components/ProductHoverActions';

@@ -22,10 +22,12 @@
   },
   "dependencies": {
     "@react-spring/web": "^10.0.1",
+    "@shopify/buy-button-js": "^3.0.5",
     "@supabase/supabase-js": "^2.51.0",
     "@use-gesture/react": "^10.3.1",
     "clsx": "^2.1.1",
     "dat.gui": "^0.7.9",
+    "express": "^5.1.0",
     "firebase": "^10.14.1",
     "framer-motion": "^12.23.0",
     "gsap": "^3.12.4",
@@ -37,6 +39,7 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.21.1",
     "react-use-measure": "^2.1.7",
+    "shopify-buy": "^3.0.7",
     "three": "^0.175.0",
     "zustand": "^4.4.7"
   }

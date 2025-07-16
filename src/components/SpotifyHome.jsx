@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Play, MoreHorizontal, ShoppingCart, TrendingUp, Sparkles, Award, Heart, Eye, Clock, Shuffle, ChevronLeft, ChevronRight, Music } from 'lucide-react';
 import { useProducts } from '../context/ProductsContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { usePageContent } from '../context/PageContentContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useState, useRef } from 'react';

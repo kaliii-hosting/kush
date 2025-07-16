@@ -18,11 +18,7 @@ const useResourcePreloader = () => {
       video.load();
     });
 
-    // Warm up Firebase connection
-    fetch('https://kushie-b69fb-default-rtdb.firebaseio.com/.json', { 
-      method: 'HEAD',
-      mode: 'no-cors' 
-    }).catch(() => {});
+    // Firebase warmup removed - causing 405 errors
 
     // Preconnect to external domains (already in HTML but adding for redundancy)
     const domains = [

@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useProducts } from '../context/ProductsContext';
-import { useCart } from '../context/CartContext';
+import { useState, useEffect, useMemo } from 'react';
+import { useEnhancedProducts } from '../context/EnhancedProductsContext';
+import { useCart } from '../context/ShopifyCartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { ShoppingCart, Filter, X, Eye, Heart } from 'lucide-react';
+import { useShopify } from '../context/ShopifyContext';
+import { ShoppingCart, Filter, X, Eye, Heart, Tag, AlertCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import ProductModal from '../components/ProductModal';
 import ProductHoverActions from '../components/ProductHoverActions';
 
 const Shop = ({ onCartClick }) => {
-  const { products, loading } = useProducts();
+  const { shopifyProducts, loading, categories: productCategories } = useEnhancedProducts();
   const { addToCart, cart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { syncStatus, error: shopifyError } = useShopify();
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -18,6 +20,7 @@ const Shop = ({ onCartClick }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [hoveredProduct, setHoveredProduct] = useState(null);
+  const [sourceFilter, setSourceFilter] = useState('all'); // all, firebase, shopify
 
   // Get search query from URL
   useEffect(() => {
@@ -26,29 +29,43 @@ const Shop = ({ onCartClick }) => {
     setSearchQuery(search);
   }, [location.search]);
 
-  const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'flower', name: 'Flower' },
-    { id: 'edible', name: 'Edibles' },
-    { id: 'concentrate', name: 'Concentrates' },
-    { id: 'cartridge', name: 'Cartridges' },
-    { id: 'disposable', name: 'Disposables' },
-    { id: 'pod', name: 'Pods' },
-    { id: 'battery', name: 'Batteries' },
-    { id: 'infused-preroll', name: 'Infused Prerolls' },
-    { id: 'preroll', name: 'Prerolls' },
-    { id: 'merch', name: 'Merchandise' },
-    { id: 'distillate', name: 'Distillate' },
-    { id: 'liquid-diamonds', name: 'Liquid Diamonds' },
-    { id: 'live-resin-diamonds', name: 'Live Resin Diamonds' },
-    { id: 'hash-infused-preroll', name: 'Hash Infused Prerolls' },
-    { id: 'infused-preroll-5pack', name: 'Infused Prerolls 5-Pack' },
-  ];
+  // Get dynamic categories from Shopify products only
+  const dynamicCategories = useMemo(() => {
+    const categorySet = new Set();
+    shopifyProducts.forEach(product => {
+      if (product.category) {
+        categorySet.add(product.category);
+      }
+      if (product.type) {
+        categorySet.add(product.type);
+      }
+    });
+    
+    // Convert to array and sort
+    const categoriesArray = Array.from(categorySet).sort();
+    
+    // Create category objects with proper formatting
+    return [
+      { id: 'all', name: 'All Products' },
+      ...categoriesArray.map(cat => ({
+        id: cat.toLowerCase().replace(/\s+/g, '-'),
+        name: cat,
+        originalValue: cat
+      }))
+    ];
+  }, [shopifyProducts]);
+  
+  const categories = dynamicCategories;
 
-  // Filter products by category and search query
-  const filteredProducts = products.filter(product => {
+  // Filter Shopify products by category and search query
+  const filteredProducts = shopifyProducts.filter(product => {
     // Filter by category
-    const matchesCategory = selectedCategory === 'all' || product.type === selectedCategory;
+    const selectedCat = categories.find(c => c.id === selectedCategory);
+    const matchesCategory = selectedCategory === 'all' || 
+      product.type === selectedCat?.originalValue || 
+      product.category === selectedCat?.originalValue ||
+      product.type?.toLowerCase() === selectedCategory || 
+      product.category?.toLowerCase() === selectedCategory;
     
     // Filter by search query
     const matchesSearch = !searchQuery || 
@@ -58,10 +75,15 @@ const Shop = ({ onCartClick }) => {
     return matchesCategory && matchesSearch;
   });
 
-  // Update category counts based on search
+  // Update category counts based on search (Shopify products only)
   const getFilteredCount = (categoryId) => {
-    return products.filter(p => {
-      const matchesCategory = categoryId === 'all' || p.type === categoryId;
+    return shopifyProducts.filter(p => {
+      const category = categories.find(c => c.id === categoryId);
+      const matchesCategory = categoryId === 'all' || 
+        p.type === category?.originalValue || 
+        p.category === category?.originalValue ||
+        p.type?.toLowerCase() === categoryId || 
+        p.category?.toLowerCase() === categoryId;
       const matchesSearch = !searchQuery || 
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));

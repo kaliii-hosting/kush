@@ -17,8 +17,7 @@
     <link rel="dns-prefetch" href="https://fchtwxunzmkzbnibqbwl.supabase.co">
     
     <!-- Preload critical resources -->
-    <link rel="preload" as="video" href="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Vending_Machine_2g_-_Final_1752609373737_pcxiien.mp4" type="video/mp4">
-    <link rel="preload" as="video" href="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Dspsbls_2g_Clouds_1752609365908_u9ruqcu.mp4" type="video/mp4">
+    <!-- Videos will be fetched when needed -->
     
     <!-- Load fonts with display swap for better performance -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -95,6 +94,8 @@
     
     <!-- Service Worker Registration -->
     <script>
+      // Temporarily disabled to avoid caching issues
+      /*
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
@@ -102,6 +103,7 @@
             .catch(err => console.log('SW registration failed'));
         });
       }
+      */
     </script>
     
     <script type="module" src="/src/main.jsx"></script>

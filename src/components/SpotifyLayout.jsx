@@ -12,13 +12,13 @@ const SpotifyLayout = ({ children }) => {
   const handleCartClose = () => setIsCartOpen(false);
   
   return (
-    <div className="h-screen flex flex-col bg-black overflow-hidden">
+    <div className="h-screen flex flex-col bg-black overflow-hidden max-w-full">
       {/* Top bar */}
       <SpotifyTopBar onCartClick={handleCartOpen} />
       
       {/* Main content area */}
-      <main className="flex-1 overflow-y-auto bg-black">
-        <div className="pb-24 min-h-screen">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
+        <div className="pb-24 min-h-screen max-w-full overflow-x-hidden">
           {children ? 
             cloneElement(children, { onCartClick: handleCartOpen }) :
             <Outlet context={{ onCartClick: handleCartOpen }} />

@@ -160,7 +160,7 @@ const SpotifyHome = ({ onCartClick }) => {
       </div>
 
       {/* Mini Hero Section 4 - Gold Cartridges */}
-      <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
+      <div className="relative h-[50vh] mb-12 overflow-hidden">
         {homeContent.goldCartridges?.videoUrl && (
           <video
             src={homeContent.goldCartridges.videoUrl}
@@ -211,7 +211,7 @@ const SpotifyHome = ({ onCartClick }) => {
       />
 
       {/* Mini Hero Section 3 - Disposables Collection */}
-      <div className="relative h-[55vh] -mx-8 mb-12 overflow-hidden">
+      <div className="relative h-[55vh] mb-12 overflow-hidden">
         {homeContent.disposables?.videoUrl && (
           <video
             src={homeContent.disposables.videoUrl}
@@ -270,7 +270,7 @@ const SpotifyHome = ({ onCartClick }) => {
       />
 
       {/* Mini Hero Section 1 - Premium Experience */}
-      <div className="relative h-[60vh] -mx-8 mb-12 overflow-hidden">
+      <div className="relative h-[60vh] mb-12 overflow-hidden">
         {homeContent.premiumExperience?.videoUrl && (
           <video
             src={homeContent.premiumExperience.videoUrl}
@@ -330,7 +330,7 @@ const SpotifyHome = ({ onCartClick }) => {
 
 
       {/* Trending Products Carousel - Spotify Style */}
-      <div className="mb-12 -mx-4 md:-mx-8">
+      <div className="mb-12">
         <div className="flex items-baseline justify-between mb-6 px-4 md:px-8">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2 hover:underline cursor-pointer">
@@ -458,7 +458,7 @@ const SpotifyHome = ({ onCartClick }) => {
       </div>
 
       {/* Mini Hero Section 2 - Innovation Spotlight */}
-      <div className="relative h-[50vh] -mx-8 mb-12 overflow-hidden">
+      <div className="relative h-[50vh] mb-12 overflow-hidden">
         {homeContent.innovation?.videoUrl && (
           <video
             src={homeContent.innovation.videoUrl}

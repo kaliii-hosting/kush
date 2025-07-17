@@ -34,27 +34,47 @@ const ShopDynamic = ({ onCartClick }) => {
     setSearchQuery(search);
   }, [location.search]);
 
-  // Get dynamic categories from Shopify products only
+  // Get dynamic categories from Shopify products (using category, type, vendor, collections, and tags)
   const dynamicCategories = useMemo(() => {
-    const categorySet = new Set();
-    let hasUncategorized = false;
+    const categoryMap = new Map();
+    const categoryTypes = new Map(); // Track what type each category is
+    let uncategorizedCount = 0;
     
     shopifyProducts.forEach(product => {
-      // Add category
-      if (product.category) {
-        categorySet.add(product.category);
+      let hasCategory = false;
+      
+      // Add category from productType/category field
+      if (product.category && product.category !== 'Uncategorized') {
+        const count = categoryMap.get(product.category) || 0;
+        categoryMap.set(product.category, count + 1);
+        categoryTypes.set(product.category, 'category');
+        hasCategory = true;
       }
       
-      // Add type
-      if (product.type) {
-        categorySet.add(product.type);
+      // Add type if different from category
+      if (product.type && product.type !== product.category && product.type !== 'Uncategorized') {
+        const count = categoryMap.get(product.type) || 0;
+        categoryMap.set(product.type, count + 1);
+        categoryTypes.set(product.type, 'type');
+        hasCategory = true;
+      }
+      
+      // Add vendor if meaningful
+      if (product.vendor && product.vendor !== 'Default Vendor' && product.vendor !== 'Vendor') {
+        const count = categoryMap.get(product.vendor) || 0;
+        categoryMap.set(product.vendor, count + 1);
+        categoryTypes.set(product.vendor, 'vendor');
+        hasCategory = true;
       }
       
       // Add collections
       if (product.collections && Array.isArray(product.collections)) {
         product.collections.forEach(collection => {
           if (collection && collection.title) {
-            categorySet.add(collection.title);
+            const count = categoryMap.get(collection.title) || 0;
+            categoryMap.set(collection.title, count + 1);
+            categoryTypes.set(collection.title, 'collection');
+            hasCategory = true;
           }
         });
       }
@@ -63,36 +83,71 @@ const ShopDynamic = ({ onCartClick }) => {
       if (product.tags && Array.isArray(product.tags)) {
         product.tags.forEach(tag => {
           if (tag && typeof tag === 'string' && tag.length > 0) {
-            categorySet.add(tag);
+            const count = categoryMap.get(tag) || 0;
+            categoryMap.set(tag, count + 1);
+            if (!categoryTypes.has(tag)) {
+              categoryTypes.set(tag, 'tag');
+            }
+            hasCategory = true;
           }
         });
       }
       
-      // Check if uncategorized
-      if (!product.category && !product.type && (!product.collections || product.collections.length === 0)) {
-        hasUncategorized = true;
+      // Count products without any categorization
+      if (!hasCategory) {
+        uncategorizedCount++;
       }
     });
     
-    // Convert to array and sort
-    const categoriesArray = Array.from(categorySet).sort();
+    // Organize categories by type for better structure
+    const categoriesByType = {
+      category: [],
+      collection: [],
+      vendor: [],
+      tag: []
+    };
     
-    // Create category objects with proper formatting
-    const categories = [
-      { id: 'all', name: 'All Products' },
-      ...categoriesArray.map(cat => ({
-        id: cat.toLowerCase().replace(/\s+/g, '-'),
-        name: cat,
-        originalValue: cat
-      }))
+    categoryMap.forEach((count, name) => {
+      const type = categoryTypes.get(name) || 'tag';
+      const categoryObj = {
+        id: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        name: name,
+        originalValue: name,
+        count: count,
+        type: type
+      };
+      
+      if (categoriesByType[type]) {
+        categoriesByType[type].push(categoryObj);
+      }
+    });
+    
+    // Sort each category type alphabetically
+    Object.keys(categoriesByType).forEach(type => {
+      categoriesByType[type].sort((a, b) => a.name.localeCompare(b.name));
+    });
+    
+    // Combine all categories in a logical order: categories, collections, vendors, tags
+    const categoriesArray = [
+      ...categoriesByType.category,
+      ...categoriesByType.collection,
+      ...categoriesByType.vendor,
+      ...categoriesByType.tag
     ];
     
-    // Add uncategorized if needed
-    if (hasUncategorized) {
+    // Create final categories array with "All Products" first
+    const categories = [
+      { id: 'all', name: 'All Products', count: shopifyProducts.length },
+      ...categoriesArray
+    ];
+    
+    // Add uncategorized if there are products without categories
+    if (uncategorizedCount > 0) {
       categories.push({
         id: 'uncategorized',
         name: 'Other',
-        originalValue: null
+        originalValue: null,
+        count: uncategorizedCount
       });
     }
     
@@ -110,15 +165,18 @@ const ShopDynamic = ({ onCartClick }) => {
     if (selectedCategory === 'all') {
       matchesCategory = true;
     } else if (selectedCategory === 'uncategorized') {
-      matchesCategory = !product.category && !product.type && (!product.collections || product.collections.length === 0) && (!product.tags || product.tags.length === 0);
+      matchesCategory = (!product.category || product.category === 'Uncategorized') && 
+                       (!product.type || product.type === 'Uncategorized') &&
+                       (!product.vendor || product.vendor === 'Default Vendor' || product.vendor === 'Vendor') &&
+                       (!product.collections || product.collections.length === 0) &&
+                       (!product.tags || product.tags.length === 0);
     } else {
-      matchesCategory = 
-        product.type === selectedCat?.originalValue || 
-        product.category === selectedCat?.originalValue ||
-        product.type?.toLowerCase() === selectedCategory || 
-        product.category?.toLowerCase() === selectedCategory ||
-        (product.collections && product.collections.some(c => c.title === selectedCat?.originalValue)) ||
-        (product.tags && product.tags.includes(selectedCat?.originalValue));
+      // Check if product matches by any category source
+      matchesCategory = product.category === selectedCat?.originalValue ||
+                       product.type === selectedCat?.originalValue ||
+                       product.vendor === selectedCat?.originalValue ||
+                       (product.collections && product.collections.some(c => c.title === selectedCat?.originalValue)) ||
+                       (product.tags && product.tags.includes(selectedCat?.originalValue));
     }
     
     // Filter by search query
@@ -138,15 +196,18 @@ const ShopDynamic = ({ onCartClick }) => {
       if (categoryId === 'all') {
         matchesCategory = true;
       } else if (categoryId === 'uncategorized') {
-        matchesCategory = !p.category && !p.type && (!p.collections || p.collections.length === 0) && (!p.tags || p.tags.length === 0);
+        matchesCategory = (!p.category || p.category === 'Uncategorized') && 
+                         (!p.type || p.type === 'Uncategorized') &&
+                         (!p.vendor || p.vendor === 'Default Vendor' || p.vendor === 'Vendor') &&
+                         (!p.collections || p.collections.length === 0) &&
+                         (!p.tags || p.tags.length === 0);
       } else {
-        matchesCategory = 
-          p.type === category?.originalValue || 
-          p.category === category?.originalValue ||
-          p.type?.toLowerCase() === categoryId || 
-          p.category?.toLowerCase() === categoryId ||
-          (p.collections && p.collections.some(c => c.title === category?.originalValue)) ||
-          (p.tags && p.tags.includes(category?.originalValue));
+        // Check if product matches by any category source
+        matchesCategory = p.category === category?.originalValue ||
+                         p.type === category?.originalValue ||
+                         p.vendor === category?.originalValue ||
+                         (p.collections && p.collections.some(c => c.title === category?.originalValue)) ||
+                         (p.tags && p.tags.includes(category?.originalValue));
       }
       
       const matchesSearch = !searchQuery || 
@@ -197,7 +258,15 @@ const ShopDynamic = ({ onCartClick }) => {
                     : 'text-text-secondary hover:text-white hover:bg-gray-dark/50'
                 }`}
               >
-                <span>{category.name}</span>
+                <div className="flex items-center gap-2">
+                  <span>{category.name}</span>
+                  {category.type && category.type !== 'collection' && (
+                    <span className="text-xs opacity-60">
+                      {category.type === 'vendor' && '(Brand)'}
+                      {category.type === 'tag' && '(Tag)'}
+                    </span>
+                  )}
+                </div>
                 <span className="text-sm">{getFilteredCount(category.id)}</span>
               </button>
             ))}

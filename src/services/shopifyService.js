@@ -33,8 +33,31 @@ class ShopifyService {
       console.log('ShopifyService: Fetching products from Shopify...');
       const products = await this.client.product.fetchAll(limit);
       console.log('ShopifyService: Raw products from Shopify:', products);
-      const transformed = this.transformProducts(products);
-      console.log('ShopifyService: Transformed products:', transformed);
+      
+      // Also fetch collections to get better categorization
+      const collections = await this.fetchCollections();
+      console.log('ShopifyService: Fetched collections:', collections);
+      
+      // Map products with their collections
+      const productsWithCollections = products.map(product => {
+        const productCollections = collections
+          .filter(collection => 
+            collection.products.some(p => p.id === product.id)
+          )
+          .map(collection => ({
+            id: collection.id,
+            title: collection.title,
+            handle: collection.handle
+          }));
+        
+        return {
+          ...product,
+          collections: productCollections
+        };
+      });
+      
+      const transformed = this.transformProducts(productsWithCollections);
+      console.log('ShopifyService: Transformed products with collections:', transformed);
       return transformed;
     } catch (error) {
       console.error('Error fetching Shopify products:', error);
@@ -68,6 +91,12 @@ class ShopifyService {
   transformProduct(shopifyProduct) {
     if (!shopifyProduct) return null;
 
+    // Use productType as the category (this is the standard Shopify field for product categories)
+    const productType = shopifyProduct.productType || '';
+    const vendor = shopifyProduct.vendor || '';
+    const tags = shopifyProduct.tags || [];
+    const collections = shopifyProduct.collections || [];
+
     return {
       id: shopifyProduct.id,
       shopifyId: shopifyProduct.id,
@@ -77,8 +106,11 @@ class ShopifyService {
       compareAtPrice: shopifyProduct.variants[0]?.compareAtPrice?.amount || null,
       imageUrl: shopifyProduct.images[0]?.src || '',
       images: shopifyProduct.images.map(img => img.src),
-      category: shopifyProduct.productType || 'Uncategorized',
-      tags: shopifyProduct.tags || [],
+      category: productType || 'Uncategorized',
+      type: productType,
+      vendor: vendor,
+      tags: tags,
+      collections: collections,
       variants: shopifyProduct.variants.map(variant => ({
         id: variant.id,
         title: variant.title,
@@ -97,7 +129,6 @@ class ShopifyService {
         values: option.values.map(value => value.value)
       })),
       available: shopifyProduct.availableForSale,
-      vendor: shopifyProduct.vendor,
       handle: shopifyProduct.handle,
       source: 'shopify',
       createdAt: shopifyProduct.createdAt,
@@ -289,7 +320,7 @@ class ShopifyService {
         handle: collection.handle,
         description: collection.description,
         image: collection.image?.src || '',
-        products: this.transformProducts(collection.products)
+        products: collection.products.map(p => ({ id: p.id }))
       }));
     } catch (error) {
       console.error('Error fetching collections:', error);

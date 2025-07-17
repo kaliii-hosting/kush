@@ -1,36 +1,36 @@
 /* Spotify-style Typography */
 
-/* Use Circular Sp font family like Spotify */
+/* Use Circular Sp font family like Spotify with fallback */
 @font-face {
   font-family: 'CircularSp';
-  src: local('CircularSp-Black'), local('CircularSpotifyText-Black'), url('https://open.scdn.co/fonts/CircularSpotifyText-Black.woff2') format('woff2');
+  src: local('CircularSp-Black'), local('CircularSpotifyText-Black'), local('Arial Black');
   font-weight: 900;
   font-style: normal;
-  font-display: swap;
+  font-display: fallback;
 }
 
 @font-face {
   font-family: 'CircularSp';
-  src: local('CircularSp-Bold'), local('CircularSpotifyText-Bold'), url('https://open.scdn.co/fonts/CircularSpotifyText-Bold.woff2') format('woff2');
+  src: local('CircularSp-Bold'), local('CircularSpotifyText-Bold'), local('Arial Bold');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: fallback;
 }
 
 @font-face {
   font-family: 'CircularSp';
-  src: local('CircularSp-Medium'), local('CircularSpotifyText-Medium'), url('https://open.scdn.co/fonts/CircularSpotifyText-Medium.woff2') format('woff2');
+  src: local('CircularSp-Medium'), local('CircularSpotifyText-Medium'), local('Arial');
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: fallback;
 }
 
 @font-face {
   font-family: 'CircularSp';
-  src: local('CircularSp-Book'), local('CircularSpotifyText-Book'), url('https://open.scdn.co/fonts/CircularSpotifyText-Book.woff2') format('woff2');
+  src: local('CircularSp-Book'), local('CircularSpotifyText-Book'), local('Arial');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: fallback;
 }
 
 /* Global heading styles */

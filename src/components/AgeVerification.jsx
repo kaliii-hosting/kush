@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLogos } from '../context/LogosContext';
 
 const AgeVerification = () => {
   // Always show age verification on every visit
   const [isVisible, setIsVisible] = useState(true);
   const navigate = useNavigate();
+  const { logos } = useLogos();
 
   const handleOver21 = () => {
     // Age verified successfully - hide the popup (no storage)
@@ -30,9 +32,18 @@ const AgeVerification = () => {
 
           {/* Content */}
           <div className="relative p-8 py-12">
-            {/* Logo Text */}
+            {/* Logo */}
             <div className="text-center mb-8">
-              <h1 className="text-5xl font-bold text-white tracking-wider">KUSHIE</h1>
+              <img 
+                src={logos?.ageVerification?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
+                alt={logos?.ageVerification?.alt || "Kushie"} 
+                className="mx-auto"
+                style={{
+                  width: logos?.ageVerification?.width === 'auto' ? 'auto' : `${logos?.ageVerification?.width}px`,
+                  height: logos?.ageVerification?.height === 'auto' ? 'auto' : `${logos?.ageVerification?.height}px`,
+                  maxHeight: '60px'
+                }}
+              />
             </div>
             
             {/* Header Text */}

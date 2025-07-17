@@ -5,6 +5,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Confirmation popup animations */
+@keyframes pulse-once {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shrink-width {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.animate-pulse-once {
+  animation: pulse-once 0.3s ease-out;
+}
+
+.animate-shrink-width {
+  animation: shrink-width 3s linear;
+}
+
 /* Global overflow prevention */
 * {
   box-sizing: border-box;

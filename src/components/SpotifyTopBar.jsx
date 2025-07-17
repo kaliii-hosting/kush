@@ -5,6 +5,7 @@ import { useCart } from '../context/ShopifyCartContext';
 import { useProducts } from '../context/ProductsContext';
 import { useAuth } from '../context/AuthContext';
 import { useBlog } from '../context/BlogContext';
+import { useLogos } from '../context/LogosContext';
 import SignIn from './auth/SignIn';
 import SignUp from './auth/SignUp';
 
@@ -15,6 +16,7 @@ const SpotifyTopBar = ({ onCartClick }) => {
   const { products } = useProducts();
   const { user, userData, logout } = useAuth();
   const { posts } = useBlog();
+  const { logos } = useLogos();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -126,10 +128,25 @@ const SpotifyTopBar = ({ onCartClick }) => {
           <div className="flex items-center gap-8">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
+              {/* Desktop Logo */}
               <img 
-                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg" 
-                alt="Kushie" 
-                className="h-10 w-auto"
+                src={logos?.desktop?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
+                alt={logos?.desktop?.alt || "Kushie"} 
+                className="hidden md:block"
+                style={{
+                  width: logos?.desktop?.width === 'auto' ? 'auto' : `${logos?.desktop?.width}px`,
+                  height: logos?.desktop?.height === 'auto' ? 'auto' : `${logos?.desktop?.height}px`
+                }}
+              />
+              {/* Mobile Logo */}
+              <img 
+                src={logos?.mobile?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Kushie%20Icon%20Logo%20(W-SVG).svg"} 
+                alt={logos?.mobile?.alt || "Kushie"} 
+                className="md:hidden"
+                style={{
+                  width: logos?.mobile?.width === 'auto' ? 'auto' : `${logos?.mobile?.width}px`,
+                  height: logos?.mobile?.height === 'auto' ? 'auto' : `${logos?.mobile?.height}px`
+                }}
               />
             </Link>
 

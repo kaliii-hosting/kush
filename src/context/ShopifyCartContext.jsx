@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useShopify } from './ShopifyContext';
-import { useEnhancedProducts } from './EnhancedProductsContext';
+import { useAuth } from './AuthContext';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const ShopifyCartContext = createContext();
 
@@ -27,58 +29,76 @@ export const ShopifyCartProvider = ({ children }) => {
     cartLoading
   } = useShopify();
 
-  const { firebaseProducts } = useEnhancedProducts();
-  const [localCart, setLocalCart] = useState([]); // For Firebase products
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [savedCheckoutId, setSavedCheckoutId] = useState(null);
 
-  // Load local cart from localStorage
+  // Sync Shopify checkout ID with Firebase for authenticated users
   useEffect(() => {
-    const savedCart = localStorage.getItem('firebase_cart');
-    if (savedCart) {
-      setLocalCart(JSON.parse(savedCart));
-    }
-  }, []);
+    if (!user || !checkout?.id) return;
 
-  // Save local cart to localStorage
+    const syncCheckoutId = async () => {
+      try {
+        const cartRef = doc(db, 'users', user.uid, 'carts', 'shopify');
+        await setDoc(cartRef, {
+          checkoutId: checkout.id,
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (error) {
+        console.error('Error syncing Shopify checkout ID:', error);
+        // Continue without Firebase sync if permissions fail
+      }
+    };
+
+    syncCheckoutId();
+  }, [user, checkout?.id]);
+
+  // Load saved checkout ID from Firebase for authenticated users
   useEffect(() => {
-    localStorage.setItem('firebase_cart', JSON.stringify(localCart));
-  }, [localCart]);
+    if (!user) return;
 
-  // Add to cart (handles both Firebase and Shopify products)
+    const loadCheckoutId = async () => {
+      try {
+        const cartRef = doc(db, 'users', user.uid, 'carts', 'shopify');
+        const cartDoc = await getDoc(cartRef);
+        
+        if (cartDoc.exists()) {
+          const data = cartDoc.data();
+          if (data.checkoutId) {
+            setSavedCheckoutId(data.checkoutId);
+            // You might want to restore the checkout here if the Shopify context supports it
+          }
+        }
+      } catch (error) {
+        console.error('Error loading Shopify checkout ID:', error);
+      }
+    };
+
+    loadCheckoutId();
+  }, [user]);
+
+  // Add to cart (only handles Shopify products)
   const addToCart = async (product, quantity = 1) => {
-    if (product.source === 'shopify') {
-      // For Shopify products, use the first variant if no specific variant is selected
-      const variantId = product.selectedVariantId || product.variants[0]?.id;
-      if (variantId) {
-        await shopifyAddToCart(variantId, quantity);
-      }
-    } else {
-      // For Firebase products, add to local cart
-      const existingItem = localCart.find(item => item.id === product.id);
-      if (existingItem) {
-        setLocalCart(prev => 
-          prev.map(item => 
-            item.id === product.id 
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          )
-        );
-      } else {
-        setLocalCart(prev => [...prev, { ...product, quantity }]);
-      }
+    if (product.source !== 'shopify') {
+      console.warn('ShopifyCartContext only handles Shopify products');
+      return;
+    }
+    
+    // For Shopify products, use the first variant if no specific variant is selected
+    const variantId = product.selectedVariantId || product.variants[0]?.id;
+    if (variantId) {
+      await shopifyAddToCart(variantId, quantity);
     }
   };
 
-  // Remove from cart
+  // Remove from cart (only handles Shopify products)
   const removeFromCart = async (productId, isShopifyProduct = false, lineItemId = null) => {
     if (isShopifyProduct && lineItemId) {
       await shopifyRemoveFromCart(lineItemId);
-    } else {
-      setLocalCart(prev => prev.filter(item => item.id !== productId));
     }
   };
 
-  // Update quantity
+  // Update quantity (only handles Shopify products)
   const updateQuantity = async (productId, quantity, isShopifyProduct = false, lineItemId = null) => {
     if (quantity <= 0) {
       await removeFromCart(productId, isShopifyProduct, lineItemId);
@@ -87,84 +107,56 @@ export const ShopifyCartProvider = ({ children }) => {
 
     if (isShopifyProduct && lineItemId) {
       await shopifyUpdateCartItem(lineItemId, quantity);
-    } else {
-      setLocalCart(prev => 
-        prev.map(item => 
-          item.id === productId 
-            ? { ...item, quantity }
-            : item
-        )
-      );
     }
   };
 
-  // Clear entire cart
+  // Clear cart (only Shopify products)
   const clearCart = async () => {
     await shopifyClearCart();
-    setLocalCart([]);
-  };
-
-  // Get all cart items (both Firebase and Shopify)
-  const getAllCartItems = () => {
-    const shopifyItems = getCartItems();
-    const firebaseItems = localCart.map(item => ({
-      ...item,
-      isFirebaseProduct: true,
-      lineItemId: null
-    }));
     
-    return [...firebaseItems, ...shopifyItems];
+    // Clear saved checkout ID in Firebase
+    if (user) {
+      try {
+        const cartRef = doc(db, 'users', user.uid, 'carts', 'shopify');
+        await setDoc(cartRef, {
+          checkoutId: null,
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (error) {
+        console.error('Error clearing Shopify checkout ID in Firebase:', error);
+      }
+    }
   };
 
-  // Get total cart count
+  // Get all cart items (only Shopify products)
+  const getAllCartItems = () => {
+    return getCartItems();
+  };
+
+  // Get total cart count (only Shopify products)
   const getTotalCartCount = () => {
-    const shopifyCount = getCartCount();
-    const firebaseCount = localCart.reduce((sum, item) => sum + item.quantity, 0);
-    return shopifyCount + firebaseCount;
+    return getCartCount();
   };
 
-  // Get cart subtotal
+  // Get cart subtotal (only Shopify products)
   const getCartSubtotal = () => {
-    const shopifyTotal = parseFloat(getCartTotal() || 0);
-    const firebaseTotal = localCart.reduce((sum, item) => 
-      sum + (parseFloat(item.price) * item.quantity), 0
-    );
-    return (shopifyTotal + firebaseTotal).toFixed(2);
+    return getCartTotal();
   };
 
-  // Check if product is in cart
+  // Check if product is in cart (only checks Shopify products)
   const isInCart = (productId) => {
-    // Check local cart for Firebase products
-    const inLocalCart = localCart.some(item => item.id === productId);
-    if (inLocalCart) return true;
-
-    // For Shopify products, we need to check by variant ID
-    // This is a simplified check - in reality, you'd need to check specific variant IDs
-    return false;
+    // For Shopify products, check if any variant is in cart
+    const cartItems = getCartItems();
+    return cartItems.some(item => item.product?.id === productId);
   };
 
-  // Checkout handler
+  // Checkout handler (only handles Shopify products)
   const handleCheckout = async () => {
-    // If we have Shopify items, redirect to Shopify checkout
     if (getCartCount() > 0) {
       const checkoutUrl = getCheckoutUrl();
       if (checkoutUrl) {
-        // If we also have Firebase items, we need to handle them separately
-        if (localCart.length > 0) {
-          // Store Firebase items for later processing
-          localStorage.setItem('pending_firebase_order', JSON.stringify(localCart));
-          
-          // Clear local cart since we're checking out
-          setLocalCart([]);
-        }
-        
-        // Redirect to Shopify checkout
         window.location.href = checkoutUrl;
       }
-    } else if (localCart.length > 0) {
-      // Handle Firebase-only checkout
-      // You can implement your custom checkout flow here
-      alert('Custom checkout for Firebase products - implement your flow here');
     }
   };
 

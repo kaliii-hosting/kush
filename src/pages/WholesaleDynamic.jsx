@@ -81,6 +81,29 @@ const WholesaleDynamic = ({ onCartClick }) => {
 
         mapInstanceRef.current = map;
 
+        // Override Leaflet's default pane z-indexes
+        setTimeout(() => {
+          if (map) {
+            const panes = ['tilePane', 'overlayPane', 'shadowPane', 'markerPane', 'tooltipPane', 'popupPane'];
+            panes.forEach(paneName => {
+              try {
+                const pane = map.getPane(paneName);
+                if (pane) {
+                  pane.style.zIndex = '1';
+                }
+              } catch (e) {
+                console.log(`Pane ${paneName} not found`);
+              }
+            });
+            
+            const container = map.getContainer();
+            if (container) {
+              container.style.zIndex = '1';
+              container.style.position = 'relative';
+            }
+          }
+        }, 100);
+
         // Add dark tile layer
         window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
           subdomains: 'abcd',
@@ -205,6 +228,44 @@ const WholesaleDynamic = ({ onCartClick }) => {
 
   return (
     <div className="bg-black min-h-screen">
+      {/* Critical z-index override for Leaflet */}
+      <style>{`
+        /* Override Leaflet's default z-index values (200-700) */
+        .leaflet-pane { z-index: 1 !important; }
+        .leaflet-tile-pane { z-index: 1 !important; }
+        .leaflet-overlay-pane { z-index: 2 !important; }
+        .leaflet-shadow-pane { z-index: 3 !important; }
+        .leaflet-marker-pane { z-index: 4 !important; }
+        .leaflet-tooltip-pane { z-index: 5 !important; }
+        .leaflet-popup-pane { z-index: 6 !important; }
+        .leaflet-control { z-index: 7 !important; }
+        
+        /* Override any inline z-index styles */
+        [style*="z-index: 200"],
+        [style*="z-index: 400"],
+        [style*="z-index: 500"],
+        [style*="z-index: 600"],
+        [style*="z-index: 650"],
+        [style*="z-index: 700"] {
+          z-index: 1 !important;
+        }
+        
+        /* Force map section to create new stacking context */
+        .wholesale-map-section {
+          position: relative !important;
+          z-index: 1 !important;
+          isolation: isolate !important;
+        }
+        
+        /* Ensure map container stays contained */
+        .wholesale-map-container {
+          position: relative !important;
+          z-index: 1 !important;
+          isolation: isolate !important;
+          contain: strict !important;
+        }
+      `}</style>
+      
       {/* Stats Section */}
       <div className="mx-auto mt-16 grid max-w-2xl grid-cols-2 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 px-6 lg:px-8">
         {[
@@ -221,28 +282,35 @@ const WholesaleDynamic = ({ onCartClick }) => {
       </div>
 
       {/* Map Section */}
-      <section className="relative bg-black py-16">
-        <div className="mx-auto max-w-2xl text-center mb-12 px-6">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Available Nationwide</h2>
-          <p className="mt-4 text-lg leading-8 text-gray-400">
-            We operate in 6 states with plans to expand. Click on a state to view local opportunities.
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            Use zoom buttons • Drag to pan • Click highlighted states for details
-          </p>
-        </div>
-        <div className="relative overflow-hidden shadow-2xl rounded-2xl">
-          <div 
-            ref={mapRef} 
-            style={{ 
-              height: '600px', 
-              width: '100%', 
-              background: '#121212', 
-              borderRadius: '1rem' 
-            }}
-          ></div>
-        </div>
-      </section>
+      <div style={{ position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+        <section className="wholesale-map-section relative bg-black py-16">
+          <div className="mx-auto max-w-2xl text-center mb-12 px-6">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Available Nationwide</h2>
+            <p className="mt-4 text-lg leading-8 text-gray-400">
+              We operate in 6 states with plans to expand. Click on a state to view local opportunities.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Use zoom buttons • Drag to pan • Click highlighted states for details
+            </p>
+          </div>
+          <div className="relative overflow-hidden shadow-2xl rounded-2xl">
+            <div 
+              className="wholesale-map-container"
+              ref={mapRef} 
+              style={{ 
+                height: '600px', 
+                width: '100%', 
+                background: '#121212', 
+                borderRadius: '1rem',
+                position: 'relative',
+                zIndex: 1,
+                isolation: 'isolate',
+                contain: 'strict'
+              }}
+            ></div>
+          </div>
+        </section>
+      </div>
 
       {/* Render other dynamic sections */}
       {sections.filter(s => s.type !== 'hero').map((section) => (

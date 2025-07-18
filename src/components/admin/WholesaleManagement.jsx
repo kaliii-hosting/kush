@@ -1,511 +1,533 @@
 import { useState, useEffect } from 'react';
-import { ref, onValue, push, update, remove } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { realtimeDb } from '../../config/firebase';
-import { Plus, Edit2, Trash2, Package, Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Search, Calendar, User, Package, Eye, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
 
 const WholesaleManagement = () => {
-  const [products, setProducts] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    category: 'flower',
-    wholesalePrice: '',
-    bulkPricing: [],
-    description: '',
-    thc: '',
-    cbd: '',
-    strain: '',
-    imageUrl: '',
-    inStock: true,
-    stockQuantity: ''
-  });
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Fetch wholesale products from Firebase
+  // Fetch wholesale invoices from Firebase
   useEffect(() => {
-    const fetchProducts = () => {
+    const fetchInvoices = () => {
       try {
-        const productsRef = ref(realtimeDb, 'wholesale_products');
-        const unsubscribe = onValue(productsRef, (snapshot) => {
+        const invoicesRef = ref(realtimeDb, 'wholesale_invoices');
+        const unsubscribe = onValue(invoicesRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
-            const productsArray = Object.entries(data).map(([id, product]) => ({
+            const invoicesArray = Object.entries(data).map(([id, invoice]) => ({
               id,
-              ...product
+              ...invoice
             }));
-            setProducts(productsArray);
+            // Sort by date, newest first
+            invoicesArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setInvoices(invoicesArray);
           } else {
-            setProducts([]);
+            setInvoices([]);
           }
           setLoading(false);
         });
 
         return () => unsubscribe();
       } catch (error) {
-        console.error('Error fetching wholesale products:', error);
+        console.error('Error fetching wholesale invoices:', error);
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchInvoices();
   }, []);
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Filter invoices based on search and status
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = searchTerm === '' || 
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const productData = {
-      ...formData,
-      wholesalePrice: parseFloat(formData.wholesalePrice),
-      stockQuantity: parseInt(formData.stockQuantity),
-      updatedAt: new Date().toISOString()
-    };
-
-    try {
-      if (editingProduct) {
-        // Update existing product
-        const productRef = ref(realtimeDb, `wholesale_products/${editingProduct.id}`);
-        await update(productRef, productData);
-      } else {
-        // Add new product
-        const productsRef = ref(realtimeDb, 'wholesale_products');
-        await push(productsRef, {
-          ...productData,
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      resetForm();
-      // Close form after successful save
-      if (!editingProduct) {
-        setShowForm(false);
-      }
-    } catch (error) {
-      console.error('Error saving product:', error);
-      alert('Error saving product. Please try again.');
-    }
-  };
-
-  // Delete product
-  const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const productRef = ref(realtimeDb, `wholesale_products/${productId}`);
-        await remove(productRef);
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Error deleting product. Please try again.');
-      }
-    }
-  };
-
-  // Edit product
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name || '',
-      sku: product.sku || '',
-      category: product.category || 'flower',
-      wholesalePrice: product.wholesalePrice || '',
-      bulkPricing: product.bulkPricing || [],
-      description: product.description || '',
-      thc: product.thc || '',
-      cbd: product.cbd || '',
-      strain: product.strain || '',
-      imageUrl: product.imageUrl || '',
-      inStock: product.inStock !== undefined ? product.inStock : true,
-      stockQuantity: product.stockQuantity || ''
-    });
-    // Show form and scroll to top
-    setShowForm(true);
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  };
-
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      sku: '',
-      category: 'flower',
-      wholesalePrice: '',
-      bulkPricing: [],
-      description: '',
-      thc: '',
-      cbd: '',
-      strain: '',
-      imageUrl: '',
-      inStock: true,
-      stockQuantity: ''
-    });
-    setEditingProduct(null);
-  };
-
-  // Add bulk pricing tier
-  const addBulkPricingTier = () => {
-    setFormData({
-      ...formData,
-      bulkPricing: [...formData.bulkPricing, { quantity: '', price: '' }]
-    });
-  };
-
-  // Update bulk pricing tier
-  const updateBulkPricingTier = (index, field, value) => {
-    const updatedPricing = [...formData.bulkPricing];
-    updatedPricing[index][field] = value;
-    setFormData({ ...formData, bulkPricing: updatedPricing });
-  };
-
-  // Remove bulk pricing tier
-  const removeBulkPricingTier = (index) => {
-    const updatedPricing = formData.bulkPricing.filter((_, i) => i !== index);
-    setFormData({ ...formData, bulkPricing: updatedPricing });
-  };
-
-  // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    const matchesStatus = filterStatus === 'all' || invoice.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
   });
 
-  const categories = ['all', 'flower', 'pre-roll', 'edible', 'concentrate', 'topical', 'accessory'];
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Generate PDF for invoice preview/download - matching cart export design
+  const generateInvoicePDF = async (invoice) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Add PNG logo
+    try {
+      const logoUrl = 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Kushie%20Invoice%20logo.png';
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve) => {
+        logoImg.onload = () => {
+          try {
+            // Add logo image
+            doc.addImage(logoImg, 'PNG', 20, 10, 60, 20);
+          } catch (err) {
+            console.error('Error adding logo to PDF:', err);
+            // Fallback to text logo
+            doc.setFontSize(28);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(203, 96, 21);
+            doc.text('KUSHIE', 20, 20);
+            doc.setTextColor(0, 0, 0);
+          }
+          resolve();
+        };
+        logoImg.onerror = () => {
+          // Fallback to text logo
+          doc.setFontSize(28);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(203, 96, 21);
+          doc.text('KUSHIE', 20, 20);
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text('Premium Cannabis Products', 20, 26);
+          resolve();
+        };
+        logoImg.src = logoUrl;
+      });
+    } catch (error) {
+      // Fallback to text logo
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(203, 96, 21);
+      doc.text('KUSHIE', 20, 20);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Premium Cannabis Products', 20, 26);
+    }
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Wholesale Invoice', 20, 35);
+    
+    // Invoice details
+    doc.setFontSize(10);
+    const invoiceDate = new Date(invoice.date);
+    doc.text(`Date: ${invoiceDate.toLocaleDateString()}`, 20, 45);
+    doc.text(`Invoice #: ${invoice.invoiceNumber}`, 20, 50);
+    
+    // Customer info
+    doc.text('Bill To:', 20, 60);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invoice.customer.name, 20, 65);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invoice.customer.email, 20, 70);
+    if (invoice.customer.phone) {
+      doc.text(`Phone: ${invoice.customer.phone}`, 20, 75);
+    }
+    
+    // Table with product images - prepare data first
+    const tableColumns = ['', 'Product', 'Quantity', 'Unit Price', 'Total'];
+    const tableRows = [];
+    const productImages = [];
+    
+    // Process invoice items with images
+    for (let i = 0; i < invoice.items.length; i++) {
+      const item = invoice.items[i];
+      
+      // Store image data separately to avoid duplication
+      let imageData = null;
+      if (item.imageUrl) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          await new Promise((resolve) => {
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = 60;
+              canvas.height = 60;
+              ctx.drawImage(img, 0, 0, 60, 60);
+              imageData = canvas.toDataURL('image/jpeg', 0.7);
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = item.imageUrl;
+          });
+        } catch (error) {
+          console.error('Error loading product image:', error);
+        }
+      }
+      
+      // Store image data by row index
+      if (imageData) {
+        productImages[i] = imageData;
+      }
+      
+      // Add row without image data in the cell
+      tableRows.push([
+        '', // Empty string for image column
+        item.name,
+        item.quantity.toString(),
+        `$${item.unitPrice.toFixed(2)}`,
+        `$${item.total.toFixed(2)}`
+      ]);
+    }
+    
+    // Generate table
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: 85,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [203, 96, 21],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 20 }, // Image column
+        1: { cellWidth: 80 }, // Product name
+        2: { cellWidth: 25, halign: 'center' }, // Quantity
+        3: { cellWidth: 30, halign: 'right' }, // Unit price
+        4: { cellWidth: 30, halign: 'right' } // Total
+      },
+      bodyStyles: {
+        minCellHeight: 20
+      },
+      didDrawCell: function(data) {
+        // Only draw images once per row in the image column
+        if (data.column.index === 0 && data.cell.section === 'body' && data.row.index >= 0) {
+          const rowIndex = data.row.index;
+          const imageData = productImages[rowIndex];
+          
+          if (imageData) {
+            const dim = 15;
+            const x = data.cell.x + 2.5;
+            const y = data.cell.y + 2.5;
+            
+            try {
+              doc.addImage(imageData, 'JPEG', x, y, dim, dim);
+            } catch (err) {
+              console.error('Error adding image to PDF:', err);
+            }
+          }
+        }
+      }
+    });
+    
+    // Total section
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Subtotal:', 130, finalY);
+    doc.text(`$${invoice.subtotal.toFixed(2)}`, 170, finalY, { align: 'right' });
+    
+    doc.text('Tax:', 130, finalY + 7);
+    doc.text(`$${invoice.tax.toFixed(2)}`, 170, finalY + 7, { align: 'right' });
+    
+    doc.setFontSize(12);
+    doc.text('Total:', 130, finalY + 14);
+    doc.text(`$${invoice.total.toFixed(2)}`, 170, finalY + 14, { align: 'right' });
+    
+    // Footer
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Thank you for your business!', 105, 280, { align: 'center' });
+    
+    // Save the PDF
+    doc.save(`kushie-wholesale-invoice-${invoice.invoiceNumber}.pdf`);
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Loading wholesale products...</div>
+        <div className="text-lg text-gray-400">Loading invoices...</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Add Product Button */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Wholesale Products</h2>
-          <p className="text-gray-400 mt-1">Manage your wholesale inventory and pricing</p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FileText className="h-8 w-8 text-primary" />
+          <div>
+            <h2 className="text-2xl font-bold text-white">Wholesale Invoices</h2>
+            <p className="text-gray-400">View and manage wholesale invoices</p>
+          </div>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-spotify-green hover:bg-green-400 text-black font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Add Product
-          {showForm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Collapsible Form Section */}
-      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-        showForm ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-      }`}>
-        <div className="bg-spotify-light-gray rounded-lg p-6">
-          <h3 className="text-xl font-bold text-white mb-6">
-            {editingProduct ? 'Edit Product' : 'Add New Product'}
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="col-span-full lg:col-span-2">
-            <label className="block text-gray-400 mb-2">Product Name</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-400 mb-2">SKU</label>
-            <input
-              type="text"
-              value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-400 mb-2">Category</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            >
-              <option value="flower">Flower</option>
-              <option value="pre-roll">Pre-Roll</option>
-              <option value="edible">Edible</option>
-              <option value="concentrate">Concentrate</option>
-              <option value="topical">Topical</option>
-              <option value="accessory">Accessory</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-gray-400 mb-2">Wholesale Price</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              value={formData.wholesalePrice}
-              onChange={(e) => setFormData({ ...formData, wholesalePrice: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-400 mb-2">Strain</label>
-            <input
-              type="text"
-              value={formData.strain}
-              onChange={(e) => setFormData({ ...formData, strain: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-          
-          <div>
-              <label className="block text-gray-400 mb-2">THC %</label>
-              <input
-                type="text"
-                value={formData.thc}
-                onChange={(e) => setFormData({ ...formData, thc: e.target.value })}
-                className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-400 mb-2">CBD %</label>
-              <input
-                type="text"
-                value={formData.cbd}
-                onChange={(e) => setFormData({ ...formData, cbd: e.target.value })}
-                className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-400 mb-2">Stock</label>
-              <input
-                type="number"
-                value={formData.stockQuantity}
-                onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
-                className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-              />
-            </div>
-
-          {/* Bulk Pricing */}
-          <div className="col-span-full">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-gray-400">Bulk Pricing Tiers</label>
-              <button
-                type="button"
-                onClick={addBulkPricingTier}
-                className="text-spotify-green hover:text-green-400 text-sm"
-              >
-                + Add Tier
-              </button>
-            </div>
-            {formData.bulkPricing.map((tier, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  value={tier.quantity}
-                  onChange={(e) => updateBulkPricingTier(index, 'quantity', e.target.value)}
-                  className="flex-1 bg-spotify-gray text-white px-3 py-1 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-spotify-green"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Price"
-                  value={tier.price}
-                  onChange={(e) => updateBulkPricingTier(index, 'price', e.target.value)}
-                  className="flex-1 bg-spotify-gray text-white px-3 py-1 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-spotify-green"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeBulkPricingTier(index)}
-                  className="text-red-400 hover:text-red-300 text-sm"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-
-
-          <div className="col-span-full">
-            <label className="block text-gray-400 mb-2">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows="3"
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-
-          <div className="col-span-full lg:col-span-2">
-            <label className="block text-gray-400 mb-2">Image URL</label>
-            <input
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full bg-spotify-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="inStock"
-              checked={formData.inStock}
-              onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-              className="w-4 h-4 rounded text-spotify-green focus:ring-spotify-green"
-            />
-            <label htmlFor="inStock" className="text-gray-400">In Stock</label>
-          </div>
-
-          <div className="col-span-full flex gap-3 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-spotify-green hover:bg-green-400 text-black font-semibold py-2 rounded-lg transition-colors"
-            >
-              {editingProduct ? 'Update Product' : 'Add Product'}
-            </button>
-            {editingProduct && (
-              <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  setShowForm(false);
-                }}
-                className="flex-1 bg-spotify-gray hover:bg-gray-600 text-white font-semibold py-2 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
+        <div className="bg-card px-4 py-2 rounded-lg">
+          <p className="text-sm text-gray-400">Total Invoices</p>
+          <p className="text-2xl font-bold text-white">{invoices.length}</p>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search products by name or SKU..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-spotify-light-gray text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-          />
+      <div className="bg-card p-4 rounded-lg space-y-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by invoice number, customer name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 bg-gray-dark border border-border rounded-lg text-white focus:outline-none focus:border-primary"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 bg-gray-dark border border-border rounded-lg text-white focus:outline-none focus:border-primary"
+          >
+            <option value="all">All Status</option>
+            <option value="generated">Generated</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+          </select>
         </div>
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="bg-spotify-light-gray text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-spotify-green"
-        >
-          {categories.map(cat => (
-            <option key={cat} value={cat}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </option>
-          ))}
-        </select>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-spotify-light-gray rounded-lg overflow-hidden">
+      {/* Invoices Table */}
+      <div className="bg-card rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-spotify-gray">
-                <th className="text-left p-4 text-gray-400 font-medium">Product</th>
-                <th className="text-left p-4 text-gray-400 font-medium">SKU</th>
-                <th className="text-left p-4 text-gray-400 font-medium">Category</th>
-                <th className="text-left p-4 text-gray-400 font-medium">Wholesale Price</th>
-                <th className="text-left p-4 text-gray-400 font-medium">Stock</th>
-                <th className="text-left p-4 text-gray-400 font-medium">Actions</th>
+            <thead className="bg-gray-dark">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Invoice #
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Items
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center p-8 text-gray-400">
-                    No wholesale products found
+            <tbody className="divide-y divide-border">
+              {filteredInvoices.map((invoice) => (
+                <tr key={invoice.id} className="hover:bg-gray-dark/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-mono text-white">
+                      #{invoice.invoiceNumber}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Calendar className="h-4 w-4" />
+                      {formatDate(invoice.date)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {invoice.customer.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {invoice.customer.email}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Package className="h-4 w-4" />
+                      {invoice.items.length} items
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-bold text-primary">
+                      ${invoice.total.toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      invoice.status === 'paid' 
+                        ? 'bg-green-500/20 text-green-400'
+                        : invoice.status === 'sent'
+                        ? 'bg-blue-500/20 text-blue-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {invoice.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedInvoice(invoice);
+                          setShowPreview(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-dark rounded-lg transition-colors"
+                        title="Preview Invoice"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => generateInvoicePDF(invoice)}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-dark rounded-lg transition-colors"
+                        title="Download PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-b border-spotify-gray hover:bg-spotify-gray/50">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-spotify-gray rounded flex items-center justify-center">
-                            <Package className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-white font-medium">{product.name}</p>
-                          <p className="text-gray-400 text-sm">{product.strain || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-gray-300">{product.sku || '-'}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 bg-spotify-gray rounded text-xs text-gray-300">
-                        {product.category}
-                      </span>
-                    </td>
-                    <td className="p-4 text-white">${product.wholesalePrice}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        product.inStock 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {product.inStock ? `${product.stockQuantity || 0} units` : 'Out of stock'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="p-2 hover:bg-spotify-gray rounded transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="p-2 hover:bg-spotify-gray rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
+
+          {filteredInvoices.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400">No invoices found</p>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Invoice Preview Modal */}
+      {showPreview && selectedInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white">Invoice Preview</h3>
+                <button
+                  onClick={() => {
+                    setShowPreview(false);
+                    setSelectedInvoice(null);
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Invoice Header */}
+              <div className="flex justify-between">
+                <div>
+                  <h4 className="text-2xl font-bold text-primary">KUSHIE</h4>
+                  <p className="text-sm text-gray-400">Cannabis Products</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-400">Invoice Number</p>
+                  <p className="text-lg font-mono text-white">#{selectedInvoice.invoiceNumber}</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    {new Date(selectedInvoice.date).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="bg-gray-dark p-4 rounded-lg">
+                <h5 className="text-sm font-medium text-gray-400 mb-2">Bill To:</h5>
+                <p className="text-white font-medium">{selectedInvoice.customer.name}</p>
+                <p className="text-sm text-gray-300">{selectedInvoice.customer.email}</p>
+                {selectedInvoice.customer.phone && (
+                  <p className="text-sm text-gray-300">{selectedInvoice.customer.phone}</p>
+                )}
+              </div>
+
+              {/* Items Table with Images */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 text-sm text-gray-400">Image</th>
+                      <th className="text-left py-2 text-sm text-gray-400">Product</th>
+                      <th className="text-center py-2 text-sm text-gray-400">Qty</th>
+                      <th className="text-right py-2 text-sm text-gray-400">Price</th>
+                      <th className="text-right py-2 text-sm text-gray-400">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedInvoice.items.map((item, index) => (
+                      <tr key={index} className="border-b border-border/50">
+                        <td className="py-3">
+                          {item.imageUrl ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-dark rounded flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-600" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 text-white">{item.name}</td>
+                        <td className="py-3 text-center text-white">{item.quantity}</td>
+                        <td className="py-3 text-right text-white">${item.unitPrice.toFixed(2)}</td>
+                        <td className="py-3 text-right text-white">${item.total.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="4" className="py-2 text-right text-gray-400">Subtotal:</td>
+                      <td className="py-2 text-right text-white">${selectedInvoice.subtotal.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan="4" className="py-2 text-right text-gray-400">Tax:</td>
+                      <td className="py-2 text-right text-white">${selectedInvoice.tax.toFixed(2)}</td>
+                    </tr>
+                    <tr className="border-t border-border">
+                      <td colSpan="4" className="py-3 text-right font-bold text-white">Total:</td>
+                      <td className="py-3 text-right font-bold text-primary text-lg">
+                        ${selectedInvoice.total.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => generateInvoicePDF(selectedInvoice)}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

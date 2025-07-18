@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
-import { useCart } from '../context/ShopifyCartContext';
+import { useWholesaleCart } from '../context/WholesaleCartContext';
 import ProductModal from '../components/ProductModal';
 import './Wholesale.css';
 
@@ -24,7 +24,7 @@ const Wholesale = ({ onCartClick }) => {
   
   // Products state
   const { firebaseProducts, loading } = useEnhancedProducts();
-  const { addToCart } = useCart();
+  const { addToCart } = useWholesaleCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -75,6 +75,32 @@ const Wholesale = ({ onCartClick }) => {
         });
 
         mapInstanceRef.current = map;
+
+        // Override Leaflet's default pane z-indexes
+        // Leaflet uses z-index 200-700 by default, we need to override these
+        setTimeout(() => {
+          if (map) {
+            // Get all default panes and set low z-index
+            const panes = ['tilePane', 'overlayPane', 'shadowPane', 'markerPane', 'tooltipPane', 'popupPane'];
+            panes.forEach(paneName => {
+              try {
+                const pane = map.getPane(paneName);
+                if (pane) {
+                  pane.style.zIndex = '1';
+                }
+              } catch (e) {
+                console.log(`Pane ${paneName} not found`);
+              }
+            });
+            
+            // Also set the map container itself
+            const container = map.getContainer();
+            if (container) {
+              container.style.zIndex = '1';
+              container.style.position = 'relative';
+            }
+          }
+        }, 100);
 
         // Add dark tile layer
         window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -159,7 +185,12 @@ const Wholesale = ({ onCartClick }) => {
             
             if (operatingStateBounds.length > 0) {
               const bounds = operatingStateBounds.reduce((acc, curr) => acc.extend(curr));
-              map.fitBounds(bounds, { padding: [50, 50] });
+              // Adjust padding to zoom in more on the states
+              const isMobile = window.innerWidth <= 768;
+              map.fitBounds(bounds, { 
+                padding: isMobile ? [20, 20] : [30, 30],
+                maxZoom: 5 // Prevent zooming in too much
+              });
             }
           })
           .catch(error => {
@@ -167,6 +198,59 @@ const Wholesale = ({ onCartClick }) => {
           });
 
         setMapReady(true);
+
+        // Wait for map to fully load then enforce z-index
+        setTimeout(() => {
+          if (mapRef.current) {
+            // Force z-index on all Leaflet elements
+            const allLeafletElements = mapRef.current.querySelectorAll('*');
+            allLeafletElements.forEach(el => {
+              if (el.style.zIndex && parseInt(el.style.zIndex) > 10) {
+                el.style.zIndex = '1';
+              }
+            });
+          }
+        }, 1000);
+
+        // Continuously enforce z-index with MutationObserver
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+              const element = mutation.target;
+              if (element.style.zIndex) {
+                const zIndex = parseInt(element.style.zIndex);
+                // Override Leaflet's default z-index values (200-700)
+                if (zIndex >= 200 && zIndex <= 700) {
+                  element.style.zIndex = '1';
+                }
+              }
+            }
+          });
+          
+          // Also check all panes periodically
+          if (map) {
+            const panes = ['tilePane', 'overlayPane', 'shadowPane', 'markerPane', 'tooltipPane', 'popupPane'];
+            panes.forEach(paneName => {
+              try {
+                const pane = map.getPane(paneName);
+                if (pane && pane.style.zIndex && parseInt(pane.style.zIndex) > 10) {
+                  pane.style.zIndex = '1';
+                }
+              } catch (e) {
+                // Pane not found
+              }
+            });
+          }
+        });
+
+        if (mapRef.current) {
+          observer.observe(mapRef.current, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style']
+          });
+        }
 
         // Handle resize
         const handleResize = () => {
@@ -176,6 +260,7 @@ const Wholesale = ({ onCartClick }) => {
 
         return () => {
           window.removeEventListener('resize', handleResize);
+          observer.disconnect();
         };
 
       } catch (error) {
@@ -200,6 +285,70 @@ const Wholesale = ({ onCartClick }) => {
 
   return (
     <div className="bg-black min-h-screen">
+      {/* Critical z-index override for Leaflet */}
+      <style>{`
+        /* Override Leaflet's default z-index values (200-700) */
+        .leaflet-pane { z-index: 1 !important; }
+        .leaflet-tile-pane { z-index: 1 !important; }
+        .leaflet-overlay-pane { z-index: 2 !important; }
+        .leaflet-shadow-pane { z-index: 3 !important; }
+        .leaflet-marker-pane { z-index: 4 !important; }
+        .leaflet-tooltip-pane { z-index: 5 !important; }
+        .leaflet-popup-pane { z-index: 6 !important; }
+        .leaflet-control { z-index: 7 !important; }
+        
+        /* Override any inline z-index styles */
+        [style*="z-index: 200"],
+        [style*="z-index: 400"],
+        [style*="z-index: 500"],
+        [style*="z-index: 600"],
+        [style*="z-index: 650"],
+        [style*="z-index: 700"] {
+          z-index: 1 !important;
+        }
+        
+        /* Force all map elements to stay low */
+        .wholesale-map-wrapper,
+        .wholesale-map-wrapper *,
+        .wholesale-map-container,
+        .wholesale-map-container *,
+        .leaflet-container,
+        .leaflet-container * {
+          z-index: auto !important;
+          max-z-index: 10 !important;
+        }
+        
+        /* Specific overrides for elements with high z-index */
+        .leaflet-pane[style*="z-index"] {
+          z-index: 1 !important;
+        }
+        
+        /* Ensure map wrapper is contained */
+        .wholesale-map-wrapper {
+          position: relative !important;
+          z-index: 1 !important;
+          isolation: isolate !important;
+          contain: strict !important;
+          overflow: hidden !important;
+        }
+        
+        /* Force map container to stay contained */
+        .wholesale-map-container {
+          position: relative !important;
+          z-index: 1 !important;
+          max-height: 600px !important;
+          overflow: hidden !important;
+        }
+        
+        /* Create stacking context for map section */
+        .wholesale-map-section,
+        div:has(> .wholesale-map-section) {
+          position: relative !important;
+          z-index: 1 !important;
+          isolation: isolate !important;
+        }
+      `}</style>
+      
       {/* Clean Spotify-style Hero Section */}
       <section className="relative overflow-hidden">
         {/* Subtle gradient background */}
@@ -250,20 +399,36 @@ const Wholesale = ({ onCartClick }) => {
       </section>
 
       {/* Clean Map Section - Full Width */}
-      <section className="relative bg-black py-16">
-        <div className="mx-auto max-w-2xl text-center mb-12 px-6">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Available Nationwide</h2>
-          <p className="mt-4 text-lg leading-8 text-gray-400">
-            We operate in 6 states with plans to expand. Click on a state to view local opportunities.
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            Use zoom buttons • Drag to pan • Click highlighted states for details
-          </p>
-        </div>
-        <div className="relative overflow-hidden shadow-2xl rounded-2xl">
-          <div className="wholesale-map-container" ref={mapRef} style={{ height: '600px' }}></div>
-        </div>
-      </section>
+      <div style={{ position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+        <section className="wholesale-map-section relative bg-black py-16">
+          <div className="mx-auto max-w-2xl text-center mb-12 px-6">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Available Nationwide</h2>
+            <p className="mt-4 text-lg leading-8 text-gray-400">
+              We operate in 6 states with plans to expand. Click on a state to view local opportunities.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Use zoom buttons • Drag to pan • Click highlighted states for details
+            </p>
+          </div>
+          <div className="relative overflow-hidden shadow-2xl rounded-2xl">
+            <div className="wholesale-map-wrapper" style={{ 
+              position: 'relative', 
+              zIndex: 1, 
+              isolation: 'isolate', 
+              contain: 'layout style paint',
+              transform: 'translateZ(0)', // Force new stacking context
+              willChange: 'transform'
+            }}>
+              <div className="wholesale-map-container" ref={mapRef} style={{ 
+                height: '600px', 
+                position: 'relative', 
+                zIndex: 1,
+                transform: 'translateZ(0)' // Force new stacking context
+              }}></div>
+            </div>
+          </div>
+        </section>
+      </div>
 
       {/* Clean Content Section */}
       <section id="wholesale-info" className="bg-black py-24">

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart, Settings, User2, Package } from 'lucide-react';
 import { useCart } from '../context/ShopifyCartContext';
+import { useWholesaleCart } from '../context/WholesaleCartContext';
 import { useProducts } from '../context/ProductsContext';
 import { useAuth } from '../context/AuthContext';
 import { useBlog } from '../context/BlogContext';
@@ -12,7 +13,13 @@ import SignUp from './auth/SignUp';
 const SpotifyTopBar = ({ onCartClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartCount } = useCart();
+  
+  // Determine which cart to use based on current page
+  const isWholesalePage = location.pathname.includes('/wholesale');
+  const shopifyCart = useCart();
+  const wholesaleCart = useWholesaleCart();
+  const cartCount = isWholesalePage ? wholesaleCart.cartCount : shopifyCart.cartCount;
+  
   const { products } = useProducts();
   const { user, userData, logout } = useAuth();
   const { posts } = useBlog();

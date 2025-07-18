@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ref, onValue, get } from 'firebase/database';
+import { realtimeDb } from '../../config/firebase';
+import { createClient } from '@supabase/supabase-js';
+import { useEnhancedProducts } from '../../context/EnhancedProductsContext';
 import { 
   LogOut, Package, Globe, Home, Settings, Menu, X,
   ShoppingBag, FileText, Users, MessageSquare, Music, Database,
@@ -24,6 +28,16 @@ const AdminDashboardEnhanced = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { logos } = useLogos();
+  const { firebaseProducts } = useEnhancedProducts();
+  
+  // Stats state
+  const [stats, setStats] = useState({
+    users: 0,
+    invoices: 0,
+    music: 0,
+    blog: 0,
+    storage: '0 MB'
+  });
 
   // Check auth state
   useEffect(() => {
@@ -32,6 +46,119 @@ const AdminDashboardEnhanced = () => {
       navigate('/admin/login');
     }
   }, [navigate]);
+  
+  // Fetch stats for sidebar
+  useEffect(() => {
+    const fetchStats = async () => {
+      let usersCount = 0;
+      let invoicesCount = 0;
+      let musicCount = 0;
+      let blogCount = 0;
+      
+      // Fetch users count
+      try {
+        const usersRef = ref(realtimeDb, 'users');
+        const usersSnapshot = await get(usersRef);
+        usersCount = usersSnapshot.exists() ? Object.keys(usersSnapshot.val()).length : 0;
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+      
+      // Fetch invoices count
+      try {
+        const invoicesRef = ref(realtimeDb, 'wholesale_invoices');
+        const invoicesSnapshot = await get(invoicesRef);
+        invoicesCount = invoicesSnapshot.exists() ? Object.keys(invoicesSnapshot.val()).length : 0;
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+      }
+      
+      // Fetch music tracks count
+      try {
+        const musicRef = ref(realtimeDb, 'musicTracks');
+        const musicSnapshot = await get(musicRef);
+        musicCount = musicSnapshot.exists() ? Object.keys(musicSnapshot.val()).length : 0;
+      } catch (error) {
+        console.error('Error fetching music tracks:', error);
+      }
+      
+      // Fetch blog posts count from Firebase Realtime Database
+      try {
+        const blogRef = ref(realtimeDb, 'blogPosts');
+        const blogSnapshot = await get(blogRef);
+        blogCount = blogSnapshot.exists() ? Object.keys(blogSnapshot.val()).length : 0;
+      } catch (error) {
+        console.error('Error fetching blog posts:', error);
+      }
+        
+      // Fetch storage size
+      let totalSize = 0;
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          // Helper function to recursively get all files
+          const getAllFiles = async (bucketName, path = '') => {
+            let size = 0;
+            try {
+              const { data: files, error } = await supabase.storage
+                .from(bucketName)
+                .list(path, { limit: 1000, offset: 0 });
+              
+              if (!error && files) {
+                for (const file of files) {
+                  // Check if it's a folder
+                  if (!file.id && file.name) {
+                    // Recursively get files from subdirectory
+                    const subPath = path ? `${path}/${file.name}` : file.name;
+                    size += await getAllFiles(bucketName, subPath);
+                  } else if (file.metadata?.size) {
+                    size += file.metadata.size;
+                  }
+                }
+              }
+            } catch (err) {
+              console.error(`Error listing files in ${bucketName}/${path}:`, err);
+            }
+            return size;
+          };
+          
+          const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+          
+          if (!bucketsError && buckets) {
+            for (const bucket of buckets) {
+              const bucketSize = await getAllFiles(bucket.name);
+              totalSize += bucketSize;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching storage size:', error);
+      }
+      
+      // Format storage size
+      const formatSize = (bytes) => {
+        if (bytes === 0) return '0 MB';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      };
+      
+      setStats({
+        users: usersCount,
+        invoices: invoicesCount,
+        music: musicCount,
+        blog: blogCount,
+        storage: formatSize(totalSize)
+      });
+    };
+    
+    fetchStats();
+  }, []);
 
   // Handle logout
   const handleLogout = () => {
@@ -42,17 +169,17 @@ const AdminDashboardEnhanced = () => {
   // Main menu items (like Spotify's main navigation)
   const mainMenuItems = [
     { id: 'dashboard', label: 'Home', icon: Home, component: Dashboard },
-    { id: 'products', label: 'Products', icon: Package, component: ProductsPage },
-    { id: 'wholesale', label: 'Wholesale', icon: ShoppingBag, component: WholesaleManagement },
+    { id: 'products', label: 'Wholesale', icon: Package, component: ProductsPage },
+    { id: 'wholesale', label: 'Invoices', icon: ShoppingBag, component: WholesaleManagement },
     { id: 'website', label: 'Website Builder', icon: Globe, component: WebsiteBuilderEnhanced },
   ];
 
   // Library menu items (like Spotify's "Your Library" section)
   const libraryMenuItems = [
-    { id: 'logos', label: 'Logo Management', icon: Image, component: LogosManagement },
-    { id: 'footer', label: 'Footer Management', icon: Columns, component: FooterManagement },
-    { id: 'music', label: 'Music Player', icon: Music, component: MusicManagement },
-    { id: 'blog', label: 'Blog Posts', icon: FileText, component: BlogManagement },
+    { id: 'logos', label: 'Logo', icon: Image, component: LogosManagement },
+    { id: 'footer', label: 'Footer', icon: Columns, component: FooterManagement },
+    { id: 'music', label: 'Music', icon: Music, component: MusicManagement },
+    { id: 'blog', label: 'Blog', icon: FileText, component: BlogManagement },
     { id: 'users', label: 'Users', icon: Users, component: UsersManagement },
     { id: 'storage', label: 'Storage', icon: Database, component: StorageManagement },
   ];
@@ -108,7 +235,14 @@ const AdminDashboardEnhanced = () => {
                       isActive ? 'text-white' : 'text-[#b3b3b3] group-hover:text-white'
                     }`} />
                     {sidebarOpen && (
-                      <span className="font-medium text-sm">{item.label}</span>
+                      <div className="flex items-center justify-between flex-1">
+                        <span className="font-medium text-sm">{item.label}</span>
+                        {item.stat !== undefined && (
+                          <span className="text-xs text-[#b3b3b3] bg-[#282828] px-2 py-0.5 rounded-full">
+                            {item.stat}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </button>
                 </li>
@@ -151,9 +285,13 @@ const AdminDashboardEnhanced = () => {
                       <Icon className="w-4 h-4" />
                     </div>
                     {sidebarOpen && (
-                      <div className="flex-1 text-left">
-                        <p className="font-medium text-sm">{item.label}</p>
-                        <p className="text-xs text-[#a7a7a7]">Admin section</p>
+                      <div className="flex items-center justify-between flex-1">
+                        <span className="font-medium text-sm">{item.label}</span>
+                        {item.stat !== undefined && (
+                          <span className="text-xs text-[#b3b3b3] bg-[#282828] px-1.5 py-0.5 rounded">
+                            {item.stat}
+                          </span>
+                        )}
                       </div>
                     )}
                   </button>

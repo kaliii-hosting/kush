@@ -30,11 +30,14 @@ import './utils/syncUsersToRealtimeDB'
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'))
 const AdminDashboardEnhanced = lazy(() => import('./components/admin/AdminDashboardEnhanced'))
+const AdminProtectedRoute = lazy(() => import('./components/admin/AdminProtectedRoute'))
+const WholesaleProtectedRoute = lazy(() => import('./components/WholesaleProtectedRoute'))
 
 // Lazy load pages
 const AboutDynamic = lazy(() => import('./pages/AboutDynamic'))
 const ShopDynamic = lazy(() => import('./pages/ShopDynamic'))
 const WholesaleDynamic = lazy(() => import('./pages/WholesaleDynamic'))
+const WholesaleLogin = lazy(() => import('./pages/WholesaleLogin'))
 const ContactDynamic = lazy(() => import('./pages/ContactDynamic'))
 const Blog = lazy(() => import('./pages/Blog'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
@@ -72,12 +75,21 @@ function App() {
                 } />
                 <Route path="/admin" element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <AdminDashboardEnhanced />
+                    <AdminProtectedRoute>
+                      <AdminDashboardEnhanced />
+                    </AdminProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/simple" element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminDashboard />
+                  </Suspense>
+                } />
+                
+                {/* Wholesale Login Route */}
+                <Route path="/wholesale/login" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <WholesaleLogin />
                   </Suspense>
                 } />
                 
@@ -89,7 +101,11 @@ function App() {
                         <Route path="/" element={<SpotifyHomeDynamic />} />
                         <Route path="/about" element={<AboutDynamic />} />
                         <Route path="/shop" element={<ShopDynamic />} />
-                        <Route path="/wholesale" element={<WholesaleDynamic />} />
+                        <Route path="/wholesale" element={
+                          <WholesaleProtectedRoute>
+                            <WholesaleDynamic />
+                          </WholesaleProtectedRoute>
+                        } />
                         <Route path="/contact" element={<ContactDynamic />} />
                         <Route path="/blog" element={<Blog />} />
                         <Route path="/wishlist" element={<Wishlist />} />

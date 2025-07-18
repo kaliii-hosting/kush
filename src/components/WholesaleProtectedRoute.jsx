@@ -1,12 +1,13 @@
-import { Navigate } from 'react-router-dom';
+import { useState } from 'react';
+import WholesaleLogin from '../pages/WholesaleLogin';
 
 const WholesaleProtectedRoute = ({ children }) => {
-  const isAuthenticated = sessionStorage.getItem('wholesaleAuthenticated') === 'true';
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   if (!isAuthenticated) {
-    return <Navigate to="/wholesale-login" replace />;
+    return <WholesaleLogin onSuccess={() => setIsAuthenticated(true)} />;
   }
-  
+
   return children;
 };
 

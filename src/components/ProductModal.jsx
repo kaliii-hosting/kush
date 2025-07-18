@@ -8,7 +8,7 @@ import CartSlideOut from './CartSlideOut';
 import WishlistSlideOut from './WishlistSlideOut';
 import ProductVariantSelector from './ProductVariantSelector';
 
-const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
+const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = false }) => {
   const { addToCart, cart, updateQuantity, cartCount } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { products } = useEnhancedProducts();
@@ -19,6 +19,7 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
   const [showCartSlideOut, setShowCartSlideOut] = useState(false);
   const [showWishlistSlideOut, setShowWishlistSlideOut] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
+  const [activeTab, setActiveTab] = useState('description');
 
   // Update selected variant when product changes
   useEffect(() => {
@@ -371,6 +372,36 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
               </div>
             </div>
 
+            {/* Product Highlights - Only for wholesale products */}
+            {isWholesale && (
+              <div className="bg-spotify-gray rounded-xl p-4 lg:p-5 mb-4">
+                <h3 className="text-base lg:text-lg font-semibold text-white mb-3">Product Highlights</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Award className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white font-medium">Premium Quality</p>
+                      <p className="text-spotify-text-subdued text-sm">Lab-tested for purity and potency</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Shield className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white font-medium">Safe & Secure</p>
+                      <p className="text-spotify-text-subdued text-sm">Compliant with all regulations</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-spotify-green flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white font-medium">Third-Party Tested</p>
+                      <p className="text-spotify-text-subdued text-sm">Verified by independent laboratories</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Purchase Options */}
             <div className="bg-spotify-gray rounded-xl p-4 lg:p-5 mb-4">
               <div className="mb-4">
@@ -432,65 +463,108 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick }) => {
           </div>
         </div>
 
-        {/* Product Highlights - Full Width */}
-        <div className="mt-8 bg-spotify-gray rounded-xl p-6 lg:p-8">
-          <h3 className="text-xl lg:text-2xl font-semibold text-white mb-6">Product Highlights</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="flex items-start gap-3">
-              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="text-white font-medium mb-1">Lab Tested</h4>
-                <span className="text-spotify-text-subdued text-sm">Purity and potency verified</span>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="text-white font-medium mb-1">Organic</h4>
-                <span className="text-spotify-text-subdued text-sm">Grown without pesticides</span>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="text-white font-medium mb-1">Hand-Trimmed</h4>
-                <span className="text-spotify-text-subdued text-sm">Carefully cured for quality</span>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Check className="h-6 w-6 text-spotify-green flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="text-white font-medium mb-1">Fresh Sealed</h4>
-                <span className="text-spotify-text-subdued text-sm">Maximum freshness guaranteed</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Product Information */}
         <div className="mt-12 bg-spotify-gray rounded-xl p-6 lg:p-8">
-          <div className="border-b border-spotify-card-hover mb-6">
-            <div className="flex gap-8 overflow-x-auto">
-              <button className="pb-4 px-1 border-b-2 border-primary text-white font-semibold whitespace-nowrap">
-                Description
-              </button>
-              <button className="pb-4 px-1 border-b-2 border-transparent text-spotify-text-subdued hover:text-white font-semibold whitespace-nowrap transition-colors">
-                Lab Results
-              </button>
+          {isWholesale ? (
+            <>
+              {/* Tabs for wholesale products */}
+              <div className="flex space-x-8 mb-6 border-b border-spotify-card-hover">
+                <button 
+                  onClick={() => setActiveTab('description')}
+                  className={`pb-3 font-medium border-b-2 transition-colors ${
+                    activeTab === 'description' 
+                      ? 'text-white border-primary' 
+                      : 'text-spotify-text-subdued border-transparent hover:text-white'
+                  }`}
+                >
+                  Description
+                </button>
+                <button 
+                  onClick={() => setActiveTab('lab-results')}
+                  className={`pb-3 font-medium border-b-2 transition-colors ${
+                    activeTab === 'lab-results' 
+                      ? 'text-white border-primary' 
+                      : 'text-spotify-text-subdued border-transparent hover:text-white'
+                  }`}
+                >
+                  Lab Results
+                </button>
+              </div>
+              
+              {/* Tab Content */}
+              <div className="space-y-6">
+                {activeTab === 'description' && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
+                    <div className="text-spotify-text-subdued leading-relaxed">
+                      {product.description ? (
+                        <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                      ) : (
+                        <p>Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {activeTab === 'lab-results' && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-4">Lab Results</h3>
+                    <div className="bg-spotify-card-hover rounded-lg p-4 mb-4">
+                      <p className="text-spotify-text-subdued text-sm mb-2">Certificate of Analysis</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">THC:</span>
+                            <span className="text-white">{product.thc || '22.5%'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">CBD:</span>
+                            <span className="text-white">{product.cbd || '0.5%'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">CBG:</span>
+                            <span className="text-white">{product.cbg || '1.2%'}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">Moisture:</span>
+                            <span className="text-white">8.5%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">Pesticides:</span>
+                            <span className="text-spotify-green">Not Detected</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-spotify-text-subdued">Heavy Metals:</span>
+                            <span className="text-spotify-green">Not Detected</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Simple description for shop products */
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
+                <div className="text-spotify-text-subdued leading-relaxed">
+                  {product.description ? (
+                    <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  ) : (
+                    <p>Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.</p>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Tab Content */}
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
-              <p className="text-spotify-text-subdued leading-relaxed mb-4">
-                {product.description || 'Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.'}
-              </p>
-              <p className="text-spotify-text-subdued leading-relaxed">
-                Our commitment to excellence means you receive only the finest products, grown with care and processed using state-of-the-art techniques. From seed to sale, we maintain strict quality control to deliver an exceptional experience every time.
-              </p>
-            </div>
+          )}
+          
+          {/* Common Product Details Grid */}
+          <div className="mt-6">
 
             {/* Product Details Grid */}
             <div>

@@ -7,7 +7,7 @@ import { useEnhancedProducts } from '../../context/EnhancedProductsContext';
 import { 
   LogOut, Package, Globe, Home, Settings, Menu, X,
   ShoppingBag, FileText, Users, MessageSquare, Music, Database,
-  Search, Bell, ChevronLeft, ChevronRight, Play, Library, Plus,
+  Bell, ChevronLeft, ChevronRight, Play, Library, Plus,
   Image, Columns
 } from 'lucide-react';
 import ProductsPage from './ProductsPage';
@@ -20,12 +20,13 @@ import StorageManagement from './StorageManagement';
 import Dashboard from './Dashboard';
 import LogosManagement from './LogosManagement';
 import FooterManagement from './FooterManagement';
+import NotificationSystem from './NotificationSystem';
 import { useLogos } from '../../context/LogosContext';
 
 const AdminDashboardEnhanced = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const { logos } = useLogos();
   const { firebaseProducts } = useEnhancedProducts();
@@ -38,14 +39,6 @@ const AdminDashboardEnhanced = () => {
     blog: 0,
     storage: '0 MB'
   });
-
-  // Check auth state
-  useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
-    if (!isAuthenticated) {
-      navigate('/admin/login');
-    }
-  }, [navigate]);
   
   // Fetch stats for sidebar
   useEffect(() => {
@@ -162,7 +155,6 @@ const AdminDashboardEnhanced = () => {
 
   // Handle logout
   const handleLogout = () => {
-    sessionStorage.removeItem('adminAuthenticated');
     navigate('/admin/login');
   };
 
@@ -326,34 +318,13 @@ const AdminDashboardEnhanced = () => {
       {/* Main Content Area */}
       <div className="flex-1 bg-[#121212] flex flex-col">
         {/* Spotify-style Header */}
-        <header className="bg-[#070707] px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-          {/* Navigation Buttons */}
-          <div className="flex items-center gap-4">
-            <button className="w-8 h-8 bg-black/70 rounded-full flex items-center justify-center cursor-not-allowed opacity-60">
-              <ChevronLeft className="w-5 h-5 text-white" />
-            </button>
-            <button className="w-8 h-8 bg-black/70 rounded-full flex items-center justify-center cursor-not-allowed opacity-60">
-              <ChevronRight className="w-5 h-5 text-white" />
-            </button>
-            
-            {/* Search Bar */}
-            <div className="relative ml-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b3b3b3]" />
-              <input
-                type="text"
-                placeholder="What do you want to manage?"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-96 bg-[#242424] text-white pl-10 pr-4 py-2 rounded-full placeholder-[#b3b3b3] focus:outline-none focus:ring-2 focus:ring-white"
-              />
-            </div>
-          </div>
+        <header className="bg-[#070707] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+          {/* Empty left side for balance */}
+          <div></div>
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
-            <button className="text-[#b3b3b3] hover:text-white transition-colors">
-              <Bell className="w-5 h-5" />
-            </button>
+            <NotificationSystem />
             <button className="w-8 h-8 bg-[#282828] rounded-full flex items-center justify-center text-white font-semibold hover:bg-[#3e3e3e] transition-colors">
               A
             </button>

@@ -3,7 +3,7 @@ import { Lock, AlertCircle, Delete } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
-const AdminLogin = () => {
+const AdminLogin = ({ onSuccess }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -19,6 +19,30 @@ const AdminLogin = () => {
     }
   }, []);
 
+  // Maintain focus on input
+  useEffect(() => {
+    const handleFocus = () => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    // Set up interval to maintain focus
+    const focusInterval = setInterval(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+
+    // Focus on window focus
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(focusInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const handleNumberClick = (num) => {
     if (pin.length < 4) {
       const newPin = pin + num;
@@ -27,25 +51,38 @@ const AdminLogin = () => {
       
       // Auto-submit when 4 digits are entered
       if (newPin.length === 4) {
-        if (newPin === ADMIN_PIN) {
-          // Set admin session (temporary - will be cleared on page refresh)
-          sessionStorage.setItem('adminAuthenticated', 'true');
-          // Sign in admin Firebase account
-          signInAdmin().then(() => {
-            navigate('/admin');
-          }).catch((err) => {
-            console.error('Admin Firebase sign in failed:', err);
-            // Still navigate even if Firebase fails
-            navigate('/admin');
-          });
-        } else {
-          setError('Incorrect PIN');
-          setTimeout(() => {
-            setPin('');
-            setError('');
-          }, 1500);
-        }
+        submitPin(newPin);
       }
+    }
+  };
+  
+  const submitPin = (pinValue) => {
+    if (pinValue === ADMIN_PIN) {
+      // Sign in admin Firebase account
+      signInAdmin().then(() => {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate('/admin');
+        }
+      }).catch((err) => {
+        console.error('Admin Firebase sign in failed:', err);
+        // Still proceed even if Firebase fails
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate('/admin');
+        }
+      });
+    } else {
+      setError('Incorrect PIN');
+      setTimeout(() => {
+        setPin('');
+        setError('');
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 1500);
     }
   };
 
@@ -61,7 +98,7 @@ const AdminLogin = () => {
 
   const handleKeyPress = (e) => {
     // Handle number keys
-    if (e.key >= '0' && e.key <= '9') {
+    if (e.key >= '0' && e.key <= '9' && pin.length < 4) {
       e.preventDefault();
       handleNumberClick(e.key);
     }
@@ -75,20 +112,30 @@ const AdminLogin = () => {
       e.preventDefault();
       handleClear();
     }
+    // Handle enter to submit
+    else if (e.key === 'Enter' && pin.length === 4) {
+      e.preventDefault();
+      submitPin(pin);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div 
+      className="min-h-screen bg-black flex items-center justify-center px-4"
+      onClick={() => inputRef.current?.focus()}
+    >
       {/* Hidden input for keyboard support */}
       <input
         ref={inputRef}
         type="text"
-        value={pin}
+        value=""
         onChange={() => {}} // Controlled by handleKeyPress
         onKeyDown={handleKeyPress}
-        className="absolute opacity-0 pointer-events-none"
+        onBlur={() => setTimeout(() => inputRef.current?.focus(), 10)}
+        className="absolute opacity-0 -z-10 w-1 h-1"
         maxLength={4}
         autoFocus
+        tabIndex={0}
       />
       
       <div className="max-w-sm w-full">
@@ -99,7 +146,7 @@ const AdminLogin = () => {
             </div>
             <h2 className="text-3xl font-bold text-white">Admin Access</h2>
             <p className="text-gray-400 mt-2">Enter PIN to continue</p>
-            <p className="text-gray-500 text-xs mt-1">Use keyboard or click numbers</p>
+            <p className="text-gray-500 text-xs mt-1">Use keyboard or click numbers • Enter to submit</p>
           </div>
 
           {/* PIN Display */}
@@ -135,7 +182,7 @@ const AdminLogin = () => {
               <button
                 key={num}
                 onClick={() => handleNumberClick(num.toString())}
-                className="bg-gray-700 hover:bg-gray-600 text-white text-xl font-semibold py-4 rounded-lg transition-all transform active:scale-95"
+                className="bg-gray-700 hover:bg-gray-600 text-white text-xl font-semibold py-4 rounded-lg transition-all transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 {num}
               </button>
@@ -143,7 +190,7 @@ const AdminLogin = () => {
             
             <button
               onClick={handleClear}
-              className="bg-gray-700 hover:bg-gray-600 text-gray-400 py-4 rounded-lg transition-all transform active:scale-95"
+              className="bg-gray-700 hover:bg-gray-600 text-gray-400 py-4 rounded-lg transition-all transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               Clear
             </button>
@@ -157,7 +204,7 @@ const AdminLogin = () => {
             
             <button
               onClick={handleDelete}
-              className="bg-gray-700 hover:bg-gray-600 text-gray-400 py-4 rounded-lg transition-all transform active:scale-95 flex items-center justify-center"
+              className="bg-gray-700 hover:bg-gray-600 text-gray-400 py-4 rounded-lg transition-all transform active:scale-95 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <Delete size={20} />
             </button>

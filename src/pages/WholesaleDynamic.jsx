@@ -430,6 +430,7 @@ const WholesaleDynamic = ({ onCartClick }) => {
           setTimeout(() => setSelectedProduct(null), 300);
         }}
         onCartClick={onCartClick}
+        isWholesale={true}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingCart, FileText, Download } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, FileText, Download, Send, Share2, Mail, Copy, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/ShopifyCartContext';
 import { useWholesaleCart } from '../context/WholesaleCartContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,10 @@ import { realtimeDb } from '../config/firebase';
 const CartSlideOut = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
   const { user, userData } = useAuth();
   
   // Determine which cart to use based on current page
@@ -38,8 +42,20 @@ const CartSlideOut = ({ isOpen, onClose }) => {
   // Generate PDF invoice for wholesale checkout
   const generatePDFInvoice = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const today = new Date();
+    const invoiceNumber = `INV ${today.getFullYear().toString().slice(-2)}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-${today.getHours().toString().padStart(2, '0')}-${today.getMinutes().toString().padStart(2, '0')}`;
     
-    // Add PNG logo
+    // Modern color scheme
+    const primaryColor = [0, 0, 0]; // Black for text
+    const secondaryColor = [100, 100, 100]; // Gray for secondary text
+    const accentColor = [203, 96, 21]; // Kushie orange for accents
+    const lightGray = [245, 245, 245];
+    const borderColor = [230, 230, 230];
+    
+    // Add Kushie logo with proper aspect ratio
     try {
       const logoUrl = 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Kushie%20Invoice%20logo.png';
       const logoImg = new Image();
@@ -48,74 +64,104 @@ const CartSlideOut = ({ isOpen, onClose }) => {
       await new Promise((resolve, reject) => {
         logoImg.onload = () => {
           try {
-            // Add logo image - adjust size and position as needed
-            doc.addImage(logoImg, 'PNG', 20, 10, 60, 20);
+            // Calculate proper dimensions maintaining aspect ratio
+            const imgWidth = logoImg.width;
+            const imgHeight = logoImg.height;
+            const maxWidth = 50;
+            const maxHeight = 20;
+            
+            let width = maxWidth;
+            let height = (imgHeight / imgWidth) * maxWidth;
+            
+            if (height > maxHeight) {
+              height = maxHeight;
+              width = (imgWidth / imgHeight) * maxHeight;
+            }
+            
+            // Add logo with correct aspect ratio
+            doc.addImage(logoImg, 'PNG', margin, 15, width, height);
             resolve();
           } catch (err) {
             console.error('Error adding logo to PDF:', err);
             // Fallback to text logo
-            doc.setFontSize(28);
+            doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(203, 96, 21);
-            doc.text('KUSHIE', 20, 20);
-            doc.setTextColor(0, 0, 0);
+            doc.setTextColor(...accentColor);
+            doc.text('KUSHIE+', margin, 25);
             resolve();
           }
         };
         logoImg.onerror = () => {
-          console.error('Error loading logo image');
           // Fallback to text logo
-          doc.setFontSize(28);
+          doc.setFontSize(24);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(203, 96, 21);
-          doc.text('KUSHIE', 20, 20);
-          doc.setTextColor(0, 0, 0);
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          doc.text('Premium Cannabis Products', 20, 26);
+          doc.setTextColor(...accentColor);
+          doc.text('KUSHIE+', margin, 25);
           resolve();
         };
         logoImg.src = logoUrl;
       });
     } catch (error) {
-      console.error('Error in logo setup:', error);
       // Fallback to text logo
-      doc.setFontSize(28);
+      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(203, 96, 21);
-      doc.text('KUSHIE', 20, 20);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Premium Cannabis Products', 20, 26);
+      doc.setTextColor(...accentColor);
+      doc.text('KUSHIE+', margin, 25);
     }
     
-    doc.setFontSize(12);
+    // Invoice header - right aligned
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invoiceNumber, pageWidth - margin, 25, { align: 'right' });
+    
+    // Add horizontal line under header
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 35, pageWidth - margin, 35);
+    
+    // Due Date and Subject section
+    let yPosition = 50;
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('Wholesale Invoice', 20, 35);
+    doc.setTextColor(...secondaryColor);
+    doc.text('Due Date', margin, yPosition);
+    doc.text('Subject', pageWidth / 2, yPosition);
     
-    // Invoice details
-    doc.setFontSize(10);
-    const today = new Date();
-    doc.text(`Date: ${today.toLocaleDateString()}`, 20, 45);
-    doc.text(`Invoice #: ${today.getTime()}`, 20, 50);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text(today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), margin, yPosition + 5);
+    doc.text('Wholesale order', pageWidth / 2, yPosition + 5);
     
-    // Customer info - use signed in user data
-    doc.text('Bill To:', 20, 60);
+    // Billed To section
+    yPosition = 65;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...secondaryColor);
+    doc.text('Billed To', margin, yPosition);
+    doc.text('Currency', pageWidth / 2, yPosition);
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
     if (user && userData) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(userData.displayName || userData.email || 'Customer', 20, 65);
+      doc.text(userData.displayName || userData.email || 'Customer', margin, yPosition + 5);
       doc.setFont('helvetica', 'normal');
-      doc.text(userData.email || '', 20, 70);
-      if (userData.phone) {
-        doc.text(`Phone: ${userData.phone}`, 20, 75);
-      }
+      doc.setFontSize(10);
+      doc.text(userData.email || '', margin, yPosition + 10);
     } else {
-      doc.text('Guest Customer', 20, 65);
+      doc.text('Guest Customer', margin, yPosition + 5);
     }
     
-    // Table with product images - prepare data first
-    const tableColumns = ['', 'Product', 'Quantity', 'Unit Price', 'Total'];
+    // Currency with flag emoji
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('USD - United State Dollar', pageWidth / 2, yPosition + 5);
+    
+    // Items table - modern design
+    yPosition = 85;
+    const tableColumns = ['ITEM', 'QTY', 'UNIT PRICE', 'AMOUNT'];
     const tableRows = [];
     const productImages = [];
     
@@ -125,7 +171,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
       const unitPrice = parseFloat(item.price);
       const total = unitPrice * item.quantity;
       
-      // Store image data separately to avoid duplication
+      // Store image data for later use
       let imageData = null;
       if (item.imageUrl) {
         try {
@@ -135,10 +181,10 @@ const CartSlideOut = ({ isOpen, onClose }) => {
             img.onload = () => {
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
-              canvas.width = 60;
-              canvas.height = 60;
-              ctx.drawImage(img, 0, 0, 60, 60);
-              imageData = canvas.toDataURL('image/jpeg', 0.7);
+              canvas.width = 40;
+              canvas.height = 40;
+              ctx.drawImage(img, 0, 0, 40, 40);
+              imageData = canvas.toDataURL('image/jpeg', 0.8);
               resolve();
             };
             img.onerror = resolve;
@@ -149,14 +195,12 @@ const CartSlideOut = ({ isOpen, onClose }) => {
         }
       }
       
-      // Store image data by row index
       if (imageData) {
         productImages[i] = imageData;
       }
       
-      // Add row without image data in the cell
+      // Add row data
       tableRows.push([
-        '', // Empty string for image column
         item.title || item.name,
         item.quantity.toString(),
         `$${unitPrice.toFixed(2)}`,
@@ -164,70 +208,173 @@ const CartSlideOut = ({ isOpen, onClose }) => {
       ]);
     }
     
-    // Generate table
+    // Generate modern table
     autoTable(doc, {
       head: [tableColumns],
       body: tableRows,
-      startY: 85,
-      theme: 'grid',
+      startY: yPosition,
+      theme: 'plain',
       headStyles: { 
-        fillColor: [203, 96, 21],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold'
+        fillColor: [255, 255, 255],
+        textColor: secondaryColor,
+        fontStyle: 'normal',
+        fontSize: 9,
+        cellPadding: { top: 4, bottom: 4, left: 5, right: 5 }
       },
       columnStyles: {
-        0: { cellWidth: 20 }, // Image column
-        1: { cellWidth: 80 }, // Product name
-        2: { cellWidth: 25, halign: 'center' }, // Quantity
-        3: { cellWidth: 30, halign: 'right' }, // Unit price
-        4: { cellWidth: 30, halign: 'right' } // Total
+        0: { cellWidth: 100 }, // Item name - increased width
+        1: { cellWidth: 20, halign: 'center' }, // Quantity
+        2: { cellWidth: 30, halign: 'right' }, // Unit price
+        3: { cellWidth: 30, halign: 'right' } // Total
       },
       bodyStyles: {
-        minCellHeight: 20
+        textColor: primaryColor,
+        fontSize: 10,
+        cellPadding: { top: 12, bottom: 12, left: 5, right: 5 },
+        minCellHeight: 15
+      },
+      alternateRowStyles: {
+        fillColor: [255, 255, 255]
+      },
+      margin: { left: margin, right: margin },
+      showHead: 'everyPage', // Show header on every page
+      pageBreak: 'auto', // Automatic page breaks
+      didDrawPage: function(data) {
+        // Add header line on every page
+        doc.setDrawColor(...borderColor);
+        doc.setLineWidth(0.5);
+        const headerY = data.table.head[0].cells[0].y + data.table.head[0].height;
+        doc.line(margin, headerY, pageWidth - margin, headerY);
+        
+        // Add page numbers if multiple pages
+        if (doc.internal.getNumberOfPages() > 1) {
+          doc.setFontSize(8);
+          doc.setTextColor(...secondaryColor);
+          doc.text(
+            `Page ${data.pageNumber} of ${doc.internal.getNumberOfPages()}`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: 'center' }
+          );
+        }
+      },
+      willDrawCell: function(data) {
+        // For product name cells, prevent default text drawing
+        if (data.column.index === 0 && data.cell.section === 'body') {
+          data.cell.text = ''; // Clear text before drawing
+        }
       },
       didDrawCell: function(data) {
-        // Only draw images once per row in the image column
+        // Add product images and custom text in first column for body rows
         if (data.column.index === 0 && data.cell.section === 'body' && data.row.index >= 0) {
           const rowIndex = data.row.index;
           const imageData = productImages[rowIndex];
+          const productName = tableRows[rowIndex][0];
           
           if (imageData) {
-            const dim = 15;
-            const x = data.cell.x + 2.5;
-            const y = data.cell.y + 2.5;
+            const imgSize = 8;
+            const x = data.cell.x + 2;
+            const y = data.cell.y + (data.cell.height - imgSize) / 2;
             
             try {
-              doc.addImage(imageData, 'JPEG', x, y, dim, dim);
+              // Add small product image
+              doc.addImage(imageData, 'JPEG', x, y, imgSize, imgSize);
             } catch (err) {
               console.error('Error adding image to PDF:', err);
             }
+          }
+          
+          // Add product name text with proper positioning
+          const textX = imageData ? data.cell.x + 12 : data.cell.x + 2;
+          const textY = data.cell.y + data.cell.height / 2;
+          const maxWidth = data.cell.width - (imageData ? 14 : 4);
+          
+          doc.setFontSize(9);
+          doc.setTextColor(102, 102, 102); // #666 grey color
+          
+          // Split text if too long
+          const lines = doc.splitTextToSize(productName, maxWidth);
+          if (lines.length === 1) {
+            doc.text(lines[0], textX, textY, { baseline: 'middle' });
+          } else {
+            // For multiple lines, adjust positioning
+            const lineHeight = 4;
+            const startY = textY - ((lines.length - 1) * lineHeight) / 2;
+            lines.forEach((line, index) => {
+              doc.text(line, textX, startY + (index * lineHeight), { baseline: 'middle' });
+            });
           }
         }
       }
     });
     
-    // Total section
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Subtotal:', 130, finalY);
-    doc.text(`$${cartTotal}`, 170, finalY, { align: 'right' });
+    // Calculate totals
+    const subtotal = parseFloat(cartTotal);
+    const total = subtotal; // No discount or tax
     
-    doc.text('Tax:', 130, finalY + 7);
-    doc.text('$0.00', 170, finalY + 7, { align: 'right' });
+    // Total section with modern layout - increased spacing
+    let finalY = doc.lastAutoTable.finalY + 20;
+    const totalsX = pageWidth - 80;
     
-    doc.setFontSize(12);
-    doc.text('Total:', 130, finalY + 14);
-    doc.text(`$${cartTotal}`, 170, finalY + 14, { align: 'right' });
+    // Check if we need a new page for totals section
+    const remainingSpace = pageHeight - finalY;
+    if (remainingSpace < 80) { // Need at least 80px for totals section
+      doc.addPage();
+      finalY = 20; // Start from top of new page
+    }
     
-    // Footer
-    doc.setFont('helvetica', 'normal');
+    // Sub total
     doc.setFontSize(10);
-    doc.text('Thank you for your business!', 105, 280, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...secondaryColor);
+    doc.text('Sub total', totalsX, finalY);
+    doc.setTextColor(...primaryColor);
+    doc.text(`$${subtotal.toFixed(2)}`, pageWidth - margin, finalY, { align: 'right' });
+    
+    // Add separator line
+    doc.setDrawColor(...borderColor);
+    doc.line(totalsX - 5, finalY + 5, pageWidth - margin, finalY + 5);
+    
+    // Total
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('Total', totalsX, finalY + 12);
+    doc.text(`$${total.toFixed(2)}`, pageWidth - margin, finalY + 12, { align: 'right' });
+    
+    // Amount due
+    const amountDueY = finalY + 20;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Amount due', totalsX, amountDueY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`$${total.toFixed(2)}`, pageWidth - margin, amountDueY, { align: 'right' });
+    
+    // Footer note with proper spacing
+    let footerY = amountDueY + 25;
+    
+    // Check if footer fits on current page
+    if (footerY > pageHeight - 60) {
+      doc.addPage();
+      footerY = 40;
+    }
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(...secondaryColor);
+    const footerText = '*Notes / Products that you have purchased cannot be returned.';
+    doc.text(footerText, margin, footerY);
+    
+    // Bottom branding with safe margin
+    const brandingY = Math.min(footerY + 30, pageHeight - 30);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...accentColor);
+    doc.text('Thank you for choosing Kushie+', pageWidth / 2, brandingY, { align: 'center' });
     
     // Save invoice data to Firebase
-    const invoiceNumber = today.getTime();
     const invoiceData = {
-      invoiceNumber: invoiceNumber.toString(),
+      invoiceNumber: invoiceNumber,
       date: today.toISOString(),
       customer: {
         name: userData?.displayName || userData?.email || 'Guest Customer',
@@ -243,9 +390,11 @@ const CartSlideOut = ({ isOpen, onClose }) => {
         total: parseFloat(item.price) * item.quantity,
         imageUrl: item.imageUrl || ''
       })),
-      subtotal: parseFloat(cartTotal),
+      subtotal: subtotal,
+      discount: 0,
+      discountPercentage: 0,
       tax: 0,
-      total: parseFloat(cartTotal),
+      total: total,
       status: 'generated',
       createdAt: serverTimestamp()
     };
@@ -260,7 +409,118 @@ const CartSlideOut = ({ isOpen, onClose }) => {
     }
 
     // Save the PDF
-    doc.save(`kushie-wholesale-invoice-${invoiceNumber}.pdf`);
+    doc.save(`kushie-wholesale-${invoiceNumber}.pdf`);
+  };
+
+  // Generate share message
+  const generateShareMessage = () => {
+    const orderDetails = cart.map(item => 
+      `${item.title || item.name} x${item.quantity} - $${(parseFloat(item.price) * item.quantity).toFixed(2)}`
+    ).join('\n');
+    
+    const message = `Kushie+ Wholesale Order\n\n${orderDetails}\n\nTotal: $${cartTotal}\n\nContact: contact@kushiebrand.com`;
+    return message;
+  };
+
+  // Handle share action
+  const handleShare = async (method) => {
+    const message = generateShareMessage();
+    const invoiceNumber = `INV-${Date.now()}`;
+    
+    switch(method) {
+      case 'email':
+        const mailtoLink = `mailto:contact@kushiebrand.com?subject=Wholesale Order ${invoiceNumber}&body=${encodeURIComponent(message)}`;
+        window.open(mailtoLink, '_blank');
+        break;
+        
+      case 'whatsapp':
+        const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappLink, '_blank');
+        break;
+        
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(message);
+          setShareMessage('Order details copied to clipboard!');
+          setTimeout(() => setShareMessage(''), 3000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+        break;
+        
+      case 'native':
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Kushie+ Wholesale Order',
+              text: message
+            });
+          } catch (err) {
+            console.error('Error sharing:', err);
+          }
+        }
+        break;
+    }
+    
+    // Save order to Firebase after sharing
+    if (method !== 'copy') {
+      await saveOrderToFirebase();
+    }
+  };
+
+  // Save order to Firebase
+  const saveOrderToFirebase = async () => {
+    try {
+      const today = new Date();
+      const invoiceNumber = `INV ${today.getFullYear().toString().slice(-2)}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-${today.getHours().toString().padStart(2, '0')}-${today.getMinutes().toString().padStart(2, '0')}`;
+      
+      const orderData = {
+        invoiceNumber: invoiceNumber,
+        date: today.toISOString(),
+        customer: {
+          name: userData?.displayName || userData?.email || 'Guest Customer',
+          email: userData?.email || '',
+          phone: userData?.phone || '',
+          userId: user?.uid || null
+        },
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.title || item.name,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.price),
+          total: parseFloat(item.price) * item.quantity,
+          imageUrl: item.imageUrl || ''
+        })),
+        subtotal: parseFloat(cartTotal),
+        discount: 0,
+        discountPercentage: 0,
+        tax: 0,
+        total: parseFloat(cartTotal),
+        status: 'shared',
+        sharedAt: serverTimestamp()
+      };
+
+      const ordersRef = ref(realtimeDb, 'wholesale_orders');
+      await push(ordersRef, orderData);
+      
+      // Generate PDF
+      await generatePDFInvoice();
+      
+      setShowShareModal(false);
+      setSubmitSuccess(true);
+      
+      // Clear cart after successful submission
+      setTimeout(() => {
+        cart.forEach(item => {
+          removeFromCart(item.id);
+        });
+        setSubmitSuccess(false);
+        onClose();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error saving order:', error);
+    }
   };
 
   if (!isVisible) return null;
@@ -424,20 +684,32 @@ const CartSlideOut = ({ isOpen, onClose }) => {
               <div className="space-y-3">
                 {isWholesalePage ? (
                   <>
-                    <button
-                      onClick={generatePDFInvoice}
-                      className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
-                    >
-                      <FileText className="h-5 w-5" />
-                      Export Invoice (PDF)
-                    </button>
-                    <Link
-                      to="/wholesale"
-                      onClick={onClose}
-                      className="block w-full text-center text-white font-bold py-4 rounded-full border-2 border-white hover:bg-white/10 transition-colors"
-                    >
-                      Continue Shopping
-                    </Link>
+                    {submitSuccess ? (
+                      <div className="bg-green-500 text-white p-4 rounded-lg text-center">
+                        <p className="font-bold mb-1">Order Submitted Successfully!</p>
+                        <p className="text-sm">Invoice has been sent to contact@kushiebrand.com</p>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setShowShareModal(true)}
+                          className="w-full bg-green-600 text-white font-bold py-4 rounded-full hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Share2 className="h-5 w-5" />
+                          Share Order
+                        </button>
+                        <button
+                          onClick={generatePDFInvoice}
+                          className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FileText className="h-5 w-5" />
+                          Export Invoice (PDF)
+                        </button>
+                        <p className="text-xs text-gray-400 text-center">
+                          Choose how to share your order
+                        </p>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -460,6 +732,87 @@ const CartSlideOut = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Share Order</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+
+            {shareMessage && (
+              <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-lg text-sm text-center">
+                {shareMessage}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Email Option */}
+              <button
+                onClick={() => handleShare('email')}
+                className="w-full flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Mail className="h-5 w-5 text-blue-400" />
+                <div className="text-left">
+                  <p className="text-white font-medium">Email to Kushie</p>
+                  <p className="text-xs text-gray-400">Send to contact@kushiebrand.com</p>
+                </div>
+              </button>
+
+              {/* WhatsApp Option */}
+              <button
+                onClick={() => handleShare('whatsapp')}
+                className="w-full flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <MessageCircle className="h-5 w-5 text-green-400" />
+                <div className="text-left">
+                  <p className="text-white font-medium">WhatsApp</p>
+                  <p className="text-xs text-gray-400">Share via WhatsApp</p>
+                </div>
+              </button>
+
+              {/* Copy Option */}
+              <button
+                onClick={() => handleShare('copy')}
+                className="w-full flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Copy className="h-5 w-5 text-purple-400" />
+                <div className="text-left">
+                  <p className="text-white font-medium">Copy to Clipboard</p>
+                  <p className="text-xs text-gray-400">Copy order details</p>
+                </div>
+              </button>
+
+              {/* Native Share (if available) */}
+              {navigator.share && (
+                <button
+                  onClick={() => handleShare('native')}
+                  className="w-full flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <Share2 className="h-5 w-5 text-orange-400" />
+                  <div className="text-left">
+                    <p className="text-white font-medium">More Options</p>
+                    <p className="text-xs text-gray-400">Share using system apps</p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-800">
+              <p className="text-xs text-gray-500 text-center">
+                Order details and PDF will be shared
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

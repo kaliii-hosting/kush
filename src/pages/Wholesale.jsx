@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useWholesaleCart } from '../context/WholesaleCartContext';
 import ProductModal from '../components/ProductModal';
@@ -17,6 +18,7 @@ const operatingStates = [
 ];
 
 const Wholesale = ({ onCartClick }) => {
+  const navigate = useNavigate();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
@@ -28,6 +30,8 @@ const Wholesale = ({ onCartClick }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Remove authentication check - will be handled by wrapper component
 
   // Initialize map
   useEffect(() => {

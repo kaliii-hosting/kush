@@ -57,12 +57,10 @@ const ProductSections = ({ productType }) => {
         return shopifyProducts.slice(0, 10);
       case 'newArrivals':
         return shopifyProducts.slice(5, 15);
-      case 'recommended':
-        return shopifyProducts.slice(10, 20);
       case 'trending':
         return shopifyProducts.slice(0, 10);
       case 'recentlyViewed':
-        return shopifyProducts.slice(8, 18);
+        return []; // Return empty array for recently viewed
       case 'madeForYou':
         return shopifyProducts.slice(3, 13);
       default:
@@ -284,14 +282,17 @@ const ProductSections = ({ productType }) => {
     }
   };
 
+  // Skip rendering for recentlyViewed section
+  if (productType === 'recentlyViewed') {
+    return null;
+  }
+
   const getSectionTitle = () => {
     switch (productType) {
       case 'popular':
         return { title: 'Popular right now', subtitle: 'The most popular products in your area' };
       case 'newArrivals':
         return { title: 'New arrivals', subtitle: 'Fresh products just added to our collection' };
-      case 'recommended':
-        return { title: 'Recommended for You', subtitle: 'Based on your preferences' };
       case 'recentlyViewed':
         return { title: 'Recently Viewed', subtitle: 'Continue where you left off' };
       case 'madeForYou':

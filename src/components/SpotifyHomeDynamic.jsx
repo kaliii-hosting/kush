@@ -57,9 +57,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
   const featured = shopifyProducts.slice(0, 6);
   const popular = shopifyProducts.slice(0, 10);
   const newArrivals = shopifyProducts.slice(5, 15);
-  const recommended = shopifyProducts.slice(10, 20);
   const trending = shopifyProducts.slice(0, 10);
-  const recentlyViewed = shopifyProducts.slice(8, 18);
   const madeForYou = shopifyProducts.slice(3, 13);
 
   // Render product sections between dynamic sections
@@ -157,6 +155,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
           key={section.id} 
           section={section}
           isFirstSection={index === 0}
+          onCartClick={onCartClick}
         />
       ))}
 

@@ -5,10 +5,10 @@ import { realtimeDb } from '../../config/firebase';
 import { createClient } from '@supabase/supabase-js';
 import { useEnhancedProducts } from '../../context/EnhancedProductsContext';
 import { 
-  LogOut, Package, Globe, Home, Settings, Menu, X,
+  LogOut, Package, Globe, Home, Settings, X,
   ShoppingBag, FileText, Users, MessageSquare, Music, Database,
   Bell, ChevronLeft, ChevronRight, Play, Library, Plus,
-  Image, Columns
+  Image, Columns, Key
 } from 'lucide-react';
 import ProductsPage from './ProductsPage';
 import WebsiteBuilderEnhanced from './WebsiteBuilderEnhanced';
@@ -20,12 +20,13 @@ import StorageManagement from './StorageManagement';
 import Dashboard from './Dashboard';
 import LogosManagement from './LogosManagement';
 import FooterManagement from './FooterManagement';
+import PasswordsManagement from './PasswordsManagement';
 import NotificationSystem from './NotificationSystem';
 import { useLogos } from '../../context/LogosContext';
 
 const AdminDashboardEnhanced = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const { logos } = useLogos();
@@ -170,6 +171,7 @@ const AdminDashboardEnhanced = () => {
   const libraryMenuItems = [
     { id: 'logos', label: 'Logo', icon: Image, component: LogosManagement },
     { id: 'footer', label: 'Footer', icon: Columns, component: FooterManagement },
+    { id: 'passwords', label: 'Passwords', icon: Key, component: PasswordsManagement },
     { id: 'music', label: 'Music', icon: Music, component: MusicManagement },
     { id: 'blog', label: 'Blog', icon: FileText, component: BlogManagement },
     { id: 'users', label: 'Users', icon: Users, component: UsersManagement },
@@ -183,27 +185,25 @@ const AdminDashboardEnhanced = () => {
   return (
     <div className="min-h-screen bg-black flex">
       {/* Spotify-style Sidebar */}
-      <div className={`bg-black flex flex-col transition-all duration-300 ${
-        sidebarOpen ? 'w-64' : 'w-[72px]'
-      }`}>
+      <div className="bg-black flex flex-col w-[72px]">
         {/* Logo Section */}
         <div className="p-6">
-          <div className="flex items-center">
-            {sidebarOpen ? (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => setActiveSection('dashboard')}
+              className="flex items-center justify-center w-12 h-12 hover:bg-[#282828] rounded-md transition-colors"
+              title="Dashboard Home"
+            >
               <img 
                 src={logos?.adminDashboard?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"}
                 alt={logos?.adminDashboard?.alt || "Kushie Admin"}
+                className="max-w-full max-h-full object-contain"
                 style={{
                   width: logos?.adminDashboard?.width === 'auto' ? 'auto' : `${logos?.adminDashboard?.width}px`,
                   height: logos?.adminDashboard?.height === 'auto' ? 'auto' : `${logos?.adminDashboard?.height}px`,
-                  maxHeight: '40px'
                 }}
               />
-            ) : (
-              <div className="w-10 h-10 bg-spotify-green rounded-full flex items-center justify-center">
-                <span className="text-black font-bold text-lg">K</span>
-              </div>
-            )}
+            </button>
           </div>
         </div>
 
@@ -217,25 +217,16 @@ const AdminDashboardEnhanced = () => {
                 <li key={item.id}>
                   <button
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-md transition-all group ${
+                    className={`w-full flex items-center justify-center px-3 py-3 rounded-md transition-all group ${
                       isActive
                         ? 'text-white bg-[#282828]'
                         : 'text-[#b3b3b3] hover:text-white'
                     }`}
+                    title={item.label}
                   >
                     <Icon className={`w-6 h-6 flex-shrink-0 ${
-                      isActive ? 'text-white' : 'text-[#b3b3b3] group-hover:text-white'
+                      isActive ? 'text-[#CB6015]' : 'text-[#b3b3b3] group-hover:text-white'
                     }`} />
-                    {sidebarOpen && (
-                      <div className="flex items-center justify-between flex-1">
-                        <span className="font-medium text-sm">{item.label}</span>
-                        {item.stat !== undefined && (
-                          <span className="text-xs text-[#b3b3b3] bg-[#282828] px-2 py-0.5 rounded-full">
-                            {item.stat}
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </button>
                 </li>
               );
@@ -248,15 +239,6 @@ const AdminDashboardEnhanced = () => {
 
         {/* Library Section */}
         <div className="px-2 flex-1">
-          {sidebarOpen && (
-            <div className="px-4 py-2 flex items-center justify-between">
-              <h3 className="text-[#b3b3b3] text-sm font-medium">Your Library</h3>
-              <button className="text-[#b3b3b3] hover:text-white transition-colors">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          
           <ul className="space-y-1 mt-2">
             {libraryMenuItems.map((item) => {
               const Icon = item.icon;
@@ -265,27 +247,16 @@ const AdminDashboardEnhanced = () => {
                 <li key={item.id}>
                   <button
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-md transition-all group ${
+                    className={`w-full flex items-center justify-center px-3 py-3 rounded-md transition-all group ${
                       isActive
                         ? 'text-white bg-[#282828]'
                         : 'text-[#b3b3b3] hover:text-white'
                     }`}
+                    title={item.label}
                   >
-                    <div className={`p-2 rounded-md ${
-                      isActive ? 'bg-[#404040]' : 'bg-[#282828] group-hover:bg-[#404040]'
-                    }`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    {sidebarOpen && (
-                      <div className="flex items-center justify-between flex-1">
-                        <span className="font-medium text-sm">{item.label}</span>
-                        {item.stat !== undefined && (
-                          <span className="text-xs text-[#b3b3b3] bg-[#282828] px-1.5 py-0.5 rounded">
-                            {item.stat}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <Icon className={`w-6 h-6 ${
+                      isActive ? 'text-[#CB6015]' : 'text-[#b3b3b3] group-hover:text-white'
+                    }`} />
                   </button>
                 </li>
               );
@@ -297,22 +268,13 @@ const AdminDashboardEnhanced = () => {
         <div className="p-4 border-t border-[#282828]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-4 px-4 py-3 rounded-md text-[#b3b3b3] hover:text-white transition-all group"
+            className="w-full flex items-center justify-center px-3 py-3 rounded-md text-[#b3b3b3] hover:text-white transition-all group"
+            title="Log out"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && (
-              <span className="font-medium text-sm">Log out</span>
-            )}
+            <LogOut className="w-6 h-6 flex-shrink-0" />
           </button>
         </div>
 
-        {/* Sidebar Toggle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute top-6 -right-3 w-6 h-6 bg-black border border-[#282828] rounded-full flex items-center justify-center hover:bg-[#282828] transition-colors"
-        >
-          {sidebarOpen ? <ChevronLeft className="w-3 h-3 text-white" /> : <ChevronRight className="w-3 h-3 text-white" />}
-        </button>
       </div>
 
       {/* Main Content Area */}
@@ -336,7 +298,7 @@ const AdminDashboardEnhanced = () => {
           <div className="h-full overflow-y-auto">
             {/* Gradient Background */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#1e3c72] via-[#121212] to-[#121212] h-[332px]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#CB6015] via-[#121212] to-[#121212] h-[332px]" />
               <div className="relative z-10 p-8">
                 <CurrentComponent />
               </div>

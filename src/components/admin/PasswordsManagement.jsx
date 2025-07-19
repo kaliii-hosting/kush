@@ -1,256 +1,446 @@
 import { useState, useEffect } from 'react';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, get, set } from 'firebase/database';
 import { realtimeDb } from '../../config/firebase';
-import { Shield, Lock, Save, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, Check, X, Shield, Key } from 'lucide-react';
 
 const PasswordsManagement = () => {
-  const [passwords, setPasswords] = useState({
-    adminPin: '',
-    wholesalePin: ''
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showPins, setShowPins] = useState({
-    admin: false,
-    wholesale: false
-  });
-  const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
+  const [adminPin, setAdminPin] = useState('');
+  const [wholesalePin, setWholesalePin] = useState('');
+  const [currentAdminPin, setCurrentAdminPin] = useState('');
+  const [currentWholesalePin, setCurrentWholesalePin] = useState('');
+  const [newAdminPin, setNewAdminPin] = useState('');
+  const [confirmAdminPin, setConfirmAdminPin] = useState('');
+  const [newWholesalePin, setNewWholesalePin] = useState('');
+  const [confirmWholesalePin, setConfirmWholesalePin] = useState('');
+  
+  const [showCurrentAdminPin, setShowCurrentAdminPin] = useState(false);
+  const [showNewAdminPin, setShowNewAdminPin] = useState(false);
+  const [showConfirmAdminPin, setShowConfirmAdminPin] = useState(false);
+  const [showCurrentWholesalePin, setShowCurrentWholesalePin] = useState(false);
+  const [showNewWholesalePin, setShowNewWholesalePin] = useState(false);
+  const [showConfirmWholesalePin, setShowConfirmWholesalePin] = useState(false);
+  
+  const [loading, setLoading] = useState(false);
+  const [adminSuccess, setAdminSuccess] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [wholesaleSuccess, setWholesaleSuccess] = useState('');
+  const [wholesaleError, setWholesaleError] = useState('');
 
+  // Load current PINs from Firebase on component mount
   useEffect(() => {
-    fetchPasswords();
+    const loadCurrentPins = async () => {
+      try {
+        // Load admin PIN
+        const adminPinRef = ref(realtimeDb, 'settings/adminPin');
+        const adminPinSnapshot = await get(adminPinRef);
+        if (adminPinSnapshot.exists()) {
+          setAdminPin(adminPinSnapshot.val());
+        } else {
+          // Set default admin PIN if not exists
+          setAdminPin('1973');
+          await set(adminPinRef, '1973');
+        }
+
+        // Load wholesale PIN
+        const wholesalePinRef = ref(realtimeDb, 'settings/wholesalePin');
+        const wholesalePinSnapshot = await get(wholesalePinRef);
+        if (wholesalePinSnapshot.exists()) {
+          setWholesalePin(wholesalePinSnapshot.val());
+        } else {
+          // Set default wholesale PIN if not exists
+          setWholesalePin('0000');
+          await set(wholesalePinRef, '0000');
+        }
+      } catch (error) {
+        console.error('Error loading PINs:', error);
+      }
+    };
+
+    loadCurrentPins();
   }, []);
 
-  const fetchPasswords = () => {
-    try {
-      const passwordsRef = ref(realtimeDb, 'settings/passwords');
-      
-      const unsubscribe = onValue(passwordsRef, 
-        (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            setPasswords({
-              adminPin: data.adminPin || '1973',
-              wholesalePin: data.wholesalePin || '1973'
-            });
-          } else {
-            // Set default passwords
-            setPasswords({
-              adminPin: '1973',
-              wholesalePin: '1973'
-            });
-          }
-          setLoading(false);
-        },
-        (error) => {
-          console.error('Error fetching passwords:', error);
-          // Load defaults on error
-          setPasswords({
-            adminPin: '1973',
-            wholesalePin: '1973'
-          });
-          setLoading(false);
-        }
-      );
+  // Reset form and messages
+  const resetAdminForm = () => {
+    setCurrentAdminPin('');
+    setNewAdminPin('');
+    setConfirmAdminPin('');
+    setAdminError('');
+    setAdminSuccess('');
+  };
 
-      return () => unsubscribe();
+  const resetWholesaleForm = () => {
+    setCurrentWholesalePin('');
+    setNewWholesalePin('');
+    setConfirmWholesalePin('');
+    setWholesaleError('');
+    setWholesaleSuccess('');
+  };
+
+  // Validate PIN format (4 digits)
+  const validatePin = (pin) => {
+    return /^\d{4}$/.test(pin);
+  };
+
+  // Handle admin PIN change
+  const handleAdminPinChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setAdminError('');
+    setAdminSuccess('');
+
+    try {
+      // Validate current PIN
+      if (currentAdminPin !== adminPin) {
+        setAdminError('Current PIN is incorrect');
+        setLoading(false);
+        return;
+      }
+
+      // Validate new PIN format
+      if (!validatePin(newAdminPin)) {
+        setAdminError('New PIN must be exactly 4 digits');
+        setLoading(false);
+        return;
+      }
+
+      // Validate PIN confirmation
+      if (newAdminPin !== confirmAdminPin) {
+        setAdminError('New PIN and confirmation do not match');
+        setLoading(false);
+        return;
+      }
+
+      // Save new admin PIN to Firebase
+      const adminPinRef = ref(realtimeDb, 'settings/adminPin');
+      await set(adminPinRef, newAdminPin);
+      
+      // Update local state
+      setAdminPin(newAdminPin);
+      setAdminSuccess('Admin PIN updated successfully!');
+      resetAdminForm();
+
+      // Hide success message after 3 seconds
+      setTimeout(() => setAdminSuccess(''), 3000);
+
     } catch (error) {
-      console.error('Error setting up Firebase listener:', error);
+      console.error('Error updating admin PIN:', error);
+      setAdminError('Failed to update admin PIN. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
-  const validatePin = (pin, field) => {
-    const errors = {};
-    
-    if (!pin || pin.length < 4) {
-      errors[field] = 'PIN must be at least 4 digits';
-    } else if (!/^\d+$/.test(pin)) {
-      errors[field] = 'PIN must contain only numbers';
-    } else if (pin.length > 8) {
-      errors[field] = 'PIN must be 8 digits or less';
-    }
-    
-    return errors;
-  };
+  // Handle wholesale PIN change
+  const handleWholesalePinChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setWholesaleError('');
+    setWholesaleSuccess('');
 
-  const handlePinChange = (field, value) => {
-    // Only allow numbers
-    const numericValue = value.replace(/\D/g, '');
-    
-    setPasswords(prev => ({
-      ...prev,
-      [field]: numericValue
-    }));
-    
-    // Clear error for this field
-    setErrors(prev => ({
-      ...prev,
-      [field.replace('Pin', '')]: ''
-    }));
-  };
-
-  const handleSave = async () => {
-    // Validate both PINs
-    const adminErrors = validatePin(passwords.adminPin, 'admin');
-    const wholesaleErrors = validatePin(passwords.wholesalePin, 'wholesale');
-    const allErrors = { ...adminErrors, ...wholesaleErrors };
-    
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
-      return;
-    }
-    
-    setSaving(true);
-    setErrors({});
-    
     try {
-      const passwordsRef = ref(realtimeDb, 'settings/passwords');
-      await update(passwordsRef, {
-        adminPin: passwords.adminPin,
-        wholesalePin: passwords.wholesalePin,
-        updatedAt: new Date().toISOString()
-      });
+      // Validate current PIN
+      if (currentWholesalePin !== wholesalePin) {
+        setWholesaleError('Current PIN is incorrect');
+        setLoading(false);
+        return;
+      }
+
+      // Validate new PIN format
+      if (!validatePin(newWholesalePin)) {
+        setWholesaleError('New PIN must be exactly 4 digits');
+        setLoading(false);
+        return;
+      }
+
+      // Validate PIN confirmation
+      if (newWholesalePin !== confirmWholesalePin) {
+        setWholesaleError('New PIN and confirmation do not match');
+        setLoading(false);
+        return;
+      }
+
+      // Save new wholesale PIN to Firebase
+      const wholesalePinRef = ref(realtimeDb, 'settings/wholesalePin');
+      await set(wholesalePinRef, newWholesalePin);
       
-      setSuccessMessage('Passwords updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      // Update local state
+      setWholesalePin(newWholesalePin);
+      setWholesaleSuccess('Wholesale PIN updated successfully!');
+      resetWholesaleForm();
+
+      // Hide success message after 3 seconds
+      setTimeout(() => setWholesaleSuccess(''), 3000);
+
     } catch (error) {
-      console.error('Error saving passwords:', error);
-      setErrors({ general: 'Failed to save passwords. Please try again.' });
+      console.error('Error updating wholesale PIN:', error);
+      setWholesaleError('Failed to update wholesale PIN. Please try again.');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-spotify-green border-t-transparent"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Password Management</h1>
-        <p className="text-gray-400">Manage PIN codes for secure access to admin and wholesale areas</p>
-      </div>
-
-      {successMessage && (
-        <div className="mb-6 bg-green-500/20 border border-green-500 rounded-lg p-4 flex items-center gap-3">
-          <Shield className="h-5 w-5 text-green-500" />
-          <p className="text-green-500">{successMessage}</p>
-        </div>
-      )}
-
-      {errors.general && (
-        <div className="mb-6 bg-red-500/20 border border-red-500 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500" />
-          <p className="text-red-500">{errors.general}</p>
-        </div>
-      )}
-
-      <div className="grid gap-6 max-w-2xl">
-        {/* Admin PIN */}
-        <div className="bg-spotify-light-gray rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Lock className="h-6 w-6 text-spotify-green" />
-            <h2 className="text-xl font-semibold text-white">Admin Dashboard PIN</h2>
-          </div>
-          
-          <p className="text-gray-400 text-sm mb-4">
-            This PIN is required to access the admin dashboard
-          </p>
-          
-          <div className="relative">
-            <input
-              type={showPins.admin ? 'text' : 'password'}
-              value={passwords.adminPin}
-              onChange={(e) => handlePinChange('adminPin', e.target.value)}
-              maxLength="8"
-              placeholder="Enter 4-8 digit PIN"
-              className={`w-full px-4 py-3 bg-spotify-gray border rounded-lg text-white focus:outline-none focus:border-spotify-green ${
-                errors.admin ? 'border-red-500' : 'border-gray-600'
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPins(prev => ({ ...prev, admin: !prev.admin }))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              {showPins.admin ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
-          </div>
-          {errors.admin && (
-            <p className="text-red-500 text-sm mt-2">{errors.admin}</p>
-          )}
+    <div className="p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Password Management</h1>
+          <p className="text-[#b3b3b3]">Manage PIN passwords for admin and wholesale access</p>
         </div>
 
-        {/* Wholesale PIN */}
-        <div className="bg-spotify-light-gray rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Lock className="h-6 w-6 text-spotify-green" />
-            <h2 className="text-xl font-semibold text-white">Wholesale Page PIN</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Admin PIN Section */}
+          <div className="bg-[#181818] rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-[#CB6015]/20 rounded-lg">
+                <Shield className="w-6 h-6 text-[#CB6015]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Admin PIN</h2>
+                <p className="text-sm text-[#b3b3b3]">Change the PIN for admin dashboard access</p>
+              </div>
+            </div>
+
+            {/* Success/Error Messages */}
+            {adminSuccess && (
+              <div className="mb-4 p-3 bg-green-900/20 border border-green-500/20 rounded-lg flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 text-sm">{adminSuccess}</span>
+              </div>
+            )}
+            
+            {adminError && (
+              <div className="mb-4 p-3 bg-red-900/20 border border-red-500/20 rounded-lg flex items-center gap-2">
+                <X className="w-4 h-4 text-red-400" />
+                <span className="text-red-400 text-sm">{adminError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAdminPinChange} className="space-y-4">
+              {/* Current Admin PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Current Admin PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentAdminPin ? 'text' : 'password'}
+                    value={currentAdminPin}
+                    onChange={(e) => setCurrentAdminPin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Enter current PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentAdminPin(!showCurrentAdminPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showCurrentAdminPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Admin PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  New Admin PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewAdminPin ? 'text' : 'password'}
+                    value={newAdminPin}
+                    onChange={(e) => setNewAdminPin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Enter new 4-digit PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAdminPin(!showNewAdminPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showNewAdminPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Admin PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Confirm New Admin PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmAdminPin ? 'text' : 'password'}
+                    value={confirmAdminPin}
+                    onChange={(e) => setConfirmAdminPin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Confirm new PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmAdminPin(!showConfirmAdminPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showConfirmAdminPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#CB6015] hover:bg-[#d86b1a] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                {loading ? 'Updating...' : 'Update Admin PIN'}
+              </button>
+            </form>
           </div>
-          
-          <p className="text-gray-400 text-sm mb-4">
-            This PIN is required to access the wholesale ordering page
-          </p>
-          
-          <div className="relative">
-            <input
-              type={showPins.wholesale ? 'text' : 'password'}
-              value={passwords.wholesalePin}
-              onChange={(e) => handlePinChange('wholesalePin', e.target.value)}
-              maxLength="8"
-              placeholder="Enter 4-8 digit PIN"
-              className={`w-full px-4 py-3 bg-spotify-gray border rounded-lg text-white focus:outline-none focus:border-spotify-green ${
-                errors.wholesale ? 'border-red-500' : 'border-gray-600'
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPins(prev => ({ ...prev, wholesale: !prev.wholesale }))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              {showPins.wholesale ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
+
+          {/* Wholesale PIN Section */}
+          <div className="bg-[#181818] rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Key className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Wholesale PIN</h2>
+                <p className="text-sm text-[#b3b3b3]">Change the PIN for wholesale page access</p>
+              </div>
+            </div>
+
+            {/* Success/Error Messages */}
+            {wholesaleSuccess && (
+              <div className="mb-4 p-3 bg-green-900/20 border border-green-500/20 rounded-lg flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 text-sm">{wholesaleSuccess}</span>
+              </div>
+            )}
+            
+            {wholesaleError && (
+              <div className="mb-4 p-3 bg-red-900/20 border border-red-500/20 rounded-lg flex items-center gap-2">
+                <X className="w-4 h-4 text-red-400" />
+                <span className="text-red-400 text-sm">{wholesaleError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleWholesalePinChange} className="space-y-4">
+              {/* Current Wholesale PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Current Wholesale PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentWholesalePin ? 'text' : 'password'}
+                    value={currentWholesalePin}
+                    onChange={(e) => setCurrentWholesalePin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Enter current PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentWholesalePin(!showCurrentWholesalePin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showCurrentWholesalePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Wholesale PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  New Wholesale PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewWholesalePin ? 'text' : 'password'}
+                    value={newWholesalePin}
+                    onChange={(e) => setNewWholesalePin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Enter new 4-digit PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewWholesalePin(!showNewWholesalePin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showNewWholesalePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Wholesale PIN */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Confirm New Wholesale PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmWholesalePin ? 'text' : 'password'}
+                    value={confirmWholesalePin}
+                    onChange={(e) => setConfirmWholesalePin(e.target.value)}
+                    className="w-full bg-[#282828] border border-[#404040] rounded-lg px-4 py-3 pr-12 text-white placeholder-[#b3b3b3] focus:outline-none focus:border-[#CB6015]"
+                    placeholder="Confirm new PIN"
+                    maxLength="4"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmWholesalePin(!showConfirmWholesalePin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+                  >
+                    {showConfirmWholesalePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <Key className="w-4 h-4" />
+                {loading ? 'Updating...' : 'Update Wholesale PIN'}
+              </button>
+            </form>
           </div>
-          {errors.wholesale && (
-            <p className="text-red-500 text-sm mt-2">{errors.wholesale}</p>
-          )}
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-spotify-green hover:bg-spotify-green-hover text-black font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-5 w-5" />
-              Save Changes
-            </>
-          )}
-        </button>
-
-        {/* Security Notice */}
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
-            <div>
-              <p className="text-yellow-500 font-semibold">Security Notice</p>
-              <p className="text-gray-400 text-sm mt-1">
-                Make sure to store these PINs securely and share them only with authorized personnel. 
-                Changing these PINs will immediately affect access to the respective areas.
-              </p>
+        {/* Information Section */}
+        <div className="mt-8 bg-[#181818] rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Security Information</h3>
+          <div className="space-y-3 text-sm text-[#b3b3b3]">
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-[#CB6015] rounded-full mt-2 flex-shrink-0" />
+              <p>PIN passwords must be exactly 4 digits (0-9)</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-[#CB6015] rounded-full mt-2 flex-shrink-0" />
+              <p>Admin PIN controls access to the admin dashboard</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-[#CB6015] rounded-full mt-2 flex-shrink-0" />
+              <p>Wholesale PIN controls access to the wholesale ordering page</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-[#CB6015] rounded-full mt-2 flex-shrink-0" />
+              <p>Changes are immediately synced to Firebase and applied system-wide</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-[#CB6015] rounded-full mt-2 flex-shrink-0" />
+              <p>Use the eye icon to toggle PIN visibility when entering</p>
             </div>
           </div>
         </div>

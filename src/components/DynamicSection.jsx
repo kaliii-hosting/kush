@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import ProductSections from './ProductSections';
 import AwardWinning from './AwardWinning';
+import FieryProductCards from './FieryProductCards';
 
-const DynamicSection = ({ section, className = '', isFirstSection = false }) => {
+const DynamicSection = ({ section, className = '', isFirstSection = false, onCartClick }) => {
   // Add consistent spacing wrapper for all sections
   const sectionWrapper = (content, sectionType) => {
     // Special handling for main hero section
@@ -285,7 +286,22 @@ const DynamicSection = ({ section, className = '', isFirstSection = false }) => 
 
   // Render product sections
   if (section.type === 'products') {
-    return sectionWrapper(<ProductSections productType={section.productType} />, 'products');
+    // Skip rendering recentlyViewed sections
+    if (section.productType === 'recentlyViewed') {
+      return null;
+    }
+    
+    return sectionWrapper(
+      <>
+        <ProductSections productType={section.productType} />
+        {section.productType === 'newArrivals' && (
+          <div className="mt-16">
+            <FieryProductCards onCartClick={onCartClick} />
+          </div>
+        )}
+      </>,
+      'products'
+    );
   }
 
   // Render award-winning section

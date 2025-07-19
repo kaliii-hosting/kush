@@ -57,9 +57,7 @@ const SpotifyHome = ({ onCartClick }) => {
   const featured = products.slice(0, 6);
   const popular = products.slice(0, 10);
   const newArrivals = products.slice(5, 15);
-  const recommended = products.slice(10, 20);
   const trending = products.slice(0, 10);
-  const recentlyViewed = products.slice(8, 18);
   const madeForYou = products.slice(3, 13);
 
   return (
@@ -266,7 +264,7 @@ const SpotifyHome = ({ onCartClick }) => {
         title="Made for you"
         subtitle="Based on your recent activity"
         items={madeForYou}
-        showAll="/shop?filter=recommended"
+        showAll="/shop"
       />
 
       {/* Mini Hero Section 1 - Premium Experience */}
@@ -320,13 +318,6 @@ const SpotifyHome = ({ onCartClick }) => {
         </div>
       </div>
 
-      {/* Recently viewed */}
-      <Section
-        title="Recently viewed"
-        subtitle="Pick up where you left off"
-        items={recentlyViewed}
-        showAll="/shop?filter=recent"
-      />
 
 
       {/* Trending Products Carousel - Spotify Style */}

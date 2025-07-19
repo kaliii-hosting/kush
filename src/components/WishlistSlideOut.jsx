@@ -49,13 +49,13 @@ const WishlistSlideOut = ({ isOpen, onClose }) => {
       
       {/* Wishlist Slide-out */}
       <div 
-        className={`fixed right-0 top-0 h-[calc(100vh-3rem)] sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
+        className={`fixed right-0 top-0 h-full sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
             <div className="flex items-center gap-3">
               <Heart className="h-6 w-6 text-red-500 fill-current" />
               <h2 className="text-xl font-bold text-white">Your Wishlist</h2>

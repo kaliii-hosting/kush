@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 const AdminAuthContext = createContext({});
@@ -24,6 +24,8 @@ export const AdminAuthProvider = ({ children }) => {
   // Sign in admin silently when PIN is verified
   const signInAdmin = async () => {
     try {
+      // Set session persistence - admin login only lasts for the browser session
+      await setPersistence(auth, browserSessionPersistence);
       const result = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
       setAdminUser(result.user);
       setError('');
@@ -48,7 +50,6 @@ export const AdminAuthProvider = ({ children }) => {
     try {
       await signOut(auth);
       setAdminUser(null);
-      localStorage.removeItem('adminAuthenticated');
     } catch (error) {
       console.error('Admin sign out error:', error);
     }
@@ -68,13 +69,7 @@ export const AdminAuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Auto sign in admin if PIN authenticated
-  useEffect(() => {
-    const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
-    if (isAdminAuthenticated && !adminUser && !loading && !error) {
-      signInAdmin();
-    }
-  }, [adminUser, loading]);
+  // Remove auto sign in - admin must enter PIN every time
 
   const value = {
     adminUser,

@@ -10,6 +10,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState('dropdown'); // 'dropdown' or 'modal'
   const [editingProduct, setEditingProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [isUsingFirebase, setIsUsingFirebase] = useState(false);
@@ -302,29 +303,32 @@ const ProductsPage = () => {
           <button
             onClick={() => {
               setEditingProduct(null);
-              setShowForm(true);
+              setShowForm(!showForm);
             }}
             className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black px-4 py-2 rounded-lg transition-colors font-medium"
           >
-            <Plus size={20} />
-            Add Product
+            <Plus size={20} className={`transition-transform ${showForm ? 'rotate-45' : ''}`} />
+            {showForm ? 'Cancel' : 'Add Product'}
           </button>
         </div>
       </div>
 
-      {/* Product Form Modal */}
+      {/* Product Form Dropdown for both Add and Edit */}
       {showForm && (
-        <ProductForm
-          product={editingProduct}
-          onSubmit={editingProduct 
-            ? (data) => handleUpdateProduct(editingProduct.id, data)
-            : handleAddProduct
-          }
-          onCancel={() => {
-            setShowForm(false);
-            setEditingProduct(null);
-          }}
-        />
+        <div className="mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <ProductForm
+            product={editingProduct}
+            onSubmit={editingProduct 
+              ? (data) => handleUpdateProduct(editingProduct.id, data)
+              : handleAddProduct
+            }
+            onCancel={() => {
+              setShowForm(false);
+              setEditingProduct(null);
+            }}
+            isDropdown={true}
+          />
+        </div>
       )}
 
       {/* Products List */}

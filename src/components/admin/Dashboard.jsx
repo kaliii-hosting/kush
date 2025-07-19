@@ -8,7 +8,7 @@ import {
   Eye, CheckCircle, XCircle, Clock, 
   BarChart3, PieChart, Activity, Play,
   MoreHorizontal, Download, Filter,
-  Music, FileText, Database, Receipt, RefreshCw
+  Music, FileText, Database, Receipt, RefreshCw, X
 } from 'lucide-react';
 
 const Dashboard = () => {

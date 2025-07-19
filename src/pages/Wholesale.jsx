@@ -30,8 +30,30 @@ const Wholesale = ({ onCartClick }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Filter wholesale products
+  const wholesaleProductsFiltered = firebaseProducts.filter(product => 
+    product.tags?.includes('wholesale') || product.category?.toLowerCase().includes('wholesale')
+  );
+  
+  // Use all products if no wholesale-specific products exist
+  const wholesaleProducts = wholesaleProductsFiltered.length > 0 
+    ? wholesaleProductsFiltered.slice(0, 10)
+    : firebaseProducts.slice(0, 10); // Limit to 10 products for the slider
   
   // Remove authentication check - will be handled by wrapper component
+
+  // Auto-play slider
+  useEffect(() => {
+    if (wholesaleProducts.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % wholesaleProducts.length);
+    }, 4000); // Change slide every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [wholesaleProducts.length]);
 
   // Initialize map
   useEffect(() => {
@@ -180,21 +202,34 @@ const Wholesale = ({ onCartClick }) => {
             stateLayersRef.current.push(geoJsonLayer);
             
             // Fit map bounds to show all operating states
-            const operatingStateBounds = [];
-            geoJsonLayer.eachLayer((layer) => {
-              if (operatingStates.some(state => state.name === layer.feature.properties.name)) {
-                operatingStateBounds.push(layer.getBounds());
-              }
-            });
-            
-            if (operatingStateBounds.length > 0) {
-              const bounds = operatingStateBounds.reduce((acc, curr) => acc.extend(curr));
-              // Adjust padding to zoom in more on the states
-              const isMobile = window.innerWidth <= 768;
-              map.fitBounds(bounds, { 
-                padding: isMobile ? [20, 20] : [30, 30],
-                maxZoom: 5 // Prevent zooming in too much
+            try {
+              const operatingStateBounds = [];
+              geoJsonLayer.eachLayer((layer) => {
+                if (operatingStates.some(state => state.name === layer.feature.properties.name)) {
+                  const layerBounds = layer.getBounds();
+                  if (layerBounds.isValid()) {
+                    operatingStateBounds.push(layerBounds);
+                  }
+                }
               });
+              
+              if (operatingStateBounds.length > 0) {
+                let bounds = operatingStateBounds[0];
+                for (let i = 1; i < operatingStateBounds.length; i++) {
+                  bounds = bounds.extend(operatingStateBounds[i]);
+                }
+                // Adjust padding to zoom in more on the states
+                const isMobile = window.innerWidth <= 768;
+                if (bounds.isValid()) {
+                  map.fitBounds(bounds, { 
+                    padding: isMobile ? [20, 20] : [30, 30],
+                    maxZoom: 5 // Prevent zooming in too much
+                  });
+                }
+              }
+            } catch (boundsError) {
+              console.log('Could not fit bounds, using default view');
+              // Keep default center and zoom if bounds calculation fails
             }
           })
           .catch(error => {
@@ -353,51 +388,99 @@ const Wholesale = ({ onCartClick }) => {
         }
       `}</style>
       
-      {/* Clean Spotify-style Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Subtle gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-black to-black" />
+      {/* Hero Section with Background Image and Product Slider */}
+      <section className="relative overflow-hidden min-h-screen flex items-center justify-center">
+        {/* Background image */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: 'url(https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Pictures/Screenshot_5_1752608083133_6u2c3km.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
         
-        <div className="relative mx-auto max-w-7xl px-6 pt-32 pb-20 lg:px-8 lg:pt-40 lg:pb-28">
-          <div className="mx-auto max-w-3xl text-center">
-            {/* Clean typography */}
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 py-20">
+          <div className="mx-auto max-w-4xl text-center mb-16">
+            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl mb-6">
               Wholesale Partnership Program
             </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
-              Join over 500 retailers nationwide. Get premium cannabis products at wholesale prices with flexible terms and dedicated support.
+            <p className="text-xl leading-8 text-gray-200">
+              Get premium cannabis products at wholesale prices with flexible terms and dedicated support.
             </p>
             
-            {/* Simple CTA buttons */}
+            {/* CTA buttons */}
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <a
                 href="/contact"
-                className="rounded-full bg-primary px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                className="rounded-full bg-primary px-8 py-4 text-lg font-semibold text-white shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
               >
                 Apply Now
               </a>
               <a
                 href="#wholesale-info"
-                className="text-base font-semibold leading-6 text-white hover:text-gray-300 transition-colors"
+                className="text-lg font-semibold leading-6 text-white hover:text-gray-300 transition-colors"
               >
                 Learn more <span aria-hidden="true">→</span>
               </a>
             </div>
           </div>
 
-          {/* Clean Stats Grid */}
-          <div className="mx-auto mt-16 grid max-w-2xl grid-cols-2 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4">
-            {[
-              { label: 'Active Partners', value: '500+' },
-              { label: 'States Served', value: '6' },
-              { label: 'Products Available', value: '1,000+' },
-              { label: 'Years Experience', value: '10+' },
-            ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center">
-                <dt className="text-base leading-7 text-gray-400">{stat.label}</dt>
-                <dd className="text-3xl font-bold leading-9 tracking-tight text-white">{stat.value}</dd>
+          {/* Wholesale Product Slider */}
+          <div className="relative mx-auto max-w-md">
+            <div className="overflow-hidden rounded-xl">
+              <div 
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {wholesaleProducts.map((product, index) => (
+                  <div key={product.id} className="w-full flex-shrink-0 px-4">
+                    <div className="bg-black/80 backdrop-blur-sm rounded-lg p-6 border border-gray-800">
+                      <div className="aspect-square mb-4 overflow-hidden rounded-lg bg-gray-900">
+                        {product.imageUrl && (
+                          <img 
+                            src={product.imageUrl} 
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
+                      <p className="text-2xl font-bold text-primary mb-2">${product.price}</p>
+                      {product.category && (
+                        <p className="text-sm text-gray-400">{product.category}</p>
+                      )}
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="mt-4 w-full rounded-full bg-primary px-6 py-3 text-base font-semibold text-white hover:bg-primary-hover transition-colors"
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            
+            {/* Slider indicators */}
+            <div className="mt-6 flex justify-center gap-2">
+              {wholesaleProducts.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`h-2 w-2 rounded-full transition-all ${
+                    currentSlide === index 
+                      ? 'bg-primary w-8' 
+                      : 'bg-gray-600 hover:bg-gray-500'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>

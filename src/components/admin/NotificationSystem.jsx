@@ -5,7 +5,7 @@ import { useEnhancedProducts } from '../../context/EnhancedProductsContext';
 import { 
   Bell, X, User, Package, Music, FileText, 
   UserPlus, UserCheck, RefreshCw, Trash2, Plus,
-  Clock, CheckCircle, Activity
+  Clock, CheckCircle, Activity, ShoppingCart
 } from 'lucide-react';
 
 const NotificationSystem = () => {
@@ -22,6 +22,8 @@ const NotificationSystem = () => {
     user_new: { icon: UserPlus, color: 'text-green-400', label: 'New User' },
     user_active: { icon: UserCheck, color: 'text-blue-400', label: 'User Active' },
     user_inactive: { icon: User, color: 'text-gray-400', label: 'User Inactive' },
+    user_deleted: { icon: Trash2, color: 'text-red-400', label: 'User Deleted' },
+    user_restored: { icon: RefreshCw, color: 'text-green-400', label: 'User Restored' },
     product_added: { icon: Plus, color: 'text-green-400', label: 'Product Added' },
     product_edited: { icon: RefreshCw, color: 'text-yellow-400', label: 'Product Updated' },
     product_deleted: { icon: Trash2, color: 'text-red-400', label: 'Product Deleted' },
@@ -30,7 +32,11 @@ const NotificationSystem = () => {
     music_deleted: { icon: Music, color: 'text-red-400', label: 'Music Deleted' },
     blog_added: { icon: FileText, color: 'text-green-400', label: 'Blog Published' },
     blog_edited: { icon: RefreshCw, color: 'text-yellow-400', label: 'Blog Updated' },
-    blog_deleted: { icon: FileText, color: 'text-red-400', label: 'Blog Deleted' }
+    blog_deleted: { icon: FileText, color: 'text-red-400', label: 'Blog Deleted' },
+    invoice_created: { icon: FileText, color: 'text-blue-400', label: 'Invoice Created' },
+    order_placed: { icon: Package, color: 'text-green-400', label: 'Order Placed' },
+    wholesale_order: { icon: Package, color: 'text-purple-400', label: 'Wholesale Order' },
+    shopify_order: { icon: ShoppingCart, color: 'text-orange-400', label: 'Shopify Order' }
   };
 
   // Load notifications from Firebase
@@ -262,6 +268,89 @@ const NotificationSystem = () => {
       }
     });
     listeners.push(blogListener);
+    
+    // Listen for wholesale invoices
+    const invoicesRef = ref(realtimeDb, 'wholesale_invoices');
+    let initialInvoicesLoaded = false;
+    
+    const invoiceListener = onValue(invoicesRef, (snapshot) => {
+      if (!initialInvoicesLoaded) {
+        initialInvoicesLoaded = true;
+        return;
+      }
+      
+      if (snapshot.exists()) {
+        const currentInvoices = snapshot.val();
+        const latestInvoice = Object.entries(currentInvoices)
+          .map(([id, data]) => ({ id, ...data }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+          
+        if (latestInvoice) {
+          createNotification({
+            type: 'invoice_created',
+            title: 'New Invoice Generated',
+            message: `Invoice ${latestInvoice.invoiceNumber} - $${latestInvoice.total?.toFixed(2)}`,
+            metadata: { invoiceId: latestInvoice.id, invoiceData: latestInvoice }
+          });
+        }
+      }
+    });
+    listeners.push(invoiceListener);
+    
+    // Listen for wholesale orders
+    const ordersRef = ref(realtimeDb, 'wholesale_orders');
+    let initialOrdersLoaded = false;
+    
+    const orderListener = onValue(ordersRef, (snapshot) => {
+      if (!initialOrdersLoaded) {
+        initialOrdersLoaded = true;
+        return;
+      }
+      
+      if (snapshot.exists()) {
+        const currentOrders = snapshot.val();
+        const latestOrder = Object.entries(currentOrders)
+          .map(([id, data]) => ({ id, ...data }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+          
+        if (latestOrder) {
+          createNotification({
+            type: 'wholesale_order',
+            title: 'New Wholesale Order',
+            message: `Order from ${latestOrder.customer?.name || 'Guest'} - $${latestOrder.total?.toFixed(2)}`,
+            metadata: { orderId: latestOrder.id, orderData: latestOrder }
+          });
+        }
+      }
+    });
+    listeners.push(orderListener);
+    
+    // Listen for user activities (login/logout)
+    const usersActivityRef = ref(realtimeDb, 'users');
+    const userActivityListener = onValue(usersActivityRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        Object.entries(users).forEach(([userId, userData]) => {
+          // Check if user has been deleted or restored
+          if (userData.isDeleted && !previousUsers[userId]?.isDeleted) {
+            createNotification({
+              type: 'user_deleted',
+              title: 'User Deleted',
+              message: `${userData.displayName || userData.email} has been marked as deleted`,
+              metadata: { userId, userData }
+            });
+          } else if (!userData.isDeleted && previousUsers[userId]?.isDeleted) {
+            createNotification({
+              type: 'user_restored',
+              title: 'User Restored',
+              message: `${userData.displayName || userData.email} has been restored`,
+              metadata: { userId, userData }
+            });
+          }
+        });
+      }
+    });
+    listeners.push(userActivityListener);
     
     // Cleanup
     return () => {
@@ -542,6 +631,36 @@ const NotificationSystem = () => {
     </div>
     </>
   );
+};
+
+// Export createNotification helper for use in other components
+export const createAdminNotification = async (data) => {
+  try {
+    const notificationsRef = ref(realtimeDb, 'admin_notifications');
+    await push(notificationsRef, {
+      ...data,
+      timestamp: Date.now(),
+      read: false,
+      createdAt: serverTimestamp()
+    });
+    
+    // Clean up old notifications (keep only last 100)
+    const snapshot = await get(notificationsRef);
+    if (snapshot.exists()) {
+      const allNotifications = Object.entries(snapshot.val());
+      if (allNotifications.length > 100) {
+        const sortedNotifications = allNotifications
+          .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+        
+        const toDelete = sortedNotifications.slice(100);
+        for (const [id] of toDelete) {
+          await remove(ref(realtimeDb, `admin_notifications/${id}`));
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
 };
 
 export default NotificationSystem;

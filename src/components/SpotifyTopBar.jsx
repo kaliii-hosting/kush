@@ -328,10 +328,6 @@ const SpotifyTopBar = ({ onCartClick }) => {
                       >
                         Sign Up
                       </button>
-                      <div className="border-t border-border"></div>
-                      <a href="/admin/login" className="block px-4 py-3 text-sm text-spotify-text-subdued hover:bg-gray">
-                        Admin Access
-                      </a>
                     </>
                   )}
                 </div>

@@ -12,7 +12,7 @@ const SpotifyLayout = ({ children }) => {
   const handleCartClose = () => setIsCartOpen(false);
   
   return (
-    <div className="h-screen flex flex-col bg-black overflow-hidden max-w-full">
+    <div className="h-screen flex flex-col bg-black overflow-hidden max-w-full relative">
       {/* Top bar */}
       <SpotifyTopBar onCartClick={handleCartOpen} />
       

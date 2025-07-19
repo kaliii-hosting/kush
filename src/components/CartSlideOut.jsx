@@ -10,7 +10,7 @@ import { autoTable } from 'jspdf-autotable';
 import { ref, push, serverTimestamp } from 'firebase/database';
 import { realtimeDb } from '../config/firebase';
 
-const CartSlideOut = ({ isOpen, onClose }) => {
+const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -19,8 +19,8 @@ const CartSlideOut = ({ isOpen, onClose }) => {
   const [shareMessage, setShareMessage] = useState('');
   const { user, userData } = useAuth();
   
-  // Determine which cart to use based on current page
-  const isWholesalePage = location.pathname.includes('/wholesale');
+  // Determine which cart to use based on prop or current page
+  const isWholesalePage = isWholesale || location.pathname.includes('/wholesale') || location.pathname.includes('/sales');
   
   // Get cart context based on page
   const shopifyCart = useCart();
@@ -28,15 +28,24 @@ const CartSlideOut = ({ isOpen, onClose }) => {
   
   // Use appropriate cart
   const currentCart = isWholesalePage ? wholesaleCart : shopifyCart;
-  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount } = currentCart;
+  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, customerForOrder } = currentCart;
 
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      // Add class to body to prevent scrolling on mobile
+      document.body.classList.add('cart-open');
     } else {
+      // Remove class from body
+      document.body.classList.remove('cart-open');
       const timer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(timer);
     }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('cart-open');
+    };
   }, [isOpen]);
 
   // Generate PDF invoice for wholesale checkout
@@ -145,11 +154,25 @@ const CartSlideOut = ({ isOpen, onClose }) => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
-    if (user && userData) {
-      doc.text(userData.displayName || userData.email || 'Customer', margin, yPosition + 5);
+    
+    // Use selected customer if available (for sales page), otherwise use logged-in user
+    const billingCustomer = customerForOrder || userData;
+    const isSalesOrder = location.pathname.includes('/sales');
+    
+    if (billingCustomer) {
+      doc.text(billingCustomer.displayName || billingCustomer.email || 'Customer', margin, yPosition + 5);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.text(userData.email || '', margin, yPosition + 10);
+      doc.text(billingCustomer.email || '', margin, yPosition + 10);
+      if (billingCustomer.address) {
+        doc.setFontSize(9);
+        const addressLines = doc.splitTextToSize(billingCustomer.address, 80);
+        addressLines.forEach((line, index) => {
+          if (index < 2) { // Limit to 2 lines
+            doc.text(line, margin, yPosition + 15 + (index * 4));
+          }
+        });
+      }
     } else {
       doc.text('Guest Customer', margin, yPosition + 5);
     }
@@ -474,14 +497,25 @@ const CartSlideOut = ({ isOpen, onClose }) => {
       const today = new Date();
       const invoiceNumber = `INV ${today.getFullYear().toString().slice(-2)}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-${today.getHours().toString().padStart(2, '0')}-${today.getMinutes().toString().padStart(2, '0')}`;
       
+      // Use selected customer if available (for sales page), otherwise use logged-in user
+      const billingCustomer = customerForOrder || userData;
+      
       const orderData = {
         invoiceNumber: invoiceNumber,
         date: today.toISOString(),
         customer: {
-          name: userData?.displayName || userData?.email || 'Guest Customer',
+          name: billingCustomer?.displayName || billingCustomer?.email || 'Guest Customer',
+          email: billingCustomer?.email || '',
+          phone: billingCustomer?.phone || '',
+          address: billingCustomer?.address || '',
+          licenseNumber: billingCustomer?.licenseNumber || '',
+          userId: billingCustomer?.id || billingCustomer?.uid || user?.uid || null
+        },
+        createdBy: {
+          name: userData?.displayName || userData?.email || 'Unknown',
           email: userData?.email || '',
-          phone: userData?.phone || '',
-          userId: user?.uid || null
+          userId: user?.uid || null,
+          role: userData?.role || 'customer'
         },
         items: cart.map(item => ({
           id: item.id,
@@ -514,6 +548,10 @@ const CartSlideOut = ({ isOpen, onClose }) => {
         cart.forEach(item => {
           removeFromCart(item.id);
         });
+        // Clear selected customer if on sales page
+        if (location.pathname.includes('/sales') && currentCart.setCustomerForOrder) {
+          currentCart.setCustomerForOrder(null);
+        }
         setSubmitSuccess(false);
         onClose();
       }, 3000);
@@ -526,7 +564,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
   if (!isVisible) return null;
 
   return (
-    <>
+    <div className="cart-slideout-container">
       {/* Backdrop */}
       <div 
         className={`fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300 ${
@@ -537,13 +575,14 @@ const CartSlideOut = ({ isOpen, onClose }) => {
       
       {/* Cart Slide-out */}
       <div 
-        className={`fixed right-0 top-0 h-[calc(100vh-3rem)] sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
+        data-cart-slideout
+        className={`fixed right-0 top-0 h-full sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
             <div className="flex items-center gap-3">
               <ShoppingCart className="h-6 w-6 text-white" />
               <h2 className="text-xl font-bold text-white">
@@ -581,7 +620,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                 </Link>
               </div>
             ) : (
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 {cart.map((item) => (
                   <div key={item.lineItemId || item.id} className="bg-card rounded-lg p-4">
                     <div className="flex gap-4">
@@ -598,7 +637,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                       
                       {/* Product Details */}
                       <div className="flex-1">
-                        <h3 className="font-bold text-white text-sm mb-1 line-clamp-2">
+                        <h3 className="font-bold text-white text-sm mb-1">
                           {item.title || item.name}
                         </h3>
                         {item.variantTitle && item.variantTitle !== 'Default Title' && (
@@ -607,7 +646,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                         <p className="text-primary font-bold mb-2">${item.price}</p>
                         
                         {/* Quantity Controls */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <button
                             onClick={() => {
                               if (isWholesalePage) {
@@ -622,11 +661,11 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                                 );
                               }
                             }}
-                            className="w-8 h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
                           >
                             <Minus className="h-4 w-4 text-white" />
                           </button>
-                          <span className="text-white font-bold w-8 text-center">
+                          <span className="text-white font-bold w-6 sm:w-8 text-center text-sm sm:text-base">
                             {item.quantity}
                           </span>
                           <button
@@ -643,7 +682,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                                 );
                               }
                             }}
-                            className="w-8 h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-dark hover:bg-gray flex items-center justify-center transition-colors"
                           >
                             <Plus className="h-4 w-4 text-white" />
                           </button>
@@ -660,7 +699,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                                 );
                               }
                             }}
-                            className="ml-auto text-text-secondary hover:text-white text-sm transition-colors"
+                            className="ml-auto text-text-secondary hover:text-white text-xs sm:text-sm transition-colors"
                           >
                             Remove
                           </button>
@@ -675,7 +714,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
 
           {/* Footer with Total and Checkout */}
           {cart.length > 0 && (
-            <div className="border-t border-border p-6 space-y-4">
+            <div className="border-t border-border p-4 sm:p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-white text-lg font-bold">Total</span>
                 <span className="text-primary text-2xl font-black">${cartTotal}</span>
@@ -692,14 +731,28 @@ const CartSlideOut = ({ isOpen, onClose }) => {
                     ) : (
                       <>
                         <button
-                          onClick={() => setShowShareModal(true)}
+                          onClick={() => {
+                            // Check if on sales page and no customer selected
+                            if (location.pathname.includes('/sales') && !customerForOrder) {
+                              alert('Please select a customer before generating an invoice');
+                              return;
+                            }
+                            setShowShareModal(true);
+                          }}
                           className="w-full bg-green-600 text-white font-bold py-4 rounded-full hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
                           <Share2 className="h-5 w-5" />
                           Share Order
                         </button>
                         <button
-                          onClick={generatePDFInvoice}
+                          onClick={() => {
+                            // Check if on sales page and no customer selected
+                            if (location.pathname.includes('/sales') && !customerForOrder) {
+                              alert('Please select a customer before generating an invoice');
+                              return;
+                            }
+                            generatePDFInvoice();
+                          }}
                           className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
                         >
                           <FileText className="h-5 w-5" />
@@ -813,7 +866,7 @@ const CartSlideOut = ({ isOpen, onClose }) => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

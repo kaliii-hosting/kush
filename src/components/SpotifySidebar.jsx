@@ -11,7 +11,6 @@ const SpotifySidebar = ({ collapsed, setCollapsed }) => {
 
   const libraryItems = [
     { name: 'Liked Products', href: '/liked', type: 'playlist' },
-    { name: 'Recently Viewed', href: '/recent', type: 'playlist' },
     { name: 'Your Orders', href: '/orders', type: 'playlist' },
   ];
 

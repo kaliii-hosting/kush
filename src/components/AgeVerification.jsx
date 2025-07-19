@@ -1,13 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLogos } from '../context/LogosContext';
 
 const AgeVerification = () => {
-  // Always show age verification on every visit
-  const [isVisible, setIsVisible] = useState(true);
+  const location = useLocation();
   const navigate = useNavigate();
   const { logos } = useLogos();
+  
+  // Check if current path is admin, wholesale, or sales
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isWholesaleRoute = location.pathname.startsWith('/wholesale');
+  const isSalesRoute = location.pathname.startsWith('/sales');
+  
+  // Don't show age verification for admin, wholesale, and sales routes
+  const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute;
+  
+  // Always show age verification on every visit (except for admin/wholesale)
+  const [isVisible, setIsVisible] = useState(shouldShowVerification);
+  const [scale, setScale] = useState(1);
+  
+  // Calculate scale based on window size and zoom
+  useEffect(() => {
+    const calculateScale = () => {
+      const baseWidth = 1920; // Base width for scale 1
+      const currentWidth = window.innerWidth;
+      const zoomLevel = window.devicePixelRatio;
+      
+      // Calculate scale based on viewport and zoom
+      let newScale = Math.min(currentWidth / baseWidth, 1);
+      
+      // Adjust for zoom level
+      if (zoomLevel > 1) {
+        newScale = newScale / (zoomLevel * 0.8);
+      }
+      
+      // Set minimum and maximum scale
+      newScale = Math.max(0.5, Math.min(1.2, newScale));
+      
+      setScale(newScale);
+    };
+
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    
+    // Listen for zoom changes
+    const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+    const media = matchMedia(mqString);
+    media.addEventListener('change', calculateScale);
+    
+    return () => {
+      window.removeEventListener('resize', calculateScale);
+      media.removeEventListener('change', calculateScale);
+    };
+  }, []);
+  
+  // Update visibility when route changes
+  useEffect(() => {
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const isWholesaleRoute = location.pathname.startsWith('/wholesale');
+    const isSalesRoute = location.pathname.startsWith('/sales');
+    const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute;
+    
+    if (shouldShowVerification && !isVisible) {
+      setIsVisible(true);
+    } else if (!shouldShowVerification && isVisible) {
+      setIsVisible(false);
+    }
+  }, [location.pathname]);
 
   const handleOver21 = () => {
     // Age verified successfully - hide the popup (no storage)
@@ -26,23 +86,28 @@ const AgeVerification = () => {
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black z-[100]" />
       
-      {/* Modal */}
+      {/* Modal Container with dynamic scaling */}
       <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
-        <div className="relative bg-[#1a1a1a] rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+        <div 
+          className="age-verification-modal-container relative"
+          style={{
+            width: '450px',
+            height: 'auto',
+            maxWidth: '95vw',
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center'
+          }}
+        >
+          <div className="relative bg-[#1a1a1a] rounded-2xl shadow-2xl w-full overflow-hidden">
 
           {/* Content */}
-          <div className="relative p-8 py-12">
+          <div className="relative p-10">
             {/* Logo */}
             <div className="text-center mb-8">
               <img 
                 src={logos?.ageVerification?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
                 alt={logos?.ageVerification?.alt || "Kushie"} 
-                className="mx-auto"
-                style={{
-                  width: logos?.ageVerification?.width === 'auto' ? 'auto' : `${logos?.ageVerification?.width}px`,
-                  height: logos?.ageVerification?.height === 'auto' ? 'auto' : `${logos?.ageVerification?.height}px`,
-                  maxHeight: '60px'
-                }}
+                className="mx-auto h-16 w-auto"
               />
             </div>
             
@@ -102,7 +167,9 @@ const AgeVerification = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
+
     </>
   );
 };

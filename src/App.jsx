@@ -43,6 +43,7 @@ const Blog = lazy(() => import('./pages/Blog'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
 const Underage = lazy(() => import('./pages/Underage'))
+const Sales = lazy(() => import('./pages/Sales'))
 
 
 function App() {
@@ -90,6 +91,13 @@ function App() {
                 <Route path="/wholesale/login" element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <WholesaleLogin />
+                  </Suspense>
+                } />
+                
+                {/* Sales Route */}
+                <Route path="/sales" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Sales />
                   </Suspense>
                 } />
                 

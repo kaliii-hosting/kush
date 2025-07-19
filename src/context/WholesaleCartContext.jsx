@@ -18,6 +18,7 @@ export const WholesaleCartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [customerForOrder, setCustomerForOrder] = useState(null);
 
   // Load cart from localStorage for non-authenticated users
   useEffect(() => {
@@ -134,6 +135,7 @@ export const WholesaleCartProvider = ({ children }) => {
 
   const clearCart = async () => {
     setCart([]);
+    setCustomerForOrder(null); // Clear selected customer when cart is cleared
     if (user) {
       await saveCartToFirebase([]);
     }
@@ -207,7 +209,9 @@ export const WholesaleCartProvider = ({ children }) => {
     cartTotal: getCartTotal(),
     isOpen,
     setIsOpen,
-    loading
+    loading,
+    customerForOrder,
+    setCustomerForOrder
   };
 
   return (

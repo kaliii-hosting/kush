@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   const googleProvider = new GoogleAuthProvider();
 
   // Create user document in Firestore
-  const createUserDocument = async (user) => {
+  const createUserDocument = async (user, additionalInfo = {}) => {
     if (!user) return null;
     
     try {
@@ -52,6 +52,9 @@ export const AuthProvider = ({ children }) => {
           email: user.email,
           displayName: user.displayName || '',
           photoURL: user.photoURL || '',
+          phone: additionalInfo.phone || '',
+          address: additionalInfo.address || '',
+          licenseNumber: additionalInfo.licenseNumber || '',
           role: 'customer', // Default role
           createdAt: serverTimestamp(),
           lastLoginAt: serverTimestamp(),
@@ -100,7 +103,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Sign up with email and password
-  const signUp = async (email, password, displayName) => {
+  const signUp = async (email, password, displayName, additionalInfo = {}) => {
     try {
       setError('');
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -110,8 +113,8 @@ export const AuthProvider = ({ children }) => {
         await updateProfile(result.user, { displayName });
       }
 
-      // Create user document
-      await createUserDocument(result.user);
+      // Create user document with additional info
+      await createUserDocument(result.user, additionalInfo);
       
       return result.user;
     } catch (error) {
@@ -125,10 +128,25 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await createUserDocument(result.user);
+      const userDoc = await createUserDocument(result.user);
+      
+      // Check if user is deleted
+      if (userDoc && userDoc.isDeleted) {
+        await signOut(auth);
+        setError('This account has been disabled. Please contact support.');
+        throw new Error('Account disabled');
+      }
+      
+      // Check if user is a sales rep and redirect
+      if (userDoc && userDoc.role === 'sales') {
+        window.location.href = '/sales';
+      }
+      
       return result.user;
     } catch (error) {
-      setError(error.message);
+      if (error.message !== 'Account disabled') {
+        setError(error.message);
+      }
       throw error;
     }
   };
@@ -140,7 +158,20 @@ export const AuthProvider = ({ children }) => {
       // Try popup first, fallback to redirect if it fails
       try {
         const result = await signInWithPopup(auth, googleProvider);
-        await createUserDocument(result.user);
+        const userDoc = await createUserDocument(result.user);
+        
+        // Check if user is deleted
+        if (userDoc && userDoc.isDeleted) {
+          await signOut(auth);
+          setError('This account has been disabled. Please contact support.');
+          throw new Error('Account disabled');
+        }
+        
+        // Check if user is a sales rep and redirect
+        if (userDoc && userDoc.role === 'sales') {
+          window.location.href = '/sales';
+        }
+        
         return result.user;
       } catch (popupError) {
         // If popup blocked or COOP error, use redirect
@@ -153,7 +184,9 @@ export const AuthProvider = ({ children }) => {
         throw popupError;
       }
     } catch (error) {
-      setError(error.message);
+      if (error.message !== 'Account disabled') {
+        setError(error.message);
+      }
       throw error;
     }
   };
@@ -177,7 +210,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          await createUserDocument(result.user);
+          const userDoc = await createUserDocument(result.user);
+          
+          // Check if user is a sales rep and redirect
+          if (userDoc && userDoc.role === 'sales') {
+            window.location.href = '/sales';
+          }
         }
       } catch (error) {
         console.error('Redirect error:', error);
@@ -193,20 +231,33 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
-          setUser(user);
           // Fetch user data from Firestore
           try {
             const userRef = doc(db, 'users', user.uid);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              setUserData(userSnap.data());
+              const userData = userSnap.data();
+              
+              // Check if user is deleted
+              if (userData.isDeleted) {
+                await signOut(auth);
+                setUser(null);
+                setUserData(null);
+                setError('This account has been disabled. Please contact support.');
+                return;
+              }
+              
+              setUser(user);
+              setUserData(userData);
             } else {
               // Create user document if it doesn't exist
               const newUserData = await createUserDocument(user);
+              setUser(user);
               setUserData(newUserData);
             }
           } catch (firestoreError) {
             console.log('Could not fetch user data:', firestoreError);
+            setUser(user);
             setUserData(null);
           }
         } else {

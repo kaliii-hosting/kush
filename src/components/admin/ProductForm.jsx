@@ -23,7 +23,6 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      type: formData.category, // Map category to type for backward compatibility
       inStock: formData.inStock // Ensure inStock is included
     };
 

@@ -102,8 +102,8 @@ const SpotifyHero = () => {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { name: 'Flowers', className: 'bg-gradient-to-br from-purple-600 to-purple-900', href: '/shop' },
-              { name: 'Edibles', className: 'bg-gradient-to-br from-orange-600 to-orange-900', href: '/shop' },
-              { name: 'Concentrates', className: 'bg-gradient-to-br from-yellow-600 to-yellow-900', href: '/shop' },
+              { name: 'Edible', className: 'bg-gradient-to-br from-orange-600 to-orange-900', href: '/shop' },
+              { name: 'Concentrate', className: 'bg-gradient-to-br from-yellow-600 to-yellow-900', href: '/shop' },
               { name: 'Accessories', className: 'bg-gradient-to-br from-green-600 to-green-900', href: '/shop' },
             ].map((category) => (
               <Link

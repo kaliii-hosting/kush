@@ -10,8 +10,8 @@ const Search = () => {
   // Browse categories
   const categories = [
     { name: 'Flowers', color: 'from-primary to-primary-dark' },
-    { name: 'Edibles', color: 'from-primary/90 to-primary-dark/90' },
-    { name: 'Concentrates', color: 'from-primary/80 to-primary-dark/80' },
+    { name: 'Edible', color: 'from-primary/90 to-primary-dark/90' },
+    { name: 'Concentrate', color: 'from-primary/80 to-primary-dark/80' },
     { name: 'Vapes', color: 'from-primary/70 to-primary-dark/70' },
     { name: 'Pre-rolls', color: 'from-primary/60 to-primary-dark/60' },
     { name: 'Accessories', color: 'from-primary/50 to-primary-dark/50' },

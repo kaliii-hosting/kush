@@ -32,6 +32,10 @@ const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'))
 const AdminDashboardEnhanced = lazy(() => import('./components/admin/AdminDashboardEnhanced'))
 const AdminProtectedRoute = lazy(() => import('./components/admin/AdminProtectedRoute'))
 const WholesaleProtectedRoute = lazy(() => import('./components/WholesaleProtectedRoute'))
+const CategoryDebugger = lazy(() => import('./components/admin/CategoryDebugger'))
+const CategoryDebuggerEnhanced = lazy(() => import('./components/admin/CategoryDebuggerEnhanced'))
+const CategoryMigrationTool = lazy(() => import('./components/admin/CategoryMigrationTool'))
+const ImagePreloader = lazy(() => import('./components/ImagePreloader'))
 
 // Lazy load pages
 const AboutDynamic = lazy(() => import('./pages/AboutDynamic'))
@@ -67,6 +71,9 @@ function App() {
                       <Router>
                     <ScrollToTop />
                     <div className="min-h-screen bg-black">
+                    <Suspense fallback={null}>
+                      <ImagePreloader />
+                    </Suspense>
                     <AgeVerification />
                     <Routes>
                 {/* Admin Routes */}
@@ -85,6 +92,27 @@ function App() {
                 <Route path="/admin/simple" element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminDashboard />
+                  </Suspense>
+                } />
+                <Route path="/admin/category-debug" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminProtectedRoute>
+                      <CategoryDebugger />
+                    </AdminProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/category-debug-enhanced" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminProtectedRoute>
+                      <CategoryDebuggerEnhanced />
+                    </AdminProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/category-migration" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminProtectedRoute>
+                      <CategoryMigrationTool />
+                    </AdminProtectedRoute>
                   </Suspense>
                 } />
                 

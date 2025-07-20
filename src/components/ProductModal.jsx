@@ -113,7 +113,7 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
   const handleShare = async () => {
     const shareData = {
       title: product.name,
-      text: `Check out this amazing ${product.type || 'cannabis product'}: ${product.name}`,
+      text: `Check out this amazing ${product.category || 'cannabis product'}: ${product.name}`,
       url: window.location.href
     };
 
@@ -214,7 +214,7 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
             {/* Mobile Product Info - Show only on mobile */}
             <div className="lg:hidden mb-4">
               <h1 className="text-xl font-bold text-white mb-2">{product.name}</h1>
-              <p className="text-sm text-spotify-text-subdued mb-3">{product.type || 'Premium Cannabis Product'}</p>
+              <p className="text-sm text-spotify-text-subdued mb-3">{product.category || 'Premium Cannabis Product'}</p>
               
               {/* Rating */}
               <div className="flex items-center gap-3 mb-3">
@@ -312,7 +312,7 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
             {/* Product Title and Rating - Hidden on mobile, shown on desktop */}
             <div className="hidden lg:block mb-6">
               <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">{product.name}</h1>
-              <p className="text-base lg:text-lg text-spotify-text-subdued mb-4">{product.type || 'Premium Cannabis Product'}</p>
+              <p className="text-base lg:text-lg text-spotify-text-subdued mb-4">{product.category || 'Premium Cannabis Product'}</p>
               
               {/* Rating */}
               <div className="flex items-center gap-4 mb-4">
@@ -511,7 +511,7 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
                   </div>
                   <div className="flex justify-between py-3 border-b border-spotify-card-hover">
                     <span className="text-spotify-text-subdued">Category</span>
-                    <span className="text-white font-medium capitalize">{product.category || product.type || 'N/A'}</span>
+                    <span className="text-white font-medium capitalize">{product.category || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between py-3 border-b border-spotify-card-hover">
                     <span className="text-spotify-text-subdued">Strain</span>

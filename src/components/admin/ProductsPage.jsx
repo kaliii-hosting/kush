@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ref, onValue, push, update, remove } from 'firebase/database';
+import { ref, onValue, push, update, remove, get } from 'firebase/database';
 import { realtimeDb } from '../../config/firebase';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
-import { Plus, Database, BarChart3, Package, Upload, FileSpreadsheet } from 'lucide-react';
+import { Plus, Database, BarChart3, Package, Upload, FileSpreadsheet, Flower2, Cookie, Droplets, Battery, Zap, CircleDot, ShoppingBag, Sparkles, Cigarette, Leaf, Shirt, Beaker, Diamond, Gem, Hash, Layers } from 'lucide-react';
 import { seedFirebaseProducts } from '../../utils/seedFirebase';
 import * as XLSX from 'xlsx';
 
@@ -40,12 +40,17 @@ const ProductsPage = () => {
             // Convert object to array with IDs
             const productsArray = Object.entries(data).map(([id, product]) => ({
               id,
-              ...product
+              ...product,
+              // Ensure category field exists
+              category: product.category || 'flower'
             }));
             setProducts(productsArray);
             setIsUsingFirebase(true);
             // Store in localStorage as backup
             localStorage.setItem('localProducts', JSON.stringify(productsArray));
+            
+            // Log for debugging
+            console.log(`Loaded ${productsArray.length} products from Firebase`);
           } else {
             // No data in Firebase, use local storage
             loadLocalProducts();
@@ -79,7 +84,7 @@ const ProductsPage = () => {
         {
           id: Date.now().toString(),
           name: "Sample Flower",
-          type: "flower",
+          category: "flower",
           price: 45,
           thc: "22%",
           description: "Sample product - Add your own products!",
@@ -191,6 +196,48 @@ const ProductsPage = () => {
       } else {
         alert('Failed to seed database. Check console for errors.');
       }
+    }
+  };
+
+  // Migrate all products from 'type' to 'category'
+  const migrateTypeToCategory = async () => {
+    try {
+      setSuccessMessage('Starting migration...');
+      const productsRef = ref(realtimeDb, 'products');
+      const snapshot = await get(productsRef);
+      
+      if (!snapshot.exists()) {
+        setSuccessMessage('No products to migrate');
+        return;
+      }
+      
+      const updates = {};
+      let migratedCount = 0;
+      
+      snapshot.forEach((childSnapshot) => {
+        const productId = childSnapshot.key;
+        const product = childSnapshot.val();
+        
+        // If product has 'type' field, migrate it to 'category'
+        if (product.type) {
+          updates[`products/${productId}/category`] = product.type;
+          updates[`products/${productId}/type`] = null; // Remove type field
+          migratedCount++;
+        }
+      });
+      
+      if (Object.keys(updates).length > 0) {
+        await update(ref(realtimeDb), updates);
+        setSuccessMessage(`Successfully migrated ${migratedCount} products from 'type' to 'category'`);
+        console.log(`Migrated ${migratedCount} products`);
+      } else {
+        setSuccessMessage('No products needed migration');
+      }
+      
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error) {
+      console.error('Error migrating products:', error);
+      alert('Failed to migrate products. Check console for errors.');
     }
   };
 
@@ -348,7 +395,6 @@ const ProductsPage = () => {
           name: row['Product Name'] || '',
           description: row['Description'] || '',
           category: row['Category'] || 'flower',
-          type: row['Category'] || 'flower',
           strain: row['Strain'] || '',
           strainInformation: row['Strain Information'] || '',
           flavor: row['Flavor'] || '',
@@ -771,19 +817,62 @@ const ProductsPage = () => {
     }
   };
 
+  // Define all categories from the ProductForm dropdown
+  const allCategories = [
+    { value: 'flower', label: 'Flower', color: 'green', icon: Flower2 },
+    { value: 'edible', label: 'Edible', color: 'purple', icon: Cookie },
+    { value: 'concentrate', label: 'Concentrate', color: 'yellow', icon: Droplets },
+    { value: 'cartridge', label: 'Cartridges', color: 'blue', icon: Zap },
+    { value: 'disposable', label: 'Disposables', color: 'cyan', icon: Battery },
+    { value: 'pod', label: 'Pods', color: 'indigo', icon: CircleDot },
+    { value: 'battery', label: 'Batteries', color: 'gray', icon: Battery },
+    { value: 'infused-preroll', label: 'Infused Prerolls', color: 'pink', icon: Sparkles },
+    { value: 'preroll', label: 'Prerolls', color: 'orange', icon: Cigarette },
+    { value: 'hemp-preroll', label: 'Hemp Prerolls', color: 'lime', icon: Leaf },
+    { value: 'merch', label: 'Merch', color: 'red', icon: Shirt },
+    { value: 'distillate', label: 'Distillate', color: 'amber', icon: Beaker },
+    { value: 'liquid-diamonds', label: 'Liquid Diamonds', color: 'sky', icon: Diamond },
+    { value: 'live-resin-diamonds', label: 'Live Resin Diamonds', color: 'violet', icon: Gem },
+    { value: 'hash-infused-preroll', label: 'Hash Infused Prerolls', color: 'rose', icon: Hash },
+    { value: 'infused-preroll-5pack', label: 'Infused Prerolls - 5 Pack', color: 'emerald', icon: Layers }
+  ];
+
   // Calculate stats for all categories
+  const getCategoryCount = (categoryValue) => {
+    return products.filter(p => {
+      // Only check category field
+      const productCategory = p.category || '';
+      
+      // Handle exact match (case-insensitive)
+      return productCategory.toLowerCase() === categoryValue.toLowerCase();
+    }).length;
+  };
+
   const stats = {
     total: products.length,
-    flower: products.filter(p => p.type === 'flower').length,
-    edible: products.filter(p => p.type === 'edible').length,
-    concentrate: products.filter(p => p.type === 'concentrate').length,
-    cartridge: products.filter(p => p.type === 'cartridge').length,
-    disposable: products.filter(p => p.type === 'disposable').length,
-    preroll: products.filter(p => p.type === 'preroll' || p.type === 'hemp-preroll').length,
-    infusedPreroll: products.filter(p => p.type === 'infused-preroll' || p.type === 'hash-infused-preroll' || p.type === 'infused-preroll-5pack').length,
-    vaporizers: products.filter(p => p.type === 'cartridge' || p.type === 'disposable' || p.type === 'pod' || p.type === 'battery').length,
-    other: products.filter(p => p.type === 'merch' || p.type === 'distillate' || p.type === 'liquid-diamonds' || p.type === 'live-resin-diamonds').length,
+    categories: allCategories.map(cat => {
+      const count = getCategoryCount(cat.value);
+      
+      // Debug logging for troubleshooting
+      if (count > 0) {
+        console.log(`Category ${cat.value} has ${count} products`);
+      }
+      
+      return {
+        ...cat,
+        count
+      };
+    })
   };
+  
+  // Additional debug to see all unique categories in products
+  useEffect(() => {
+    if (products.length > 0) {
+      const uniqueCategories = [...new Set(products.map(p => p.category))];
+      console.log('Unique categories in products:', uniqueCategories);
+      console.log('Total products:', products.length);
+    }
+  }, [products]);
 
   if (loading) {
     return (
@@ -860,61 +949,62 @@ const ProductsPage = () => {
         </div>
       )}
       
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-        <div className="bg-spotify-light-gray rounded-lg p-4">
+      {/* Stats - Total Card */}
+      <div className="mb-6">
+        <div className="bg-spotify-green rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-xs">Total</p>
-              <p className="text-2xl font-bold text-white">{stats.total}</p>
+              <p className="text-black/70 text-sm font-medium">Total Products</p>
+              <p className="text-4xl font-bold text-black mt-1">{stats.total}</p>
             </div>
-            <BarChart3 className="w-6 h-6 text-gray-600" />
+            <BarChart3 className="w-10 h-10 text-black/50" />
           </div>
         </div>
-        <div className="bg-spotify-light-gray rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs">Flower</p>
-              <p className="text-2xl font-bold text-green-400">{stats.flower}</p>
-            </div>
-            <Package className="w-6 h-6 text-green-600" />
-          </div>
-        </div>
-        <div className="bg-spotify-light-gray rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs">Prerolls</p>
-              <p className="text-2xl font-bold text-orange-400">{stats.preroll}</p>
-            </div>
-            <Package className="w-6 h-6 text-orange-600" />
-          </div>
-        </div>
-        <div className="bg-spotify-light-gray rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs">Infused</p>
-              <p className="text-2xl font-bold text-purple-400">{stats.infusedPreroll}</p>
-            </div>
-            <Package className="w-6 h-6 text-purple-600" />
-          </div>
-        </div>
-        <div className="bg-spotify-light-gray rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs">Vaporizers</p>
-              <p className="text-2xl font-bold text-blue-400">{stats.vaporizers}</p>
-            </div>
-            <Package className="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-        <div className="bg-spotify-light-gray rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs">Other</p>
-              <p className="text-2xl font-bold text-gray-400">{stats.other}</p>
-            </div>
-            <Package className="w-6 h-6 text-gray-600" />
-          </div>
+      </div>
+
+      {/* Category Stats - All Categories */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-white mb-4">Product Categories</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+          {stats.categories.map((category) => {
+            const getColorClasses = (color, count) => {
+              const hasProducts = count > 0;
+              const colors = {
+                green: hasProducts ? 'text-green-400 text-green-600' : 'text-gray-400 text-gray-600',
+                purple: hasProducts ? 'text-purple-400 text-purple-600' : 'text-gray-400 text-gray-600',
+                yellow: hasProducts ? 'text-yellow-400 text-yellow-600' : 'text-gray-400 text-gray-600',
+                blue: hasProducts ? 'text-blue-400 text-blue-600' : 'text-gray-400 text-gray-600',
+                cyan: hasProducts ? 'text-cyan-400 text-cyan-600' : 'text-gray-400 text-gray-600',
+                indigo: hasProducts ? 'text-indigo-400 text-indigo-600' : 'text-gray-400 text-gray-600',
+                gray: hasProducts ? 'text-gray-300 text-gray-500' : 'text-gray-400 text-gray-600',
+                pink: hasProducts ? 'text-pink-400 text-pink-600' : 'text-gray-400 text-gray-600',
+                orange: hasProducts ? 'text-orange-400 text-orange-600' : 'text-gray-400 text-gray-600',
+                lime: hasProducts ? 'text-lime-400 text-lime-600' : 'text-gray-400 text-gray-600',
+                red: hasProducts ? 'text-red-400 text-red-600' : 'text-gray-400 text-gray-600',
+                amber: hasProducts ? 'text-amber-400 text-amber-600' : 'text-gray-400 text-gray-600',
+                sky: hasProducts ? 'text-sky-400 text-sky-600' : 'text-gray-400 text-gray-600',
+                violet: hasProducts ? 'text-violet-400 text-violet-600' : 'text-gray-400 text-gray-600',
+                rose: hasProducts ? 'text-rose-400 text-rose-600' : 'text-gray-400 text-gray-600',
+                emerald: hasProducts ? 'text-emerald-400 text-emerald-600' : 'text-gray-400 text-gray-600',
+              };
+              return colors[color] || 'text-gray-400 text-gray-600';
+            };
+            
+            const [textColor, iconColor] = getColorClasses(category.color, category.count).split(' ');
+            const IconComponent = category.icon || Package;
+            
+            return (
+              <div key={category.value} className={`bg-spotify-light-gray rounded-lg p-4 ${category.count === 0 ? 'opacity-60' : ''} hover:bg-spotify-card-hover transition-colors cursor-pointer`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-gray-400 text-xs truncate pr-2">{category.label}</p>
+                    <p className={`text-2xl font-bold ${textColor}`}>{category.count}</p>
+                  </div>
+                  <IconComponent className={`w-5 h-5 ${iconColor} flex-shrink-0`} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -934,6 +1024,14 @@ const ProductsPage = () => {
               Seed Database
             </button>
           )}
+          {/* Temporary migration button */}
+          <button
+            onClick={migrateTypeToCategory}
+            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg transition-colors font-medium"
+          >
+            <Database size={20} />
+            Migrate Type→Category
+          </button>
           <button
             onClick={handleDownloadTemplate}
             className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"

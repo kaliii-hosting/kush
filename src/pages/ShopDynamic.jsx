@@ -51,13 +51,7 @@ const ShopDynamic = ({ onCartClick }) => {
         hasCategory = true;
       }
       
-      // Add type if different from category
-      if (product.type && product.type !== product.category && product.type !== 'Uncategorized') {
-        const count = categoryMap.get(product.type) || 0;
-        categoryMap.set(product.type, count + 1);
-        categoryTypes.set(product.type, 'type');
-        hasCategory = true;
-      }
+      // Type field removed - only using category now
       
       // Add vendor if meaningful
       if (product.vendor && product.vendor !== 'Default Vendor' && product.vendor !== 'Vendor') {
@@ -166,14 +160,12 @@ const ShopDynamic = ({ onCartClick }) => {
       matchesCategory = true;
     } else if (selectedCategory === 'uncategorized') {
       matchesCategory = (!product.category || product.category === 'Uncategorized') && 
-                       (!product.type || product.type === 'Uncategorized') &&
                        (!product.vendor || product.vendor === 'Default Vendor' || product.vendor === 'Vendor') &&
                        (!product.collections || product.collections.length === 0) &&
                        (!product.tags || product.tags.length === 0);
     } else {
       // Check if product matches by any category source
       matchesCategory = product.category === selectedCat?.originalValue ||
-                       product.type === selectedCat?.originalValue ||
                        product.vendor === selectedCat?.originalValue ||
                        (product.collections && product.collections.some(c => c.title === selectedCat?.originalValue)) ||
                        (product.tags && product.tags.includes(selectedCat?.originalValue));
@@ -197,14 +189,12 @@ const ShopDynamic = ({ onCartClick }) => {
         matchesCategory = true;
       } else if (categoryId === 'uncategorized') {
         matchesCategory = (!p.category || p.category === 'Uncategorized') && 
-                         (!p.type || p.type === 'Uncategorized') &&
                          (!p.vendor || p.vendor === 'Default Vendor' || p.vendor === 'Vendor') &&
                          (!p.collections || p.collections.length === 0) &&
                          (!p.tags || p.tags.length === 0);
       } else {
         // Check if product matches by any category source
         matchesCategory = p.category === category?.originalValue ||
-                         p.type === category?.originalValue ||
                          p.vendor === category?.originalValue ||
                          (p.collections && p.collections.some(c => c.title === category?.originalValue)) ||
                          (p.tags && p.tags.includes(category?.originalValue));

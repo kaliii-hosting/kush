@@ -3,7 +3,7 @@ export const productsData = [
   {
     id: 1,
     name: "OG Kush",
-    type: "flower",
+    category: "flower",
     price: 45,
     thc: "22%",
     description: "Classic strain with earthy pine aroma and powerful relaxation effects.",
@@ -14,7 +14,7 @@ export const productsData = [
   {
     id: 2,
     name: "Blue Dream",
-    type: "flower",
+    category: "flower",
     price: 50,
     thc: "24%",
     description: "Balanced hybrid with sweet berry aroma and gentle cerebral invigoration.",
@@ -25,7 +25,7 @@ export const productsData = [
   {
     id: 3,
     name: "Gorilla Glue",
-    type: "flower",
+    category: "flower",
     price: 55,
     thc: "28%",
     description: "Heavy-handed euphoria and relaxation, leaving you glued to the couch.",
@@ -36,7 +36,7 @@ export const productsData = [
   {
     id: 4,
     name: "Sour Diesel",
-    type: "flower",
+    category: "flower",
     price: 48,
     thc: "26%",
     description: "Energizing, dreamy cerebral effects with a pungent diesel aroma.",
@@ -49,7 +49,7 @@ export const productsData = [
   {
     id: 5,
     name: "Gummy Bears",
-    type: "edible",
+    category: "edible",
     price: 25,
     thc: "10mg each",
     description: "Assorted fruit flavors, perfect for micro-dosing throughout the day.",
@@ -60,7 +60,7 @@ export const productsData = [
   {
     id: 6,
     name: "Chocolate Bar",
-    type: "edible",
+    category: "edible",
     price: 30,
     thc: "100mg",
     description: "Rich dark chocolate infused with premium cannabis extract.",
@@ -71,7 +71,7 @@ export const productsData = [
   {
     id: 7,
     name: "Cookie Bites",
-    type: "edible",
+    category: "edible",
     price: 28,
     thc: "5mg each",
     description: "Delicious chocolate chip cookie bites, perfect for beginners.",
@@ -84,7 +84,7 @@ export const productsData = [
   {
     id: 8,
     name: "Live Resin",
-    type: "concentrate",
+    category: "concentrate",
     price: 65,
     thc: "85%",
     description: "Premium live resin extracted from fresh frozen plants.",
@@ -95,7 +95,7 @@ export const productsData = [
   {
     id: 9,
     name: "Shatter",
-    type: "concentrate",
+    category: "concentrate",
     price: 60,
     thc: "82%",
     description: "Glass-like concentrate with potent effects and clean flavor.",
@@ -106,7 +106,7 @@ export const productsData = [
   {
     id: 10,
     name: "Wax",
-    type: "concentrate",
+    category: "concentrate",
     price: 55,
     thc: "78%",
     description: "Soft, opaque concentrate perfect for dabbing.",

@@ -40,14 +40,14 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
     },
     { 
       id: 'concentrate', 
-      name: 'Concentrates', 
+      name: 'Concentrate', 
       icon: Droplet,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50'
     },
     { 
       id: 'edible', 
-      name: 'Edibles', 
+      name: 'Edible', 
       icon: Cookie,
       color: 'bg-amber-500',
       hoverColor: 'hover:bg-amber-50'

@@ -21,7 +21,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                 Product
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Type
+                Category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Price
@@ -64,13 +64,13 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    product.type === 'flower' 
+                    product.category === 'flower' 
                       ? 'bg-green-500/20 text-green-400' 
-                      : product.type === 'edible'
+                      : product.category === 'edible'
                       ? 'bg-yellow-500/20 text-yellow-400'
                       : 'bg-purple-500/20 text-purple-400'
                   }`}>
-                    {product.type}
+                    {product.category}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">

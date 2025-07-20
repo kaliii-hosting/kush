@@ -36,54 +36,104 @@ const Wholesale = ({ onCartClick }) => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCart, setShowCart] = useState(false);
   
-  // Define all available categories (from ProductForm)
+  // Define all available categories (matching ProductForm dropdown values)
   const allCategories = [
-    'Flower',
-    'Edible',
-    'Concentrate',
-    'Cartridges',
-    'Disposables',
-    'Pods',
-    'Batteries',
-    'Infused Prerolls',
-    'Prerolls',
-    'Merch',
-    'Distillate',
-    'Liquid Diamonds',
-    'Live Resin Diamonds',
-    'Hash Infused Prerolls',
-    'Infused Prerolls - 5 Pack'
+    { value: 'flower', label: 'Flower' },
+    { value: 'edible', label: 'Edible' },
+    { value: 'concentrate', label: 'Concentrate' },
+    { value: 'cartridge', label: 'Cartridges' },
+    { value: 'disposable', label: 'Disposables' },
+    { value: 'pod', label: 'Pods' },
+    { value: 'battery', label: 'Batteries' },
+    { value: 'infused-preroll', label: 'Infused Prerolls' },
+    { value: 'preroll', label: 'Prerolls' },
+    { value: 'hemp-preroll', label: 'Hemp Prerolls' },
+    { value: 'merch', label: 'Merch' },
+    { value: 'distillate', label: 'Distillate' },
+    { value: 'liquid-diamonds', label: 'Liquid Diamonds' },
+    { value: 'live-resin-diamonds', label: 'Live Resin Diamonds' },
+    { value: 'hash-infused-preroll', label: 'Hash Infused Prerolls' },
+    { value: 'infused-preroll-5pack', label: 'Infused Prerolls - 5 Pack' }
   ];
   
   // Get categories with counts - matching Sales page logic
   const categoriesWithCounts = useMemo(() => {
+    console.log('=== DEBUG: Starting category count calculation ===');
+    console.log('Total products:', firebaseProducts.length);
+    console.log('All categories:', allCategories);
+    
     const categoryMap = new Map();
     
     // Initialize all categories with 0 count
     allCategories.forEach(cat => {
-      categoryMap.set(cat, 0);
+      categoryMap.set(cat.label, 0);
+      console.log(`Initialized category: ${cat.label} (value: ${cat.value})`);
     });
     
-    // Count products by category (using type field for Firebase products)
-    firebaseProducts.forEach(product => {
-      const category = product.category || product.type;
+    // Count products by category (using category field)
+    firebaseProducts.forEach((product, index) => {
+      const category = product.category;
+      console.log(`Product ${index + 1}:`, {
+        name: product.name,
+        category: category,
+        categoryType: typeof category,
+        categoryExists: !!category
+      });
+      
       if (category) {
-        // Convert type values to display names
-        const displayCategory = category
-          .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-          .replace('Infused Preroll', 'Infused Prerolls')
-          .replace('Preroll', 'Prerolls')
-          .replace('Cartridge', 'Cartridges')
-          .replace('Disposable', 'Disposables')
-          .replace('Pod', 'Pods')
-          .replace('Battery', 'Batteries');
+        // Find matching category from allCategories
+        const matchingCategory = allCategories.find(cat => cat.value === category);
+        console.log(`  Looking for category value "${category}" in allCategories...`);
         
-        const currentCount = categoryMap.get(displayCategory) || 0;
-        categoryMap.set(displayCategory, currentCount + 1);
+        if (matchingCategory) {
+          console.log(`  ✓ Found matching category: ${matchingCategory.label}`);
+          const currentCount = categoryMap.get(matchingCategory.label) || 0;
+          categoryMap.set(matchingCategory.label, currentCount + 1);
+          console.log(`  Updated count for ${matchingCategory.label}: ${currentCount + 1}`);
+        } else {
+          console.log(`  ✗ No matching category found for value: "${category}"`);
+          console.log(`  Available category values:`, allCategories.map(c => c.value));
+        }
+      } else {
+        console.log(`  - Product has no category`);
       }
     });
+    
+    console.log('\n=== Final category counts ===');
+    let totalCounted = 0;
+    categoryMap.forEach((count, label) => {
+      console.log(`${label}: ${count}`);
+      totalCounted += count;
+    });
+    
+    console.log(`\nTotal products counted in categories: ${totalCounted}`);
+    console.log(`Total products in firebaseProducts: ${firebaseProducts.length}`);
+    console.log(`Products without categories: ${firebaseProducts.length - totalCounted}`);
+    
+    // Additional debug: Find unique category values in products
+    const uniqueProductCategories = [...new Set(firebaseProducts
+      .map(p => p.category)
+      .filter(Boolean))];
+    console.log('\n=== Unique category values in products ===');
+    console.log(uniqueProductCategories);
+    
+    // Check for categories in products but not in allCategories
+    const unmatchedCategories = uniqueProductCategories.filter(cat => 
+      !allCategories.some(ac => ac.value === cat)
+    );
+    if (unmatchedCategories.length > 0) {
+      console.log('\n⚠️  Categories in products but NOT in allCategories:');
+      console.log(unmatchedCategories);
+    }
+    
+    // Show products without categories
+    const productsWithoutCategories = firebaseProducts.filter(p => !p.category);
+    if (productsWithoutCategories.length > 0) {
+      console.log(`\n⚠️  ${productsWithoutCategories.length} products have no category:`);
+      productsWithoutCategories.forEach(p => console.log(`  - ${p.name}`));
+    }
+    
+    console.log('=== End of category count debug ===\n');
     
     return Array.from(categoryMap.entries())
       .map(([name, count]) => ({ name, count }))

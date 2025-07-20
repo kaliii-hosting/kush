@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLogos } from '../context/LogosContext';
@@ -6,7 +6,10 @@ import { useLogos } from '../context/LogosContext';
 const AgeVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logos } = useLogos();
+  const { logos, loading: logosLoading } = useLogos();
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const imgRef = useRef(null);
   
   // Check if current path is admin, wholesale, sales, or accessibility
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -20,6 +23,10 @@ const AgeVerification = () => {
   // Always show age verification on every visit (except for admin/wholesale)
   const [isVisible, setIsVisible] = useState(shouldShowVerification);
   const [scale, setScale] = useState(1);
+  
+  // Get logo URL
+  const logoUrl = logos?.ageVerification?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg";
+  const logoAlt = logos?.ageVerification?.alt || "Kushie";
   
   // Calculate scale based on window size and zoom
   useEffect(() => {
@@ -55,6 +62,22 @@ const AgeVerification = () => {
       media.removeEventListener('change', calculateScale);
     };
   }, []);
+  
+  // Preload logo image
+  useEffect(() => {
+    if (logoUrl) {
+      const img = new Image();
+      img.onload = () => {
+        setLogoLoaded(true);
+        setLogoError(false);
+      };
+      img.onerror = () => {
+        setLogoError(true);
+        setLogoLoaded(true); // Set loaded to true even on error to show fallback
+      };
+      img.src = logoUrl;
+    }
+  }, [logoUrl]);
   
   // Update visibility when route changes
   useEffect(() => {
@@ -106,11 +129,37 @@ const AgeVerification = () => {
           <div className="relative p-10">
             {/* Logo */}
             <div className="text-center mb-8">
-              <img 
-                src={logos?.ageVerification?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
-                alt={logos?.ageVerification?.alt || "Kushie"} 
-                className="mx-auto h-16 w-auto"
-              />
+              <div className="relative mx-auto h-16 flex items-center justify-center" style={{ minWidth: '150px' }}>
+                {/* Loading placeholder */}
+                {(!logoLoaded || logosLoading) && !logoError && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-40 h-16 bg-gray-800 rounded animate-pulse" />
+                  </div>
+                )}
+                
+                {/* Logo image */}
+                {!logoError && (
+                  <img 
+                    ref={imgRef}
+                    src={logoUrl} 
+                    alt={logoAlt} 
+                    className={`h-16 w-auto transition-opacity duration-300 ${
+                      logoLoaded && !logosLoading ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    style={{ 
+                      maxWidth: '200px',
+                      display: logoLoaded || logoError ? 'block' : 'none'
+                    }}
+                    onLoad={() => setLogoLoaded(true)}
+                    onError={() => setLogoError(true)}
+                  />
+                )}
+                
+                {/* Fallback text if image fails */}
+                {logoError && (
+                  <h1 className="text-3xl font-bold text-white">KUSHIE</h1>
+                )}
+              </div>
             </div>
             
             {/* Header Text */}

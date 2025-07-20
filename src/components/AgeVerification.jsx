@@ -8,13 +8,14 @@ const AgeVerification = () => {
   const navigate = useNavigate();
   const { logos } = useLogos();
   
-  // Check if current path is admin, wholesale, or sales
+  // Check if current path is admin, wholesale, sales, or accessibility
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isWholesaleRoute = location.pathname.startsWith('/wholesale');
   const isSalesRoute = location.pathname.startsWith('/sales');
+  const isAccessibilityRoute = location.pathname.startsWith('/accessibility');
   
-  // Don't show age verification for admin, wholesale, and sales routes
-  const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute;
+  // Don't show age verification for admin, wholesale, sales, and accessibility routes
+  const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute && !isAccessibilityRoute;
   
   // Always show age verification on every visit (except for admin/wholesale)
   const [isVisible, setIsVisible] = useState(shouldShowVerification);
@@ -60,7 +61,8 @@ const AgeVerification = () => {
     const isAdminRoute = location.pathname.startsWith('/admin');
     const isWholesaleRoute = location.pathname.startsWith('/wholesale');
     const isSalesRoute = location.pathname.startsWith('/sales');
-    const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute;
+    const isAccessibilityRoute = location.pathname.startsWith('/accessibility');
+    const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute && !isAccessibilityRoute;
     
     if (shouldShowVerification && !isVisible) {
       setIsVisible(true);

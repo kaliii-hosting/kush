@@ -5,9 +5,11 @@
 /* Base styles */
 .accessibility-page {
   background: light-dark(#fff, #000);
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   min-height: 100vh;
+  padding-top: 80px;
   overflow: hidden;
   font-family: 'SF Pro Text', 'SF Pro Icons', 'AOS Icons', 'Helvetica Neue',
     Helvetica, Arial, sans-serif, system-ui;
@@ -37,8 +39,9 @@
 
 .accessibility-page main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 40px;
 }
 
 /* Keypad styles */
@@ -239,5 +242,13 @@
 @media (max-width: 768px) {
   .keypad {
     width: clamp(260px, 80vw, 380px);
+  }
+  
+  .accessibility-page {
+    padding-top: 40px;
+  }
+  
+  .accessibility-page main {
+    padding-top: 20px;
   }
 }

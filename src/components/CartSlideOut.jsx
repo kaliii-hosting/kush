@@ -8,7 +8,8 @@ import ShopifyCheckoutButton from './ShopifyCheckoutButton';
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import { ref, push, serverTimestamp } from 'firebase/database';
-import { realtimeDb } from '../config/firebase';
+import { realtimeDb, db } from '../config/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
   const location = useLocation();
@@ -457,13 +458,47 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
       createdAt: serverTimestamp()
     };
 
-    // Save to Firebase
+    // Save to Firebase Realtime Database (legacy)
     try {
       const invoicesRef = ref(realtimeDb, 'wholesale_invoices');
       await push(invoicesRef, invoiceData);
-      console.log('Invoice saved to Firebase');
+      console.log('Invoice saved to Firebase Realtime Database');
     } catch (error) {
-      console.error('Error saving invoice to Firebase:', error);
+      console.error('Error saving invoice to Firebase Realtime Database:', error);
+    }
+
+    // Save to Firestore for the Sales page invoices list
+    // Only save if user is authenticated
+    if (user?.uid) {
+      try {
+        const firestoreInvoiceData = {
+          invoiceNumber: invoiceNumber,
+          createdAt: Timestamp.now(),
+          createdBy: user.uid,
+          customer: invoiceData.customer,
+          items: invoiceData.items,
+          subtotal: invoiceData.subtotal,
+          tax: invoiceData.tax,
+          total: invoiceData.total,
+          status: 'completed',
+          type: 'wholesale',
+          // Store sales rep info if available
+          salesRep: {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: userData?.displayName || ''
+          }
+        };
+
+        const docRef = await addDoc(collection(db, 'invoices'), firestoreInvoiceData);
+        console.log('Invoice saved to Firestore with ID:', docRef.id);
+        console.log('User role:', userData?.role);
+      } catch (error) {
+        console.error('Error saving invoice to Firestore:', error);
+        console.error('User details:', { uid: user?.uid, role: userData?.role });
+      }
+    } else {
+      console.warn('Cannot save invoice to Firestore: User not authenticated');
     }
 
     // Save the PDF

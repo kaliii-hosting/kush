@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart, Filter, X } from 'lucide-react';
+import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart, Filter, X, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useWholesaleCart } from '../context/WholesaleCartContext';
@@ -54,6 +54,41 @@ const Wholesale = ({ onCartClick }) => {
     'Hash Infused Prerolls',
     'Infused Prerolls - 5 Pack'
   ];
+  
+  // Get categories with counts - matching Sales page logic
+  const categoriesWithCounts = useMemo(() => {
+    const categoryMap = new Map();
+    
+    // Initialize all categories with 0 count
+    allCategories.forEach(cat => {
+      categoryMap.set(cat, 0);
+    });
+    
+    // Count products by category (using type field for Firebase products)
+    firebaseProducts.forEach(product => {
+      const category = product.category || product.type;
+      if (category) {
+        // Convert type values to display names
+        const displayCategory = category
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+          .replace('Infused Preroll', 'Infused Prerolls')
+          .replace('Preroll', 'Prerolls')
+          .replace('Cartridge', 'Cartridges')
+          .replace('Disposable', 'Disposables')
+          .replace('Pod', 'Pods')
+          .replace('Battery', 'Batteries');
+        
+        const currentCount = categoryMap.get(displayCategory) || 0;
+        categoryMap.set(displayCategory, currentCount + 1);
+      }
+    });
+    
+    return Array.from(categoryMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [firebaseProducts]);
   
   // Filter wholesale products
   const wholesaleProductsFiltered = firebaseProducts.filter(product => 
@@ -347,6 +382,8 @@ const Wholesale = ({ onCartClick }) => {
 
   return (
     <div className="bg-black min-h-screen">
+      {!showShop && (
+        <>
       {/* Critical z-index override for Leaflet */}
       <style>{`
         /* Override Leaflet's default z-index values (200-700) */
@@ -668,11 +705,13 @@ const Wholesale = ({ onCartClick }) => {
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* Shop Section - Hidden by default, shown when user clicks shop */}
       {showShop && (
-        <section className="bg-black border-t border-gray-800 min-h-screen">
-          <div className="flex h-full">
+        <div className="fixed inset-0 z-50 bg-black overflow-hidden">
+          <div className="flex h-full bg-black">
           {/* Desktop Sidebar - Match Sales Page Style */}
           <aside className="hidden lg:block w-64 bg-black border-r border-gray-800 p-6 overflow-y-auto">
             <h2 className="text-lg font-bold text-white mb-6">Filter by Category</h2>
@@ -688,45 +727,25 @@ const Wholesale = ({ onCartClick }) => {
                 <span>All Products</span>
                 <span className="text-sm">{firebaseProducts.length}</span>
               </button>
-              {allCategories.map((category) => {
-                const categoryProducts = firebaseProducts.filter(product => {
-                  const productCategory = product.category || product.type;
-                  if (!productCategory) return false;
-                  
-                  const displayCategory = productCategory
-                    .split('-')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ')
-                    .replace('Infused Preroll', 'Infused Prerolls')
-                    .replace('Preroll', 'Prerolls')
-                    .replace('Cartridge', 'Cartridges')
-                    .replace('Disposable', 'Disposables')
-                    .replace('Pod', 'Pods')
-                    .replace('Battery', 'Batteries');
-                  
-                  return displayCategory === category;
-                });
-                
-                return (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
-                      selectedCategory === category
-                        ? 'bg-spotify-dark-gray text-white'
-                        : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
-                    }`}
-                  >
-                    <span>{category}</span>
-                    <span className="text-sm">{categoryProducts.length}</span>
-                  </button>
-                );
-              })}
+              {categoriesWithCounts.map(({ name, count }) => (
+                <button
+                  key={name}
+                  onClick={() => setSelectedCategory(name)}
+                  className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                    selectedCategory === name
+                      ? 'bg-spotify-dark-gray text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
+                  }`}
+                >
+                  <span>{name}</span>
+                  <span className="text-sm">{count}</span>
+                </button>
+              ))}
             </nav>
           </aside>
 
           {/* Main Content */}
-          <div className="flex-1 bg-black">
+          <div className="flex-1 bg-black overflow-y-auto">
             <div className="p-6 lg:p-8">
               {/* Header */}
               <div className="mb-8">
@@ -901,49 +920,28 @@ const Wholesale = ({ onCartClick }) => {
                     <span>All Products</span>
                     <span className="text-sm">{firebaseProducts.length}</span>
                   </button>
-                  {allCategories.map((category) => {
-                    const categoryProducts = firebaseProducts.filter(product => {
-                      const productCategory = product.category || product.type;
-                      if (!productCategory) return false;
-                      
-                      const displayCategory = productCategory
-                        .split('-')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ')
-                        .replace('Infused Preroll', 'Infused Prerolls')
-                        .replace('Preroll', 'Prerolls')
-                        .replace('Cartridge', 'Cartridges')
-                        .replace('Disposable', 'Disposables')
-                        .replace('Pod', 'Pods')
-                        .replace('Battery', 'Batteries');
-                      
-                      return displayCategory === category;
-                    });
-                    
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => {
-                          setSelectedCategory(category);
-                          setShowMobileFilters(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
-                          selectedCategory === category
-                            ? 'bg-spotify-dark-gray text-white'
-                            : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
-                        }`}
-                      >
-                        <span>{category}</span>
-                        <span className="text-sm">{categoryProducts.length}</span>
-                      </button>
-                    );
-                  })}
+                  {categoriesWithCounts.map(({ name, count }) => (
+                    <button
+                      key={name}
+                      onClick={() => {
+                        setSelectedCategory(name);
+                        setShowMobileFilters(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                        selectedCategory === name
+                          ? 'bg-spotify-dark-gray text-white'
+                          : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
+                      }`}
+                    >
+                      <span>{name}</span>
+                      <span className="text-sm">{count}</span>
+                    </button>
+                  ))}
                 </nav>
               </div>
             </div>
           )}
         </div>
-      </section>
       )}
 
       {/* Product Modal */}

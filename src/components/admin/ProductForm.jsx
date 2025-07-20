@@ -4,11 +4,15 @@ import { X } from 'lucide-react';
 const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    type: product?.type || 'flower',
-    price: product?.price || '',
-    thc: product?.thc || '',
     description: product?.description || '',
-    effects: product?.effects ? product.effects.join(', ') : '',
+    category: product?.category || product?.type || 'flower',
+    strain: product?.strain || '',
+    strainInformation: product?.strainInformation || '',
+    flavor: product?.flavor || '',
+    thc: product?.thc || '',
+    cbd: product?.cbd || '',
+    price: product?.price || '',
+    packageSize: product?.packageSize || '',
     imageUrl: product?.imageUrl || '',
     inStock: product?.inStock !== false
   });
@@ -19,7 +23,7 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      effects: formData.effects.split(',').map(effect => effect.trim()).filter(effect => effect),
+      type: formData.category, // Map category to type for backward compatibility
       inStock: formData.inStock // Ensure inStock is included
     };
 
@@ -54,11 +58,25 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">
-          Type
+          Description
+        </label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows="3"
+          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
+          placeholder="Enter product description"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Category
         </label>
         <select
-          name="type"
-          value={formData.type}
+          name="category"
+          value={formData.category}
           onChange={handleChange}
           className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black focus:outline-none focus:border-green-500"
         >
@@ -71,6 +89,7 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
           <option value="battery">Batteries</option>
           <option value="infused-preroll">Infused Prerolls</option>
           <option value="preroll">Prerolls</option>
+          <option value="hemp-preroll">Hemp Prerolls</option>
           <option value="merch">Merch</option>
           <option value="distillate">Distillate</option>
           <option value="liquid-diamonds">Liquid Diamonds</option>
@@ -78,6 +97,48 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
           <option value="hash-infused-preroll">Hash Infused Prerolls</option>
           <option value="infused-preroll-5pack">Infused Prerolls - 5 Pack</option>
         </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Strain
+        </label>
+        <input
+          type="text"
+          name="strain"
+          value={formData.strain}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
+          placeholder="e.g., OG Kush, Blue Dream"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Strain Information
+        </label>
+        <textarea
+          name="strainInformation"
+          value={formData.strainInformation}
+          onChange={handleChange}
+          rows="2"
+          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
+          placeholder="Details about the strain (effects, lineage, etc.)"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Flavor
+        </label>
+        <input
+          type="text"
+          name="flavor"
+          value={formData.flavor}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
+          placeholder="e.g., Citrus, Pine, Berry"
+        />
       </div>
 
       <div>
@@ -106,35 +167,35 @@ const ProductForm = ({ product, onSubmit, onCancel, isDropdown = false }) => {
           name="thc"
           value={formData.thc}
           onChange={handleChange}
-          placeholder="e.g., 22% or 10mg"
+          placeholder="e.g., 22%"
           className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">
-          Description
-        </label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows="3"
-          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
-          placeholder="Enter product description"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Effects (comma-separated)
+          CBD Content
         </label>
         <input
           type="text"
-          name="effects"
-          value={formData.effects}
+          name="cbd"
+          value={formData.cbd}
           onChange={handleChange}
-          placeholder="e.g., Relaxed, Happy, Euphoric"
+          placeholder="e.g., 0.5%"
+          className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Package Size
+        </label>
+        <input
+          type="text"
+          name="packageSize"
+          value={formData.packageSize}
+          onChange={handleChange}
+          placeholder="e.g., 3.5g, 7g, 14g, 28g"
           className="w-full px-3 py-2 bg-white border border-gray-600 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-green-500"
         />
       </div>

@@ -1,8 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import './Accessibility.css';
 
 const Accessibility = () => {
   const navigate = useNavigate();
+  
+  // Ensure page starts at top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
 
   const handleKeyClick = (route) => {
     navigate(route);

@@ -468,83 +468,18 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
         <div className="mt-12 bg-spotify-gray rounded-xl p-6 lg:p-8">
           {isWholesale ? (
             <>
-              {/* Tabs for wholesale products */}
-              <div className="flex space-x-8 mb-6 border-b border-spotify-card-hover">
-                <button 
-                  onClick={() => setActiveTab('description')}
-                  className={`pb-3 font-medium border-b-2 transition-colors ${
-                    activeTab === 'description' 
-                      ? 'text-white border-primary' 
-                      : 'text-spotify-text-subdued border-transparent hover:text-white'
-                  }`}
-                >
-                  Description
-                </button>
-                <button 
-                  onClick={() => setActiveTab('lab-results')}
-                  className={`pb-3 font-medium border-b-2 transition-colors ${
-                    activeTab === 'lab-results' 
-                      ? 'text-white border-primary' 
-                      : 'text-spotify-text-subdued border-transparent hover:text-white'
-                  }`}
-                >
-                  Lab Results
-                </button>
-              </div>
-              
-              {/* Tab Content */}
+              {/* Description Content */}
               <div className="space-y-6">
-                {activeTab === 'description' && (
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
-                    <div className="text-spotify-text-subdued leading-relaxed">
-                      {product.description ? (
-                        <div dangerouslySetInnerHTML={{ __html: product.description }} />
-                      ) : (
-                        <p>Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.</p>
-                      )}
-                    </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
+                  <div className="text-spotify-text-subdued leading-relaxed">
+                    {product.description ? (
+                      <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                    ) : (
+                      <p>Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.</p>
+                    )}
                   </div>
-                )}
-                
-                {activeTab === 'lab-results' && (
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Lab Results</h3>
-                    <div className="bg-spotify-card-hover rounded-lg p-4 mb-4">
-                      <p className="text-spotify-text-subdued text-sm mb-2">Certificate of Analysis</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">THC:</span>
-                            <span className="text-white">{product.thc || '22.5%'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">CBD:</span>
-                            <span className="text-white">{product.cbd || '0.5%'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">CBG:</span>
-                            <span className="text-white">{product.cbg || '1.2%'}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">Moisture:</span>
-                            <span className="text-white">8.5%</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">Pesticides:</span>
-                            <span className="text-spotify-green">Not Detected</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-spotify-text-subdued">Heavy Metals:</span>
-                            <span className="text-spotify-green">Not Detected</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             </>
           ) : (
@@ -563,39 +498,89 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
             </div>
           )}
           
-          {/* Common Product Details Grid */}
+          {/* Product Details Grid - Different for wholesale vs shop */}
           <div className="mt-6">
-
-            {/* Product Details Grid */}
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-4">Product Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">THC Content</span>
-                  <span className="text-white font-medium">{product.thc || '22%'}</span>
+            {isWholesale ? (
+              // Wholesale Product Details with all fields
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">Product Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Product Name</span>
+                    <span className="text-white font-medium">{product.name || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Category</span>
+                    <span className="text-white font-medium capitalize">{product.category || product.type || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Strain</span>
+                    <span className="text-white font-medium">{product.strain || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Flavor</span>
+                    <span className="text-white font-medium">{product.flavor || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">THC Content</span>
+                    <span className="text-white font-medium">{product.thc || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">CBD Content</span>
+                    <span className="text-white font-medium">{product.cbd || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Price</span>
+                    <span className="text-white font-medium">${product.price || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Package Size</span>
+                    <span className="text-white font-medium">{product.packageSize || 'N/A'}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">CBD Content</span>
-                  <span className="text-white font-medium">{product.cbd || '0.5%'}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">Weight</span>
-                  <span className="text-white font-medium">{product.weight || '3.5g'}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">Strain Type</span>
-                  <span className="text-white font-medium">{product.strain || 'Hybrid'}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">Effects</span>
-                  <span className="text-white font-medium">{product.effects || 'Relaxed, Happy, Euphoric'}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                  <span className="text-spotify-text-subdued">Flavor Profile</span>
-                  <span className="text-white font-medium">{product.flavor || 'Sweet, Earthy, Citrus'}</span>
+                
+                {/* Strain Information - Full width */}
+                {product.strainInformation && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-3">Strain Information</h3>
+                    <div className="text-spotify-text-subdued leading-relaxed bg-spotify-card-hover rounded-lg p-4">
+                      {product.strainInformation}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Regular shop product details
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">Product Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">THC Content</span>
+                    <span className="text-white font-medium">{product.thc || '22%'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">CBD Content</span>
+                    <span className="text-white font-medium">{product.cbd || '0.5%'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Weight</span>
+                    <span className="text-white font-medium">{product.weight || '3.5g'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Strain Type</span>
+                    <span className="text-white font-medium">{product.strain || 'Hybrid'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Effects</span>
+                    <span className="text-white font-medium">{product.effects || 'Relaxed, Happy, Euphoric'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
+                    <span className="text-spotify-text-subdued">Flavor Profile</span>
+                    <span className="text-white font-medium">{product.flavor || 'Sweet, Earthy, Citrus'}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

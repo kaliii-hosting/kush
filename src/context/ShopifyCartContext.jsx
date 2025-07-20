@@ -29,13 +29,16 @@ export const ShopifyCartProvider = ({ children }) => {
     cartLoading
   } = useShopify();
 
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [savedCheckoutId, setSavedCheckoutId] = useState(null);
+  
+  // Don't sync for sales reps or admin users
+  const shouldSkipSync = userData?.role === 'salesRep' || userData?.role === 'admin';
 
   // Sync Shopify checkout ID with Firebase for authenticated users
   useEffect(() => {
-    if (!user || !checkout?.id) return;
+    if (!user || !checkout?.id || shouldSkipSync) return;
 
     const syncCheckoutId = async () => {
       try {
@@ -51,11 +54,11 @@ export const ShopifyCartProvider = ({ children }) => {
     };
 
     syncCheckoutId();
-  }, [user, checkout?.id]);
+  }, [user, checkout?.id, shouldSkipSync]);
 
   // Load saved checkout ID from Firebase for authenticated users
   useEffect(() => {
-    if (!user) return;
+    if (!user || shouldSkipSync) return;
 
     const loadCheckoutId = async () => {
       try {
@@ -75,7 +78,7 @@ export const ShopifyCartProvider = ({ children }) => {
     };
 
     loadCheckoutId();
-  }, [user]);
+  }, [user, shouldSkipSync]);
 
   // Add to cart (only handles Shopify products)
   const addToCart = async (product, quantity = 1) => {

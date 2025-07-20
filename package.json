@@ -46,6 +46,7 @@
     "react-use-measure": "^2.1.7",
     "shopify-buy": "^3.0.7",
     "three": "^0.175.0",
+    "xlsx": "^0.18.5",
     "zustand": "^4.4.7"
   }
 }

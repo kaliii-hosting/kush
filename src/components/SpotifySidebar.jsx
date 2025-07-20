@@ -137,7 +137,7 @@ const SpotifySidebar = ({ collapsed, setCollapsed }) => {
               <a href="/cookies" className="hover:text-white">Cookies</a>
               <a href="/about-ads" className="hover:text-white">About Ads</a>
             </div>
-            <a href="/accessibility" className="hover:text-white block">Accessibility</a>
+            <Link to="/accessibility" className="hover:text-white block">Accessibility</Link>
           </div>
         )}
       </div>

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart } from 'lucide-react';
+import { MapPin, Store, Truck, Play, Building2, Package, Users, ChevronRight, Eye, ShoppingCart, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useWholesaleCart } from '../context/WholesaleCartContext';
 import ProductModal from '../components/ProductModal';
+import CartSlideOut from '../components/CartSlideOut';
 import './Wholesale.css';
 
 // States where we operate
@@ -18,6 +19,7 @@ const operatingStates = [
 ];
 
 const Wholesale = ({ onCartClick }) => {
+  const [showShop, setShowShop] = useState(false);
   const navigate = useNavigate();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -26,11 +28,32 @@ const Wholesale = ({ onCartClick }) => {
   
   // Products state
   const { firebaseProducts, loading } = useEnhancedProducts();
-  const { addToCart } = useWholesaleCart();
+  const { cart, addToCart } = useWholesaleCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  
+  // Define all available categories (from ProductForm)
+  const allCategories = [
+    'Flower',
+    'Edible',
+    'Concentrate',
+    'Cartridges',
+    'Disposables',
+    'Pods',
+    'Batteries',
+    'Infused Prerolls',
+    'Prerolls',
+    'Merch',
+    'Distillate',
+    'Liquid Diamonds',
+    'Live Resin Diamonds',
+    'Hash Infused Prerolls',
+    'Infused Prerolls - 5 Pack'
+  ];
   
   // Filter wholesale products
   const wholesaleProductsFiltered = firebaseProducts.filter(product => 
@@ -421,12 +444,12 @@ const Wholesale = ({ onCartClick }) => {
               >
                 Apply Now
               </a>
-              <a
-                href="#wholesale-info"
+              <button
+                onClick={() => setShowShop(true)}
                 className="text-lg font-semibold leading-6 text-white hover:text-gray-300 transition-colors"
               >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+                Shop Now <span aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
 
@@ -633,12 +656,12 @@ const Wholesale = ({ onCartClick }) => {
                   >
                     Start Application
                   </a>
-                  <a
-                    href="/shop"
+                  <button
+                    onClick={() => setShowShop(true)}
                     className="text-base font-semibold leading-6 text-white hover:text-gray-300 transition-colors"
                   >
                     View Products <span aria-hidden="true">→</span>
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -646,109 +669,282 @@ const Wholesale = ({ onCartClick }) => {
         </div>
       </section>
 
-      {/* Local Inventory Section */}
-      <section className="py-20 bg-black border-t border-border">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Local Inventory
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-gray-400">
-              Browse our complete local inventory available for wholesale orders
-            </p>
-          </div>
-
-          {/* Category Filter */}
-          <div className="mb-8 flex flex-wrap justify-center gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-dark text-gray-400 hover:text-white'
-              }`}
-            >
-              All Products
-            </button>
-            {[...new Set(firebaseProducts.map(p => p.category).filter(Boolean))].map(category => (
+      {/* Shop Section - Hidden by default, shown when user clicks shop */}
+      {showShop && (
+        <section className="bg-black border-t border-gray-800 min-h-screen">
+          <div className="flex h-full">
+          {/* Desktop Sidebar - Match Sales Page Style */}
+          <aside className="hidden lg:block w-64 bg-black border-r border-gray-800 p-6 overflow-y-auto">
+            <h2 className="text-lg font-bold text-white mb-6">Filter by Category</h2>
+            <nav className="space-y-1">
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-dark text-gray-400 hover:text-white'
+                onClick={() => setSelectedCategory('all')}
+                className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                  selectedCategory === 'all'
+                    ? 'bg-spotify-dark-gray text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
                 }`}
               >
-                {category}
+                <span>All Products</span>
+                <span className="text-sm">{firebaseProducts.length}</span>
               </button>
-            ))}
-          </div>
+              {allCategories.map((category) => {
+                const categoryProducts = firebaseProducts.filter(product => {
+                  const productCategory = product.category || product.type;
+                  if (!productCategory) return false;
+                  
+                  const displayCategory = productCategory
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ')
+                    .replace('Infused Preroll', 'Infused Prerolls')
+                    .replace('Preroll', 'Prerolls')
+                    .replace('Cartridge', 'Cartridges')
+                    .replace('Disposable', 'Disposables')
+                    .replace('Pod', 'Pods')
+                    .replace('Battery', 'Batteries');
+                  
+                  return displayCategory === category;
+                });
+                
+                return (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                      selectedCategory === category
+                        ? 'bg-spotify-dark-gray text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
+                    }`}
+                  >
+                    <span>{category}</span>
+                    <span className="text-sm">{categoryProducts.length}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
 
-          {/* Products Grid */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {firebaseProducts
-                .filter(product => selectedCategory === 'all' || product.category === selectedCategory)
-                .map((product) => (
-                <div 
-                  key={product.id} 
-                  className="group relative bg-card rounded-lg p-4 transition-all duration-300 hover:bg-card-hover"
-                >
-                  {/* Product Image */}
-                  <div className="relative mb-4 aspect-square overflow-hidden rounded-md bg-gray-dark">
-                    {product.imageUrl && (
-                      <img 
-                        src={product.imageUrl} 
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    )}
-                    
-                    {/* Hover Actions */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedProduct(product);
-                          setShowProductModal(true);
-                        }}
-                        className="p-3 bg-white rounded-full text-black hover:bg-gray-200 transition-colors"
-                        title="Quick View"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(product);
-                        }}
-                        className="p-3 bg-primary rounded-full text-white hover:bg-primary-hover transition-colors"
-                        title="Add to Cart"
-                      >
-                        <ShoppingCart className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
+          {/* Main Content */}
+          <div className="flex-1 bg-black">
+            <div className="p-6 lg:p-8">
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
                   <div>
-                    <h3 className="font-bold text-white text-sm mb-1 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold">${product.price}</p>
-                    {product.category && (
-                      <p className="text-xs text-gray-400 mt-1">{product.category}</p>
-                    )}
+                    <h1 className="text-3xl lg:text-5xl font-black text-white">
+                      {selectedCategory === 'all' ? 'All Wholesale Products' : selectedCategory}
+                    </h1>
                   </div>
                 </div>
-              ))}
+                
+                {/* Mobile filter button */}
+                <button
+                  onClick={() => setShowMobileFilters(true)}
+                  className="lg:hidden flex items-center gap-2 bg-spotify-dark-gray text-white px-4 py-2 rounded-full hover:bg-spotify-card-hover transition-colors mb-4"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
+                
+                <p className="text-gray-400">
+                  {firebaseProducts.filter(product => {
+                    if (selectedCategory === 'all') return true;
+                    
+                    const productCategory = product.category || product.type;
+                    if (!productCategory) return false;
+                    
+                    const displayCategory = productCategory
+                      .split('-')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ')
+                      .replace('Infused Preroll', 'Infused Prerolls')
+                      .replace('Preroll', 'Prerolls')
+                      .replace('Cartridge', 'Cartridges')
+                      .replace('Disposable', 'Disposables')
+                      .replace('Pod', 'Pods')
+                      .replace('Battery', 'Batteries');
+                    
+                    return displayCategory === selectedCategory;
+                  }).length} {firebaseProducts.filter(product => {
+                    if (selectedCategory === 'all') return true;
+                    
+                    const productCategory = product.category || product.type;
+                    if (!productCategory) return false;
+                    
+                    const displayCategory = productCategory
+                      .split('-')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ')
+                      .replace('Infused Preroll', 'Infused Prerolls')
+                      .replace('Preroll', 'Prerolls')
+                      .replace('Cartridge', 'Cartridges')
+                      .replace('Disposable', 'Disposables')
+                      .replace('Pod', 'Pods')
+                      .replace('Battery', 'Batteries');
+                    
+                    return displayCategory === selectedCategory;
+                  }).length === 1 ? 'product' : 'products'}
+                </p>
+              </div>
+
+              {/* Products Grid */}
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                  {firebaseProducts
+                    .filter(product => {
+                      if (selectedCategory === 'all') return true;
+                      
+                      const productCategory = product.category || product.type;
+                      if (!productCategory) return false;
+                      
+                      const displayCategory = productCategory
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ')
+                        .replace('Infused Preroll', 'Infused Prerolls')
+                        .replace('Preroll', 'Prerolls')
+                        .replace('Cartridge', 'Cartridges')
+                        .replace('Disposable', 'Disposables')
+                        .replace('Pod', 'Pods')
+                        .replace('Battery', 'Batteries');
+                      
+                      return displayCategory === selectedCategory;
+                    })
+                    .map((product) => (
+                      <div 
+                        key={product.id} 
+                        className="group relative bg-spotify-light-gray rounded-lg p-4 transition-all duration-300 hover:bg-spotify-dark-gray cursor-pointer"
+                      >
+                        {/* Product Image */}
+                        <div className="relative mb-4 aspect-square overflow-hidden rounded-md bg-gray-900">
+                          {product.imageUrl && (
+                            <img 
+                              src={product.imageUrl} 
+                              alt={product.name}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          )}
+                          
+                          {/* Hover Actions */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProduct(product);
+                                setShowProductModal(true);
+                              }}
+                              className="p-3 bg-white rounded-full text-black hover:bg-gray-200 transition-colors"
+                              title="Quick View"
+                            >
+                              <Eye className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
+                              className="p-3 bg-primary rounded-full text-white hover:bg-primary-hover transition-colors"
+                              title="Add to Cart"
+                            >
+                              <ShoppingCart className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Product Info */}
+                        <div>
+                          <h3 className="font-bold text-white text-sm mb-1 line-clamp-2">{product.name}</h3>
+                          <p className="text-primary font-bold">${product.price}</p>
+                          {product.category && (
+                            <p className="text-xs text-gray-400 mt-1">{product.category}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Mobile Filters Modal */}
+          {showMobileFilters && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="fixed inset-0 bg-black/80" onClick={() => setShowMobileFilters(false)} />
+              <div className="fixed right-0 top-0 h-full w-80 bg-black border-l border-gray-800 p-6 overflow-y-auto">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-lg font-bold text-white">Filter by Category</h2>
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="p-2 hover:bg-spotify-dark-gray rounded-full transition-colors"
+                  >
+                    <X className="h-5 w-5 text-white" />
+                  </button>
+                </div>
+                
+                <nav className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setShowMobileFilters(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                      selectedCategory === 'all'
+                        ? 'bg-spotify-dark-gray text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
+                    }`}
+                  >
+                    <span>All Products</span>
+                    <span className="text-sm">{firebaseProducts.length}</span>
+                  </button>
+                  {allCategories.map((category) => {
+                    const categoryProducts = firebaseProducts.filter(product => {
+                      const productCategory = product.category || product.type;
+                      if (!productCategory) return false;
+                      
+                      const displayCategory = productCategory
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ')
+                        .replace('Infused Preroll', 'Infused Prerolls')
+                        .replace('Preroll', 'Prerolls')
+                        .replace('Cartridge', 'Cartridges')
+                        .replace('Disposable', 'Disposables')
+                        .replace('Pod', 'Pods')
+                        .replace('Battery', 'Batteries');
+                      
+                      return displayCategory === category;
+                    });
+                    
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setShowMobileFilters(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-md transition-colors flex justify-between items-center ${
+                          selectedCategory === category
+                            ? 'bg-spotify-dark-gray text-white'
+                            : 'text-gray-400 hover:text-white hover:bg-spotify-dark-gray/50'
+                        }`}
+                      >
+                        <span>{category}</span>
+                        <span className="text-sm">{categoryProducts.length}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
             </div>
           )}
         </div>
       </section>
+      )}
 
       {/* Product Modal */}
       <ProductModal 
@@ -758,8 +954,33 @@ const Wholesale = ({ onCartClick }) => {
           setShowProductModal(false);
           setTimeout(() => setSelectedProduct(null), 300);
         }}
-        onCartClick={onCartClick}
+        onCartClick={() => setShowCart(true)}
+        isWholesale={true}
       />
+      
+      {/* Cart Slide Out */}
+      <CartSlideOut 
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+        isWholesale={true}
+      />
+      
+      {/* Floating Cart Button */}
+      {showShop && cart.length > 0 && (
+        <button
+          onClick={() => setShowCart(true)}
+          className="fixed bottom-6 right-6 bg-primary hover:bg-primary-hover text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50"
+        >
+          <div className="relative">
+            <ShoppingCart className="h-6 w-6" />
+            {cart.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cart.reduce((total, item) => total + item.quantity, 0)}
+              </span>
+            )}
+          </div>
+        </button>
+      )}
     </div>
   );
 };

@@ -134,14 +134,14 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...secondaryColor);
-    doc.text('Due Date', margin, yPosition);
-    doc.text('Subject', pageWidth / 2, yPosition);
+    doc.text('Date', margin, yPosition);
+    doc.text('Invoice Type', pageWidth / 2, yPosition);
     
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text(today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), margin, yPosition + 5);
-    doc.text('Wholesale order', pageWidth / 2, yPosition + 5);
+    doc.text('Wholesale Order', pageWidth / 2, yPosition + 5);
     
     // Billed To section
     yPosition = 65;
@@ -159,22 +159,55 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
     const billingCustomer = customerForOrder || userData;
     const isSalesOrder = location.pathname.includes('/sales');
     
+    let customerDetailsEndY = yPosition + 5;
+    
     if (billingCustomer) {
-      doc.text(billingCustomer.displayName || billingCustomer.email || 'Customer', margin, yPosition + 5);
+      // Customer Name
+      doc.text(billingCustomer.displayName || billingCustomer.email || 'Customer', margin, customerDetailsEndY);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.text(billingCustomer.email || '', margin, yPosition + 10);
+      customerDetailsEndY += 5;
+      
+      // Email
+      if (billingCustomer.email) {
+        doc.text(billingCustomer.email, margin, customerDetailsEndY);
+        customerDetailsEndY += 5;
+      }
+      
+      // Phone
+      if (billingCustomer.phone || billingCustomer.phoneNumber) {
+        doc.setFontSize(9);
+        doc.text(`Phone: ${billingCustomer.phone || billingCustomer.phoneNumber}`, margin, customerDetailsEndY);
+        customerDetailsEndY += 4;
+      }
+      
+      // License Number - Make it more prominent
+      if (billingCustomer.licenseNumber) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...accentColor); // Highlight license number
+        doc.text(`License #: ${billingCustomer.licenseNumber}`, margin, customerDetailsEndY);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...primaryColor); // Reset color
+        customerDetailsEndY += 5;
+      }
+      
+      // Address
       if (billingCustomer.address) {
         doc.setFontSize(9);
+        doc.setTextColor(...secondaryColor);
         const addressLines = doc.splitTextToSize(billingCustomer.address, 80);
         addressLines.forEach((line, index) => {
-          if (index < 2) { // Limit to 2 lines
-            doc.text(line, margin, yPosition + 15 + (index * 4));
+          if (index < 3) { // Allow up to 3 lines for address
+            doc.text(line, margin, customerDetailsEndY);
+            customerDetailsEndY += 4;
           }
         });
+        doc.setTextColor(...primaryColor); // Reset color
       }
     } else {
-      doc.text('Guest Customer', margin, yPosition + 5);
+      doc.text('Guest Customer', margin, customerDetailsEndY);
+      customerDetailsEndY += 5;
     }
     
     // Currency with flag emoji
@@ -182,8 +215,8 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
     doc.setFont('helvetica', 'bold');
     doc.text('USD - United State Dollar', pageWidth / 2, yPosition + 5);
     
-    // Items table - modern design
-    yPosition = 85;
+    // Items table - modern design - adjust position based on customer details
+    yPosition = Math.max(customerDetailsEndY + 10, 95); // Ensure minimum spacing
     const tableColumns = ['ITEM', 'QTY', 'UNIT PRICE', 'AMOUNT'];
     const tableRows = [];
     const productImages = [];
@@ -400,10 +433,12 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
       invoiceNumber: invoiceNumber,
       date: today.toISOString(),
       customer: {
-        name: userData?.displayName || userData?.email || 'Guest Customer',
-        email: userData?.email || '',
-        phone: userData?.phone || '',
-        userId: user?.uid || null
+        name: billingCustomer?.displayName || billingCustomer?.email || 'Guest Customer',
+        email: billingCustomer?.email || '',
+        phone: billingCustomer?.phone || billingCustomer?.phoneNumber || '',
+        address: billingCustomer?.address || '',
+        licenseNumber: billingCustomer?.licenseNumber || '',
+        userId: billingCustomer?.id || billingCustomer?.uid || user?.uid || null
       },
       items: cart.map(item => ({
         id: item.id,

@@ -44,6 +44,7 @@ const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
 const Underage = lazy(() => import('./pages/Underage'))
 const Sales = lazy(() => import('./pages/Sales'))
+const Accessibility = lazy(() => import('./pages/Accessibility'))
 
 
 function App() {
@@ -119,6 +120,7 @@ function App() {
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/account" element={<Account />} />
                         <Route path="/underage" element={<Underage />} />
+                        <Route path="/accessibility" element={<Accessibility />} />
                       </Routes>
                     </Suspense>
                   </SpotifyLayout>

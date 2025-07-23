@@ -112,58 +112,63 @@ const GlobalFooter = () => {
         {/* Divider */}
         <div className="mb-12 border-t border-spotify-light-gray" />
         
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-          {/* Logo and Company Info */}
-          <div className="col-span-2">
-            <Link to="/" className="inline-block mb-6">
-              <img 
-                src={logos?.footer?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
-                alt={logos?.footer?.alt || "Kushie Logo"} 
-                style={{
-                  width: logos?.footer?.width === 'auto' ? 'auto' : `${logos?.footer?.width}px`,
-                  height: logos?.footer?.height === 'auto' ? 'auto' : `${logos?.footer?.height}px`,
-                  maxHeight: '40px'
-                }}
-              />
-            </Link>
-            <p className="text-sm text-spotify-text-subdued mb-6 max-w-sm">
-              Premium cannabis products delivered with care. Quality, consistency, and customer satisfaction are our priorities.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-spotify-text-subdued">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>Multiple locations across 6 states</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-spotify-text-subdued">
-                <Phone className="h-4 w-4 flex-shrink-0" />
-                <a href="tel:1-800-KUSHIE" className="hover:text-white transition-colors">
-                  1-800-KUSHIE
-                </a>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-spotify-text-subdued">
-                <Mail className="h-4 w-4 flex-shrink-0" />
-                <a href="mailto:support@kushie.com" className="hover:text-white transition-colors">
-                  support@kushie.com
-                </a>
-              </div>
+        {/* Logo and Company Info - Centered on Mobile */}
+        <div className="text-center md:text-left mb-8 md:mb-12">
+          <Link to="/" className="inline-block mb-6">
+            <img 
+              src={logos?.footer?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
+              alt={logos?.footer?.alt || "Kushie Logo"} 
+              style={{
+                width: logos?.footer?.width === 'auto' ? 'auto' : `${logos?.footer?.width}px`,
+                height: logos?.footer?.height === 'auto' ? 'auto' : `${logos?.footer?.height}px`,
+                maxHeight: '60px'
+              }}
+              className="h-16 md:h-10 w-auto mx-auto md:mx-0"
+            />
+          </Link>
+          <p className="text-sm text-spotify-text-subdued mb-6 max-w-sm mx-auto md:mx-0">
+            Premium cannabis products delivered with care. Quality, consistency, and customer satisfaction are our priorities.
+          </p>
+          <div className="space-y-3 max-w-sm mx-auto md:mx-0">
+            <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-spotify-text-subdued">
+              <MapPin className="h-4 w-4 flex-shrink-0" />
+              <span>Multiple locations across 6 states</span>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-spotify-text-subdued">
+              <Phone className="h-4 w-4 flex-shrink-0" />
+              <a href="tel:1-800-KUSHIE" className="hover:text-white transition-colors">
+                1-800-KUSHIE
+              </a>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-spotify-text-subdued">
+              <Mail className="h-4 w-4 flex-shrink-0" />
+              <a href="mailto:support@kushie.com" className="hover:text-white transition-colors">
+                support@kushie.com
+              </a>
             </div>
           </div>
+        </div>
 
-          {/* Dynamic Columns */}
+        {/* Main Footer Content - 4 cols on mobile, 4-6 on desktop */}
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-8">
+          {/* Empty column for desktop to offset content */}
+          <div className="hidden lg:block lg:col-span-2"></div>
+          
+          {/* Dynamic Columns - Centered on mobile with smaller text */}
           {columns.map((column) => (
-            <div key={column.id}>
-              <h3 className="text-sm font-semibold text-white mb-4">{column.title}</h3>
-              <ul className="space-y-3">
+            <div key={column.id} className="text-center md:text-left">
+              <h3 className="text-xs md:text-sm font-semibold text-white mb-2 md:mb-4">{column.title}</h3>
+              <ul className="space-y-1 md:space-y-3">
                 {column.links?.map((link, index) => (
                   <li key={index}>
                     <Link 
                       to={link.url} 
-                      className="text-sm text-spotify-text-subdued hover:text-white transition-colors flex items-center gap-1"
+                      className="text-xs md:text-sm text-spotify-text-subdued hover:text-white transition-colors inline-flex items-center gap-1"
                     >
-                      {link.text}
+                      <span className="hidden sm:inline">{link.text}</span>
+                      <span className="sm:hidden">{link.text.split(' ')[0]}</span>
                       {link.url.includes('lab-results') && (
-                        <ExternalLink className="h-3 w-3" />
+                        <ExternalLink className="h-2 md:h-3 w-2 md:w-3" />
                       )}
                     </Link>
                   </li>

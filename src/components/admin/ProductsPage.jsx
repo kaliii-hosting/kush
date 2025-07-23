@@ -884,88 +884,24 @@ const ProductsPage = () => {
 
   return (
     <div>
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg">
-          {successMessage}
-        </div>
-      )}
-      
-      {/* Firebase Notice */}
-      {!isUsingFirebase && (
-        <div className="mb-4 bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg">
-          <p className="font-semibold">Notice: Using Local Storage</p>
-          <p className="text-sm mt-1">
-            Firebase connection not established. Products are being stored locally in your browser. 
-            Check your Firebase Realtime Database configuration.
-          </p>
-        </div>
-      )}
-
-      {/* Import Progress Overlay */}
-      {importLoading && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-          <div className="bg-spotify-light-gray rounded-xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Importing Products</h3>
-            
-            {/* Chunk Info */}
-            {totalChunks > 1 && (
-              <div className="mb-4 text-center">
-                <p className="text-spotify-green font-semibold">
-                  Chunk {currentChunk} of {totalChunks}
-                </p>
-              </div>
-            )}
-            
-            {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
-                <div 
-                  className="bg-spotify-green h-full transition-all duration-300 ease-out"
-                  style={{ width: `${importProgress}%` }}
-                />
-              </div>
-              <p className="text-white text-center mt-2 font-semibold">{importProgress}%</p>
-            </div>
-            
-            {/* Status Message */}
-            <p className="text-gray-300 text-center text-sm mb-2">{importStatus}</p>
-            
-            {/* File Size Warning for Large Files */}
-            {totalChunks > 1 && (
-              <p className="text-yellow-400 text-xs text-center">
-                Large file detected - processing in chunks for stability
-              </p>
-            )}
-            
-            {/* Cancel Button (disabled during import) */}
-            <button
-              className="mt-6 w-full bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed opacity-50"
-              disabled
-            >
-              Please wait...
-            </button>
+      {/* Header with Total Count */}
+      <div className="mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Products Inventory</h2>
+            <p className="text-xs sm:text-sm text-gray-400 mt-0.5">For large datasets (over 2MB), use CSV format</p>
           </div>
-        </div>
-      )}
-      
-      {/* Stats - Total Card */}
-      <div className="mb-6">
-        <div className="bg-spotify-green rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-black/70 text-sm font-medium">Total Products</p>
-              <p className="text-4xl font-bold text-black mt-1">{stats.total}</p>
-            </div>
-            <BarChart3 className="w-10 h-10 text-black/50" />
+          <div className="bg-spotify-green rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 self-start sm:self-auto">
+            <p className="text-black/70 text-xs sm:text-sm font-medium">Total Products</p>
+            <p className="text-2xl sm:text-3xl font-bold text-black">{stats.total}</p>
           </div>
         </div>
       </div>
 
       {/* Category Stats - All Categories */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-4">Product Categories</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-white mb-2">Product Categories</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
           {stats.categories.map((category) => {
             const getColorClasses = (color, count) => {
               const hasProducts = count > 0;
@@ -994,7 +930,7 @@ const ProductsPage = () => {
             const IconComponent = category.icon || Package;
             
             return (
-              <div key={category.value} className={`bg-spotify-light-gray rounded-lg p-4 ${category.count === 0 ? 'opacity-60' : ''} hover:bg-spotify-card-hover transition-colors cursor-pointer`}>
+              <div key={category.value} className={`bg-spotify-light-gray rounded-lg p-2 ${category.count === 0 ? 'opacity-60' : ''} hover:bg-spotify-card-hover transition-colors cursor-pointer`}>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-gray-400 text-xs truncate pr-2">{category.label}</p>
@@ -1008,56 +944,113 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Add Product Button */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Products Inventory</h2>
-          <p className="text-sm text-gray-400 mt-1">For large datasets (over 2MB), use CSV format for better performance</p>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-2 bg-green-500/20 border border-green-500 text-green-400 px-2 py-1.5 rounded-lg text-sm">
+          {successMessage}
         </div>
-        <div className="flex gap-2">
+      )}
+      
+      {/* Firebase Notice */}
+      {!isUsingFirebase && (
+        <div className="mb-2 bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-2 py-1.5 rounded-lg">
+          <p className="font-semibold text-sm">Notice: Using Local Storage</p>
+          <p className="text-xs mt-0.5">
+            Firebase connection not established. Products are being stored locally in your browser. 
+            Check your Firebase Realtime Database configuration.
+          </p>
+        </div>
+      )}
+
+      {/* Import Progress Overlay */}
+      {importLoading && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="bg-spotify-light-gray rounded-xl p-4 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-white mb-2">Importing Products</h3>
+            
+            {/* Chunk Info */}
+            {totalChunks > 1 && (
+              <div className="mb-2 text-center">
+                <p className="text-spotify-green font-semibold">
+                  Chunk {currentChunk} of {totalChunks}
+                </p>
+              </div>
+            )}
+            
+            {/* Progress Bar */}
+            <div className="mb-2">
+              <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
+                <div 
+                  className="bg-spotify-green h-full transition-all duration-300 ease-out"
+                  style={{ width: `${importProgress}%` }}
+                />
+              </div>
+              <p className="text-white text-center mt-2 font-semibold">{importProgress}%</p>
+            </div>
+            
+            {/* Status Message */}
+            <p className="text-gray-300 text-center text-sm mb-2">{importStatus}</p>
+            
+            {/* File Size Warning for Large Files */}
+            {totalChunks > 1 && (
+              <p className="text-yellow-400 text-xs text-center">
+                Large file detected - processing in chunks for stability
+              </p>
+            )}
+            
+            {/* Cancel Button (disabled during import) */}
+            <button
+              className="mt-3 w-full bg-gray-600 text-gray-400 py-2 px-4 rounded-lg cursor-not-allowed opacity-50"
+              disabled
+            >
+              Please wait...
+            </button>
+          </div>
+        </div>
+      )}
+      
+
+      {/* Add Product Button */}
+      <div className="flex justify-end items-center mb-3 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
           {products.length === 0 && (
             <button
               onClick={handleSeedDatabase}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg transition-colors text-sm whitespace-nowrap"
             >
-              <Database size={20} />
-              Seed Database
+              <Database size={16} className="sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Seed Database</span>
+              <span className="sm:hidden">Seed</span>
             </button>
           )}
-          {/* Temporary migration button */}
-          <button
-            onClick={migrateTypeToCategory}
-            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg transition-colors font-medium"
-          >
-            <Database size={20} />
-            Migrate Type→Category
-          </button>
           <button
             onClick={handleDownloadTemplate}
-            className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 text-white px-2 sm:px-3 py-1 rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
             title="Download Excel template"
           >
-            <FileSpreadsheet size={20} />
-            Template
+            <FileSpreadsheet size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Template</span>
           </button>
           <button
             onClick={handleImportClick}
-            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
             disabled={importLoading}
             title="Import Excel or CSV file (max 2MB)"
           >
-            <Upload size={20} className={importLoading ? 'animate-spin' : ''} />
-            {importLoading ? 'Importing...' : 'Import File'}
+            <Upload size={16} className={`sm:w-5 sm:h-5 ${importLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{importLoading ? 'Importing...' : 'Import'}</span>
+            <span className="sm:hidden">{importLoading ? '...' : 'Import'}</span>
           </button>
           <button
             onClick={() => {
               setEditingProduct(null);
               setShowForm(!showForm);
             }}
-            className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black px-4 py-2 rounded-lg transition-colors font-medium"
+            className="flex items-center gap-1 bg-spotify-green hover:bg-spotify-green-hover text-black px-2 sm:px-3 py-1 rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
           >
-            <Plus size={20} className={`transition-transform ${showForm ? 'rotate-45' : ''}`} />
-            {showForm ? 'Cancel' : 'Add Product'}
+            <Plus size={16} className={`sm:w-5 sm:h-5 transition-transform ${showForm ? 'rotate-45' : ''}`} />
+            <span className="hidden sm:inline">{showForm ? 'Cancel' : 'Add Product'}</span>
+            <span className="sm:hidden">{showForm ? 'Cancel' : 'Add'}</span>
           </button>
         </div>
       </div>
@@ -1073,7 +1066,7 @@ const ProductsPage = () => {
 
       {/* Product Form Dropdown for both Add and Edit */}
       {showForm && (
-        <div className="mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div className="mb-4 bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-700">
           <ProductForm
             product={editingProduct}
             onSubmit={editingProduct 

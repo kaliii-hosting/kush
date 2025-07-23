@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { startUserSync, stopUserSync } from '../utils/syncUsersToRealtimeDB';
 
 const AdminAuthContext = createContext({});
 
@@ -60,13 +61,21 @@ export const AdminAuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && user.email === ADMIN_EMAIL) {
         setAdminUser(user);
+        // Start user sync when admin is authenticated
+        startUserSync();
       } else {
         setAdminUser(null);
+        // Stop user sync when admin is not authenticated
+        stopUserSync();
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      // Stop user sync when component unmounts
+      stopUserSync();
+    };
   }, []);
 
   // Remove auto sign in - admin must enter PIN every time

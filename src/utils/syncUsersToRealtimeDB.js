@@ -50,5 +50,5 @@ export const stopUserSync = () => {
   }
 };
 
-// Auto-start sync when this module is imported
-startUserSync();
+// Don't auto-start sync - it should be started only when admin is authenticated
+// startUserSync();

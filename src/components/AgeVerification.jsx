@@ -20,8 +20,24 @@ const AgeVerification = () => {
   // Don't show age verification for admin, wholesale, sales, and accessibility routes
   const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute && !isAccessibilityRoute;
   
-  // Always show age verification on every visit (except for admin/wholesale)
-  const [isVisible, setIsVisible] = useState(shouldShowVerification);
+  // Initialize session state on component mount
+  useEffect(() => {
+    // Check if this is a fresh page load (not navigation)
+    const navigationEntries = performance.getEntriesByType('navigation');
+    const isPageReload = navigationEntries.length > 0 && navigationEntries[0].type === 'reload';
+    const isInitialLoad = navigationEntries.length > 0 && navigationEntries[0].type === 'navigate' && !document.referrer;
+    
+    // Clear age verification on page refresh or initial load
+    if ((isPageReload || isInitialLoad) && location.pathname === '/') {
+      sessionStorage.removeItem('ageVerified');
+    }
+  }, []);
+  
+  // Check if user has already verified age in this session
+  const [hasVerified, setHasVerified] = useState(() => sessionStorage.getItem('ageVerified') === 'true');
+  
+  // Show verification only if on homepage and hasn't verified in this session
+  const [isVisible, setIsVisible] = useState(shouldShowVerification && !hasVerified && location.pathname === '/');
   const [scale, setScale] = useState(1);
   
   // Get logo URL
@@ -86,16 +102,20 @@ const AgeVerification = () => {
     const isSalesRoute = location.pathname.startsWith('/sales');
     const isAccessibilityRoute = location.pathname.startsWith('/accessibility');
     const shouldShowVerification = !isAdminRoute && !isWholesaleRoute && !isSalesRoute && !isAccessibilityRoute;
+    const hasVerifiedInSession = sessionStorage.getItem('ageVerified') === 'true';
     
-    if (shouldShowVerification && !isVisible) {
+    // Only show on homepage if not verified in session
+    if (shouldShowVerification && location.pathname === '/' && !hasVerifiedInSession) {
       setIsVisible(true);
-    } else if (!shouldShowVerification && isVisible) {
+    } else {
       setIsVisible(false);
     }
   }, [location.pathname]);
 
   const handleOver21 = () => {
-    // Age verified successfully - hide the popup (no storage)
+    // Age verified successfully - store in session and hide the popup
+    sessionStorage.setItem('ageVerified', 'true');
+    setHasVerified(true);
     setIsVisible(false);
   };
 
@@ -138,27 +158,20 @@ const AgeVerification = () => {
                 )}
                 
                 {/* Logo image */}
-                {!logoError && (
-                  <img 
-                    ref={imgRef}
-                    src={logoUrl} 
-                    alt={logoAlt} 
-                    className={`h-16 w-auto transition-opacity duration-300 ${
-                      logoLoaded && !logosLoading ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    style={{ 
-                      maxWidth: '200px',
-                      display: logoLoaded || logoError ? 'block' : 'none'
-                    }}
-                    onLoad={() => setLogoLoaded(true)}
-                    onError={() => setLogoError(true)}
-                  />
-                )}
-                
-                {/* Fallback text if image fails */}
-                {logoError && (
-                  <h1 className="text-3xl font-bold text-white">KUSHIE</h1>
-                )}
+                <img 
+                  ref={imgRef}
+                  src={logoUrl} 
+                  alt={logoAlt} 
+                  className={`h-16 w-auto transition-opacity duration-300 ${
+                    logoLoaded && !logosLoading ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ 
+                    maxWidth: '200px',
+                    display: logoLoaded || logoError ? 'block' : 'none'
+                  }}
+                  onLoad={() => setLogoLoaded(true)}
+                  onError={() => setLogoError(true)}
+                />
               </div>
             </div>
             

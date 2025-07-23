@@ -4,23 +4,23 @@
 /* Base section wrapper - applies to all sections */
 .section-wrapper {
   /* Desktop spacing */
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
-/* Mobile spacing - 30px */
+/* Mobile spacing - 15px */
 @media (max-width: 640px) {
   .section-wrapper {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
-/* Tablet spacing - 35px */
+/* Tablet spacing - 17.5px */
 @media (min-width: 641px) and (max-width: 1024px) {
   .section-wrapper {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
@@ -29,119 +29,119 @@
 /* Hero sections - no top padding, same bottom as other sections */
 .hero-section {
   padding-top: 0;
-  padding-bottom: 50px;
+  padding-bottom: 25px;
 }
 
 @media (max-width: 640px) {
   .hero-section {
-    padding-bottom: 30px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .hero-section {
-    padding-bottom: 35px;
+    padding-bottom: 17.5px;
   }
 }
 
 /* Video sections - same spacing as base */
 .video-section-section {
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 @media (max-width: 640px) {
   .video-section-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .video-section-section {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
 /* Product sections - same spacing as base */
 .products-section {
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 @media (max-width: 640px) {
   .products-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .products-section {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
 /* Award winning section - same spacing with gradient background */
 .award-winning-section {
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
   background: linear-gradient(to bottom, #000000, #0a0a0a, #000000);
 }
 
 @media (max-width: 640px) {
   .award-winning-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .award-winning-section {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
 /* Content sections - same spacing as base */
 .content-section {
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 @media (max-width: 640px) {
   .content-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .content-section {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
 /* CTA sections - same spacing as base */
 .cta-section {
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 @media (max-width: 640px) {
   .cta-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .cta-section {
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding-top: 17.5px;
+    padding-bottom: 17.5px;
   }
 }
 
@@ -158,57 +158,57 @@
 }
 
 .section-spacing-small {
-  padding-top: 25px !important;
-  padding-bottom: 25px !important;
+  padding-top: 12.5px !important;
+  padding-bottom: 12.5px !important;
 }
 
 @media (max-width: 640px) {
   .section-spacing-small {
-    padding-top: 15px !important;
-    padding-bottom: 15px !important;
+    padding-top: 7.5px !important;
+    padding-bottom: 7.5px !important;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .section-spacing-small {
-    padding-top: 20px !important;
-    padding-bottom: 20px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
   }
 }
 
 .section-spacing-large {
-  padding-top: 75px !important;
-  padding-bottom: 75px !important;
+  padding-top: 37.5px !important;
+  padding-bottom: 37.5px !important;
 }
 
 @media (max-width: 640px) {
   .section-spacing-large {
-    padding-top: 45px !important;
-    padding-bottom: 45px !important;
+    padding-top: 22.5px !important;
+    padding-bottom: 22.5px !important;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .section-spacing-large {
-    padding-top: 55px !important;
-    padding-bottom: 55px !important;
+    padding-top: 27.5px !important;
+    padding-bottom: 27.5px !important;
   }
 }
 
 /* First section after hero - no additional spacing needed */
 .hero-section + .section-wrapper {
-  padding-top: 50px;
+  padding-top: 25px;
 }
 
 @media (max-width: 640px) {
   .hero-section + .section-wrapper {
-    padding-top: 30px;
+    padding-top: 15px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .hero-section + .section-wrapper {
-    padding-top: 35px;
+    padding-top: 17.5px;
   }
 }
 
@@ -291,37 +291,37 @@ html {
 
 /* Specific adjustments for product sections to reduce gaps */
 .section-wrapper.products-section {
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 @media (max-width: 640px) {
   .section-wrapper.products-section {
-    padding-top: 25px;
-    padding-bottom: 25px;
+    padding-top: 12.5px;
+    padding-bottom: 12.5px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .section-wrapper.products-section {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
   }
 }
 
 /* Reduce spacing between hero and first content section */
 .hero-section + .section-wrapper:not(.video-section-section) {
-  padding-top: 40px;
+  padding-top: 20px;
 }
 
 @media (max-width: 640px) {
   .hero-section + .section-wrapper:not(.video-section-section) {
-    padding-top: 25px;
+    padding-top: 12.5px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .hero-section + .section-wrapper:not(.video-section-section) {
-    padding-top: 30px;
+    padding-top: 15px;
   }
 }

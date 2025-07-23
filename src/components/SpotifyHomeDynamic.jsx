@@ -8,6 +8,8 @@ import { useState, useRef } from 'react';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
 import DynamicSection from './DynamicSection';
+import QualityFeatures from './QualityFeatures';
+import PromoSection from './PromoSection';
 
 const SpotifyHomeDynamic = ({ onCartClick }) => {
   const { shopifyProducts } = useEnhancedProducts();
@@ -150,14 +152,29 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
   return (
     <div className="space-y-0">
       {/* Render all sections in order */}
-      {sections.map((section, index) => (
-        <DynamicSection 
-          key={section.id} 
-          section={section}
-          isFirstSection={index === 0}
-          onCartClick={onCartClick}
-        />
-      ))}
+      {sections.map((section, index) => {
+        const elements = [];
+        
+        // Add the current section
+        elements.push(
+          <DynamicSection 
+            key={section.id} 
+            section={section}
+            isFirstSection={index === 0}
+            onCartClick={onCartClick}
+          />
+        );
+        
+        // Add PromoSection after Gold Standard Cartridges section
+        if (section.id === 'goldCartridges' || section.title === 'Gold Standard Cartridges') {
+          elements.push(<PromoSection key="promo-section" />);
+        }
+        
+        return elements;
+      })}
+
+      {/* Quality Features Section at the bottom */}
+      <QualityFeatures />
 
       {/* Product Modal */}
       <ProductModal 

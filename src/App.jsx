@@ -23,8 +23,8 @@ import ScrollToTop from './components/ScrollToTop'
 import LoadingSpinner from './components/LoadingSpinner'
 import useResourcePreloader from './hooks/useResourcePreloader'
 
-// Import user sync utility (will auto-start syncing)
-import './utils/syncUsersToRealtimeDB'
+// User sync is now handled in AdminAuthContext when admin logs in
+// import './utils/syncUsersToRealtimeDB'
 
 // Lazy load admin components
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'))

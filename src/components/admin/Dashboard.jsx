@@ -8,8 +8,9 @@ import {
   Eye, CheckCircle, XCircle, Clock, 
   BarChart3, PieChart, Activity, Play,
   MoreHorizontal, Download, Filter,
-  Music, FileText, Database, Receipt, RefreshCw, X
+  Music, FileText, Database, Receipt, RefreshCw, X, UserPlus
 } from 'lucide-react';
+import { seedSampleUsers } from '../../utils/seedUsers';
 
 const Dashboard = () => {
   const { shopifyProducts = [], firebaseProducts = [], loading: productsLoading } = useEnhancedProducts();
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [cardRefreshing, setCardRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [realtimeActive, setRealtimeActive] = useState(false);
+  const [seedingUsers, setSeedingUsers] = useState(false);
   const [stats, setStats] = useState({
     totalShopifyProducts: 0,
     totalWholesaleProducts: 0,
@@ -65,13 +67,41 @@ const Dashboard = () => {
               ...usersData[key]
             }));
             totalUsers = usersArray.length;
-            activeUsers = usersArray.filter(user => user.status === 'active').length;
+            
+            // Enhanced active user detection
+            const now = Date.now();
+            const ACTIVE_THRESHOLD = 30 * 24 * 60 * 60 * 1000; // 30 days
+            
+            activeUsers = usersArray.filter(user => {
+              // Check multiple fields for activity status
+              return user.status === 'active' ||
+                     user.isActive === true ||
+                     (user.lastActive && (now - new Date(user.lastActive).getTime()) < ACTIVE_THRESHOLD) ||
+                     (user.lastLogin && (now - new Date(user.lastLogin).getTime()) < ACTIVE_THRESHOLD) ||
+                     (user.createdAt && (now - new Date(user.createdAt).getTime()) < ACTIVE_THRESHOLD && !user.status);
+            }).length;
+            
             console.log(`Found ${totalUsers} users (${activeUsers} active)`);
           } else {
-            console.log('No users found in database');
+            console.log('No users found in database - checking auth users');
+            
+            // Try to fetch from Firebase Auth as fallback
+            try {
+              const { getAuth } = await import('firebase/auth');
+              const { auth } = await import('../../config/firebase');
+              // Note: This would require admin SDK in a real scenario
+              console.log('Note: Full user list requires Firebase Admin SDK');
+            } catch (authError) {
+              console.log('Auth check skipped:', authError.message);
+            }
           }
         } catch (error) {
           console.error('Error fetching users:', error);
+          console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            name: error.name
+          });
         }
         
         // Fetch music tracks count
@@ -111,37 +141,39 @@ const Dashboard = () => {
         const blogPostsCount = blogPosts?.length || 0;
         console.log(`Found ${blogPostsCount} blog posts from context`);
 
-        // Fetch storage size from Supabase
+        // Skip storage size calculation on initial load to improve performance
         let storageSize = 0;
-        try {
-          console.log('Fetching storage size...');
-          
-          // Import from supabase config
-          const { supabase, STORAGE_BUCKET } = await import('../../config/supabase');
-          
-          console.log('Using storage bucket:', STORAGE_BUCKET);
-          
-          // Function to recursively get all files
-          const calculateTotalSize = async (path = '') => {
-            let totalSize = 0;
+        if (isRefreshing) {
+          try {
+            console.log('Fetching storage size...');
             
-            const { data: items, error } = await supabase.storage
-              .from(STORAGE_BUCKET)
-              .list(path, {
-                limit: 1000,
-                offset: 0
-              });
+            // Import from supabase config
+            const { supabase, STORAGE_BUCKET } = await import('../../config/supabase');
             
-            if (error) {
-              console.error(`Error listing files in ${path}:`, error);
-              return 0;
-            }
+            console.log('Using storage bucket:', STORAGE_BUCKET);
             
-            if (!items || items.length === 0) {
-              return 0;
-            }
-            
-            console.log(`Found ${items.length} items in path: ${path || '/'}`);
+            // Function to recursively get all files - limited depth for performance
+            const calculateTotalSize = async (path = '', depth = 0) => {
+              if (depth > 2) return 0; // Limit recursion depth
+              let totalSize = 0;
+              
+              const { data: items, error } = await supabase.storage
+                .from(STORAGE_BUCKET)
+                .list(path, {
+                  limit: 100, // Reduced limit for performance
+                  offset: 0
+                });
+              
+              if (error) {
+                console.error(`Error listing files in ${path}:`, error);
+                return 0;
+              }
+              
+              if (!items || items.length === 0) {
+                return 0;
+              }
+              
+              console.log(`Found ${items.length} items in path: ${path || '/'}`);
             
             for (const item of items) {
               // Files have an id property, folders don't
@@ -154,7 +186,7 @@ const Dashboard = () => {
                 // It's a folder, recurse into it
                 console.log(`Folder: ${item.name}`);
                 const folderPath = path ? `${path}/${item.name}` : item.name;
-                const folderSize = await calculateTotalSize(folderPath);
+                const folderSize = await calculateTotalSize(folderPath, depth + 1);
                 totalSize += folderSize;
               }
             }
@@ -162,12 +194,13 @@ const Dashboard = () => {
             return totalSize;
           };
           
-          // Calculate total storage size
-          storageSize = await calculateTotalSize();
-          console.log(`\nTotal storage size: ${storageSize} bytes (${(storageSize / 1024 / 1024).toFixed(2)} MB)`);
-          
-        } catch (error) {
-          console.error('Error calculating storage size:', error);
+            // Calculate total storage size
+            storageSize = await calculateTotalSize();
+            console.log(`\nTotal storage size: ${storageSize} bytes (${(storageSize / 1024 / 1024).toFixed(2)} MB)`);
+            
+          } catch (error) {
+            console.error('Error calculating storage size:', error);
+          }
         }
 
         // Log product counts
@@ -216,9 +249,31 @@ const Dashboard = () => {
       }, 100);
     };
 
-    // Initial fetch
+    // Handle seeding sample users
+    const handleSeedUsers = async () => {
+      setSeedingUsers(true);
+      try {
+        const success = await seedSampleUsers();
+        if (success) {
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
+          // Refresh stats after seeding
+          await fetchAllStats();
+        }
+      } catch (error) {
+        console.error('Error seeding users:', error);
+      } finally {
+        setSeedingUsers(false);
+      }
+    };
+
+    // Initial fetch - debounced to prevent multiple calls
     useEffect(() => {
-      fetchAllStats();
+      const timer = setTimeout(() => {
+        fetchAllStats();
+      }, 100);
+      
+      return () => clearTimeout(timer);
   }, [shopifyProducts, firebaseProducts, blogPosts]);
   
   // Add real-time listeners for dynamic updates
@@ -251,9 +306,9 @@ const Dashboard = () => {
           const isActive = 
             user.status === 'active' ||
             user.isActive === true ||
-            (user.lastActive && (now - user.lastActive) < ACTIVE_THRESHOLD) ||
-            (user.lastLogin && (now - user.lastLogin) < ACTIVE_THRESHOLD) ||
-            (user.createdAt && (now - user.createdAt) < ACTIVE_THRESHOLD && !user.status);
+            (user.lastActive && (now - new Date(user.lastActive).getTime()) < ACTIVE_THRESHOLD) ||
+            (user.lastLogin && (now - new Date(user.lastLogin).getTime()) < ACTIVE_THRESHOLD) ||
+            (user.createdAt && (now - new Date(user.createdAt).getTime()) < ACTIVE_THRESHOLD && !user.status);
           
           if (isActive) {
             activeUsers++;
@@ -353,9 +408,9 @@ const Dashboard = () => {
   };
 
   // Spotify-style card component
-  const SpotifyCard = ({ title, value, subtitle, icon: Icon, color = '#1db954', trend }) => {
+  const SpotifyCard = ({ title, value, subtitle, icon: Icon, color = '#1db954', trend, isLoading }) => {
     return (
-      <div className={`bg-[#181818] rounded-lg p-6 hover:bg-[#282828] transition-all duration-300 cursor-pointer group relative overflow-hidden ${
+      <div className={`bg-[#181818] rounded-lg p-2 sm:p-3 hover:bg-[#282828] transition-all duration-300 cursor-pointer group relative overflow-hidden ${
         cardRefreshing ? 'animate-pulse' : ''
       }`}>
         {/* Refresh animation overlay */}
@@ -363,29 +418,35 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
         )}
         
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-sm text-[#b3b3b3] font-medium">{title}</p>
-            <h3 className={`text-3xl font-bold text-white mt-1 transition-all duration-300 ${
-              cardRefreshing ? 'opacity-50' : 'opacity-100'
-            }`}>{value}</h3>
-            {subtitle && (
-              <p className="text-sm text-[#b3b3b3] mt-1">{subtitle}</p>
+        <div className="flex items-start justify-between mb-1.5 sm:mb-2">
+          <div className="flex-1">
+            <p className="text-xs sm:text-sm text-[#b3b3b3] font-medium truncate pr-2">{title}</p>
+            {isLoading ? (
+              <div className="mt-2">
+                <div className="h-6 sm:h-8 w-12 sm:w-16 bg-[#282828] rounded animate-pulse" />
+              </div>
+            ) : (
+              <h3 className={`text-2xl sm:text-3xl font-bold text-white mt-0.5 transition-all duration-300 ${
+                cardRefreshing ? 'opacity-50' : 'opacity-100'
+              }`}>{value !== null && value !== undefined ? value : '0'}</h3>
+            )}
+            {subtitle && !isLoading && (
+              <p className="text-xs sm:text-sm text-[#b3b3b3] mt-0.5 line-clamp-2">{subtitle}</p>
             )}
           </div>
-          <div className={`p-2 rounded-full transition-all duration-300 ${
+          <div className={`p-1.5 sm:p-2 rounded-full transition-all duration-300 flex-shrink-0 ${
             cardRefreshing ? 'animate-spin' : ''
           }`} style={{ backgroundColor: `${color}20` }}>
-            <Icon className="w-5 h-5" style={{ color }} />
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
             {title === 'Total Users' && realtimeActive && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse" />
             )}
           </div>
         </div>
         {trend && (
-          <div className="flex items-center gap-2">
-            <TrendingUp className={`w-4 h-4 ${trend > 0 ? 'text-spotify-green' : 'text-red-500 rotate-180'}`} />
-            <span className={`text-sm font-medium ${trend > 0 ? 'text-spotify-green' : 'text-red-500'}`}>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <TrendingUp className={`w-3 h-3 sm:w-4 sm:h-4 ${trend > 0 ? 'text-spotify-green' : 'text-red-500 rotate-180'}`} />
+            <span className={`text-xs sm:text-sm font-medium ${trend > 0 ? 'text-spotify-green' : 'text-red-500'}`}>
               {Math.abs(trend)}%
             </span>
             <span className="text-xs text-[#b3b3b3]">vs last month</span>
@@ -432,24 +493,24 @@ const Dashboard = () => {
       
       {/* Toast Notification */}
       {showToast && (
-        <div className="fixed top-4 right-4 z-50 toast-enter">
-          <div className="bg-spotify-green text-black px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" />
+        <div className="fixed top-2 right-2 left-2 sm:left-auto z-50 toast-enter">
+          <div className="bg-spotify-green text-black px-2 sm:px-3 py-1 sm:py-2 rounded-lg shadow-lg flex items-center gap-1 text-sm sm:text-base">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="font-medium">Dashboard refreshed successfully!</span>
           </div>
         </div>
       )}
       
       {/* Welcome Section */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}</h1>
-          <p className="text-[#b3b3b3]">Here's what's happening with your store today</p>
+      <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}</h1>
+          <p className="text-[#b3b3b3] text-sm sm:text-base">Here's what's happening with your store today</p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-[#282828] hover:bg-[#3e3e3e] text-white rounded-full transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-[#282828] hover:bg-[#3e3e3e] text-white rounded-full transition-colors disabled:opacity-50 text-sm sm:text-base self-start"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -457,18 +518,31 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-        <SpotifyCard
-          title="Total Users"
-          value={stats.totalUsers}
-          subtitle={
-            stats.onlineNow > 0 
-              ? `${stats.onlineNow} online now, ${stats.activeUsers} active` 
-              : `${stats.activeUsers} active, ${stats.inactiveUsers} inactive`
-          }
-          icon={Users}
-          color="#1db954"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+        <div className="relative">
+          <SpotifyCard
+            title="Total Users"
+            value={stats.totalUsers}
+            subtitle={
+              stats.onlineNow > 0 
+                ? `${stats.onlineNow} online now, ${stats.activeUsers} active` 
+                : `${stats.activeUsers} active, ${stats.inactiveUsers} inactive`
+            }
+            icon={Users}
+            color="#1db954"
+          />
+          {stats.totalUsers === 0 && !loading && (
+            <button
+              onClick={handleSeedUsers}
+              disabled={seedingUsers}
+              className="absolute bottom-1 right-1 flex items-center gap-0.5 px-1.5 py-0.5 bg-spotify-green hover:bg-spotify-green-hover text-black text-xs font-medium rounded-full transition-colors disabled:opacity-50 z-10"
+            >
+              <UserPlus className="w-3 h-3" />
+              <span className="hidden sm:inline">{seedingUsers ? 'Seeding...' : 'Add Sample Users'}</span>
+              <span className="sm:hidden">{seedingUsers ? '...' : 'Add'}</span>
+            </button>
+          )}
+        </div>
         <SpotifyCard
           title="Storage Used"
           value={formatStorageSize(stats.storageSize)}

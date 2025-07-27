@@ -5,13 +5,12 @@ import { realtimeDb } from '../../config/firebase';
 import { createClient } from '@supabase/supabase-js';
 import { useEnhancedProducts } from '../../context/EnhancedProductsContext';
 import { 
-  LogOut, Package, Globe, Home, Settings, X,
+  LogOut, Package, Home, Settings, X,
   ShoppingBag, FileText, Users, MessageSquare, Music, Database,
   Bell, ChevronLeft, ChevronRight, Play, Library, Plus,
   Image, Columns, Key
 } from 'lucide-react';
 import ProductsPage from './ProductsPage';
-import WebsiteBuilderEnhanced from './WebsiteBuilderEnhanced';
 import WholesaleManagement from './WholesaleManagement';
 import MusicManagement from './MusicManagement';
 import BlogManagement from './BlogManagement';
@@ -164,7 +163,6 @@ const AdminDashboardEnhanced = () => {
     { id: 'dashboard', label: 'Home', icon: Home, component: Dashboard },
     { id: 'products', label: 'Wholesale', icon: Package, component: ProductsPage },
     { id: 'wholesale', label: 'Invoices', icon: ShoppingBag, component: WholesaleManagement },
-    { id: 'website', label: 'Website Builder', icon: Globe, component: WebsiteBuilderEnhanced },
   ];
 
   // Library menu items (like Spotify's "Your Library" section)

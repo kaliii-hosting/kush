@@ -49,6 +49,15 @@ html, body {
   padding: 0;
 }
 
+/* Mobile hero section fix */
+@media (max-width: 768px) {
+  .hero-mobile-fix {
+    margin-top: -1rem;
+    height: calc(100vh - 3rem);
+    min-height: calc(100vh - 3rem);
+  }
+}
+
 /* Prevent horizontal scroll on mobile */
 @media (max-width: 768px) {
   html, body {
@@ -203,6 +212,23 @@ body {
   display: none;
 }
 
+/* Prevent text selection when dragging */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Cursor styles for draggable elements */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
 .animation-delay-1000 {
   animation-delay: 1s;
 }
@@ -233,6 +259,203 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Disclosure Cards Section Styles */
+.disclosure-section {
+  --gap: 8px;
+  --base: clamp(2rem, 8cqi, 80px);
+  --easing: linear(
+    0 0%,
+    0.1538 4.09%,
+    0.2926 8.29%,
+    0.4173 12.63%,
+    0.5282 17.12%,
+    0.6255 21.77%,
+    0.7099 26.61%,
+    0.782 31.67%,
+    0.8425 37%,
+    0.8887 42.23%,
+    0.9257 47.79%,
+    0.9543 53.78%,
+    0.9752 60.32%,
+    0.9883 67.11%,
+    0.9961 75%,
+    1 100%
+  );
+  --speed: 0.6s;
+}
+
+.disclosure-grid {
+  display: grid;
+  container-type: inline-size;
+  grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: var(--gap);
+  list-style-type: none;
+  justify-content: stretch;
+  padding: 0 2rem;
+  height: clamp(300px, 40dvh, 474px);
+  margin: 0;
+  width: 100%;
+  transition: grid-template-columns var(--speed) var(--easing);
+}
+
+@media (max-width: 768px) {
+  .disclosure-grid {
+    padding: 0 1rem;
+    height: clamp(250px, 35dvh, 400px);
+  }
+}
+
+.disclosure-item {
+  background: #181818;
+  position: relative;
+  overflow: hidden;
+  min-width: var(--base);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.disclosure-article {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-inline: calc(var(--base) * 0.5 - 9px);
+  padding-bottom: 1rem;
+  overflow: hidden;
+}
+
+.disclosure-article h3 {
+  position: absolute;
+  top: 1rem;
+  left: calc(var(--base) * 0.5);
+  transform-origin: 0 50%;
+  rotate: 90deg;
+  font-size: 1rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin: 0;
+  color: #CB6015;
+}
+
+.disclosure-article svg {
+  width: 18px;
+  fill: none;
+  opacity: 1 !important;
+  color: #CB6015 !important;
+}
+
+.disclosure-article p {
+  font-size: 13px;
+  text-wrap: balance;
+  line-height: 1.25;
+  --opacity: 0.8;
+  margin: 0;
+}
+
+.disclosure-article a {
+  position: absolute;
+  bottom: 1rem;
+  height: 18px;
+  line-height: 1;
+  color: inherit;
+}
+
+.disclosure-article a span {
+  display: inline-block;
+  line-height: 18px;
+  translate: calc(var(--base) * 0.5);
+  font-weight: 500;
+}
+
+.disclosure-article a:is(:focus-visible, :hover) {
+  outline: none;
+}
+
+.disclosure-article a:is(:focus-visible, :hover) span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.disclosure-article img {
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
+}
+
+.disclosure-item :is(svg, h3) {
+  opacity: 1 !important;
+  transition: opacity calc(var(--speed) * 1.2) var(--easing);
+}
+
+.disclosure-item :is(a, p) {
+  opacity: 0;
+  transition: opacity calc(var(--speed) * 1.2) var(--easing);
+  width: fit-content;
+}
+
+/* Ensure icons in all disclosure items are visible */
+.disclosure-item[data-active='false'] svg,
+.disclosure-item[data-active='false'] .lucide {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.disclosure-item img {
+  filter: grayscale(1) brightness(1.5);
+  scale: 1.1;
+  transition-property: filter, scale;
+  transition-duration: calc(var(--speed) * 1.2);
+  transition-timing-function: var(--easing);
+}
+
+[data-active='true'] :is(a, p) {
+  opacity: var(--opacity, 1);
+}
+
+/* Keep icons and titles always visible */
+.disclosure-item :is(h3, svg) {
+  opacity: 1 !important;
+}
+
+/* Ensure Lucide icons are always visible with proper color */
+.disclosure-article .lucide {
+  opacity: 1 !important;
+  color: #CB6015 !important;
+  stroke: #CB6015 !important;
+}
+
+/* Force all disclosure icons to be visible */
+.disclosure-item svg,
+.disclosure-article svg,
+.disclosure-item .lucide,
+.disclosure-article .lucide {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #CB6015 !important;
+  stroke: #CB6015 !important;
+  display: block !important;
+}
+
+[data-active='true'] :is(a, p) {
+  transition-delay: calc(var(--speed) * 0.25);
+}
+
+[data-active='true'] img {
+  filter: grayscale(0) brightness(1);
+  scale: 1;
+  transition-delay: calc(var(--speed) * 0.25);
 }
 
 

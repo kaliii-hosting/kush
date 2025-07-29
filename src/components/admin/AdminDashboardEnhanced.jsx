@@ -8,7 +8,7 @@ import {
   LogOut, Package, Home, Settings, X,
   ShoppingBag, FileText, Users, MessageSquare, Music, Database,
   Bell, ChevronLeft, ChevronRight, Play, Library, Plus,
-  Image, Columns, Key
+  Image, Columns, Key, Mail
 } from 'lucide-react';
 import ProductsPage from './ProductsPage';
 import WholesaleManagement from './WholesaleManagement';
@@ -20,8 +20,10 @@ import Dashboard from './Dashboard';
 import LogosManagement from './LogosManagement';
 import FooterManagement from './FooterManagement';
 import PasswordsManagement from './PasswordsManagement';
+import MessagesPage from './MessagesPage';
 import NotificationSystem from './NotificationSystem';
 import { useLogos } from '../../context/LogosContext';
+import './AdminDashboard.css';
 
 const AdminDashboardEnhanced = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -167,6 +169,7 @@ const AdminDashboardEnhanced = () => {
 
   // Library menu items (like Spotify's "Your Library" section)
   const libraryMenuItems = [
+    { id: 'messages', label: 'Messages', icon: Mail, component: MessagesPage },
     { id: 'logos', label: 'Logo', icon: Image, component: LogosManagement },
     { id: 'footer', label: 'Footer', icon: Columns, component: FooterManagement },
     { id: 'passwords', label: 'Passwords', icon: Key, component: PasswordsManagement },
@@ -181,32 +184,29 @@ const AdminDashboardEnhanced = () => {
   const CurrentComponent = allMenuItems.find(item => item.id === activeSection)?.component || Dashboard;
 
   return (
-    <div className="min-h-screen bg-black flex">
-      {/* Spotify-style Sidebar */}
-      <div className="bg-black flex flex-col w-[72px]">
+    <div className="min-h-screen bg-[#121212] flex" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+      {/* Enterprise Sidebar */}
+      <div className="bg-black flex flex-col w-64 enterprise-sidebar">
         {/* Logo Section */}
-        <div className="p-6">
-          <div className="flex items-center justify-center">
-            <button
-              onClick={() => setActiveSection('dashboard')}
-              className="flex items-center justify-center w-12 h-12 hover:bg-[#282828] rounded-md transition-colors"
-              title="Dashboard Home"
-            >
-              <img 
-                src={logos?.adminDashboard?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"}
-                alt={logos?.adminDashboard?.alt || "Kushie Admin"}
-                className="max-w-full max-h-full object-contain"
-                style={{
-                  width: logos?.adminDashboard?.width === 'auto' ? 'auto' : `${logos?.adminDashboard?.width}px`,
-                  height: logos?.adminDashboard?.height === 'auto' ? 'auto' : `${logos?.adminDashboard?.height}px`,
-                }}
-              />
-            </button>
+        <div className="px-6 py-5">
+          <div className="flex items-center gap-3">
+            <img 
+              src={logos?.adminDashboard?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"}
+              alt={logos?.adminDashboard?.alt || "Kushie Admin"}
+              className="h-8 w-auto object-contain"
+            />
+            <div>
+              <h2 className="text-white font-bold text-lg">Kushie</h2>
+              <p className="text-xs text-[#b3b3b3]">Admin Portal</p>
+            </div>
           </div>
         </div>
 
         {/* Main Navigation */}
-        <nav className="px-2">
+        <nav className="px-3 py-4">
+          <div className="mb-2">
+            <h3 className="px-3 text-xs font-bold text-[#b3b3b3] uppercase tracking-wider">Main</h3>
+          </div>
           <ul className="space-y-1">
             {mainMenuItems.map((item) => {
               const Icon = item.icon;
@@ -215,16 +215,16 @@ const AdminDashboardEnhanced = () => {
                 <li key={item.id}>
                   <button
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center justify-center px-3 py-3 rounded-md transition-all group ${
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded transition-all relative ${
                       isActive
-                        ? 'text-white bg-[#282828]'
+                        ? 'bg-[#282828] text-white'
                         : 'text-[#b3b3b3] hover:text-white'
                     }`}
-                    title={item.label}
                   >
-                    <Icon className={`w-6 h-6 flex-shrink-0 ${
-                      isActive ? 'text-[#CB6015]' : 'text-[#b3b3b3] group-hover:text-white'
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${
+                      isActive ? 'text-white' : 'text-[#b3b3b3]'
                     }`} />
+                    <span className="text-sm">{item.label}</span>
                   </button>
                 </li>
               );
@@ -232,12 +232,12 @@ const AdminDashboardEnhanced = () => {
           </ul>
         </nav>
 
-        {/* Divider */}
-        <div className="mx-6 my-4 h-px bg-[#282828]" />
-
-        {/* Library Section */}
-        <div className="px-2 flex-1">
-          <ul className="space-y-1 mt-2">
+        {/* Configuration Section */}
+        <div className="px-3 py-4 flex-1">
+          <div className="mb-2">
+            <h3 className="px-3 text-xs font-bold text-[#b3b3b3] uppercase tracking-wider">Configuration</h3>
+          </div>
+          <ul className="space-y-1">
             {libraryMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
@@ -245,16 +245,16 @@ const AdminDashboardEnhanced = () => {
                 <li key={item.id}>
                   <button
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center justify-center px-3 py-3 rounded-md transition-all group ${
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded transition-all relative ${
                       isActive
-                        ? 'text-white bg-[#282828]'
+                        ? 'bg-[#282828] text-white'
                         : 'text-[#b3b3b3] hover:text-white'
                     }`}
-                    title={item.label}
                   >
-                    <Icon className={`w-6 h-6 ${
-                      isActive ? 'text-[#CB6015]' : 'text-[#b3b3b3] group-hover:text-white'
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${
+                      isActive ? 'text-white' : 'text-[#b3b3b3]'
                     }`} />
+                    <span className="text-sm">{item.label}</span>
                   </button>
                 </li>
               );
@@ -263,13 +263,22 @@ const AdminDashboardEnhanced = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="p-4 border-t border-[#282828]">
+        <div className="p-3 border-t border-[#282828]">
+          <div className="flex items-center gap-3 px-3 py-2 mb-3">
+            <div className="w-8 h-8 bg-[#282828] rounded-full flex items-center justify-center">
+              <span className="text-sm font-semibold text-white">A</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-white">Administrator</p>
+              <p className="text-xs text-[#b3b3b3]">admin@kushie.com</p>
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center px-3 py-3 rounded-md text-[#b3b3b3] hover:text-white transition-all group"
-            title="Log out"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded text-[#b3b3b3] hover:text-white transition-all"
           >
-            <LogOut className="w-6 h-6 flex-shrink-0" />
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm">Sign out</span>
           </button>
         </div>
 
@@ -277,29 +286,106 @@ const AdminDashboardEnhanced = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 bg-[#121212] flex flex-col">
-        {/* Spotify-style Header */}
-        <header className="bg-[#070707] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
-          {/* Empty left side for balance */}
-          <div></div>
+        {/* Enterprise Header */}
+        <header className="bg-[#121212] px-8 py-4 sticky top-0 z-50">
+          <div className="flex items-center justify-between">
+            {/* Page Title */}
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                {allMenuItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
+              </h1>
+            </div>
 
-          {/* User Menu */}
-          <div className="flex items-center gap-4">
-            <NotificationSystem />
-            <button className="w-8 h-8 bg-[#282828] rounded-full flex items-center justify-center text-white font-semibold hover:bg-[#3e3e3e] transition-colors">
-              A
-            </button>
+            {/* Header Actions */}
+            <div className="flex items-center gap-4">
+              {/* Search */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-64 px-4 py-2 pl-10 text-sm bg-[#282828] text-white rounded-full border-0 placeholder-[#b3b3b3] focus:outline-none focus:ring-2 focus:ring-white"
+                />
+                <svg className="w-5 h-5 text-[#b3b3b3] absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              
+              {/* Notifications */}
+              <div className="relative">
+                <button className="p-2 hover:bg-[#282828] rounded-full transition-colors relative">
+                  <Bell className="w-5 h-5 text-[#b3b3b3] hover:text-white" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-[#1db954] rounded-full"></span>
+                </button>
+              </div>
+              
+              {/* Help */}
+              <button className="p-2 hover:bg-[#282828] rounded-full transition-colors">
+                <svg className="w-5 h-5 text-[#b3b3b3] hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Content Area with Spotify gradient */}
+        {/* Content Area */}
         <main className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto">
-            {/* Gradient Background */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#CB6015] via-[#121212] to-[#121212] h-[332px]" />
-              <div className="relative z-10 p-8">
-                <CurrentComponent />
+          <div className="h-full overflow-y-auto bg-[#121212] admin-scrollbar">
+            <div className="p-8">
+              {/* Quick Stats Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-[#181818] rounded-lg p-4 stats-card cursor-pointer hover:bg-[#282828] transition-all">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[#b3b3b3]">Total Users</p>
+                      <p className="text-2xl font-bold text-white">{stats.users}</p>
+                      <p className="text-xs text-[#1db954] mt-1">↑ 12% from last month</p>
+                    </div>
+                    <div className="w-12 h-12 bg-[#282828] rounded-lg flex items-center justify-center">
+                      <Users className="w-6 h-6 text-[#1db954]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#181818] rounded-lg p-4 stats-card cursor-pointer hover:bg-[#282828] transition-all">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[#b3b3b3]">Active Invoices</p>
+                      <p className="text-2xl font-bold text-white">{stats.invoices}</p>
+                      <p className="text-xs text-[#1db954] mt-1">↑ 8% from last month</p>
+                    </div>
+                    <div className="w-12 h-12 bg-[#282828] rounded-lg flex items-center justify-center">
+                      <ShoppingBag className="w-6 h-6 text-[#1db954]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#181818] rounded-lg p-4 stats-card cursor-pointer hover:bg-[#282828] transition-all">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[#b3b3b3]">Blog Posts</p>
+                      <p className="text-2xl font-bold text-white">{stats.blog}</p>
+                      <p className="text-xs text-[#1db954] mt-1">↑ 23% engagement</p>
+                    </div>
+                    <div className="w-12 h-12 bg-[#282828] rounded-lg flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-[#1db954]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#181818] rounded-lg p-4 stats-card cursor-pointer hover:bg-[#282828] transition-all">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[#b3b3b3]">Storage Used</p>
+                      <p className="text-2xl font-bold text-white">{stats.storage}</p>
+                      <p className="text-xs text-[#b3b3b3] mt-1">of 100 GB</p>
+                    </div>
+                    <div className="w-12 h-12 bg-[#282828] rounded-lg flex items-center justify-center">
+                      <Database className="w-6 h-6 text-[#1db954]" />
+                    </div>
+                  </div>
+                </div>
               </div>
+              
+              {/* Component Content */}
+              <CurrentComponent />
             </div>
           </div>
         </main>

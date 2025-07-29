@@ -1,11 +1,12 @@
 import { useState, cloneElement } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import SpotifyTopBar from './SpotifyTopBar';
 import SpotifyPlayerBar from './SpotifyPlayerBar';
 import CartSlideOut from './CartSlideOut';
 import GlobalFooter from './GlobalFooter';
 
 const SpotifyLayout = ({ children }) => {
+  const location = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   const handleCartOpen = () => setIsCartOpen(true);
@@ -23,7 +24,7 @@ const SpotifyLayout = ({ children }) => {
             cloneElement(children, { onCartClick: handleCartOpen }) :
             <Outlet context={{ onCartClick: handleCartOpen }} />
           }
-          <GlobalFooter />
+          {location.pathname !== '/accessibility' && <GlobalFooter />}
         </div>
       </main>
       

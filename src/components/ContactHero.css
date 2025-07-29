@@ -1,0 +1,521 @@
+@font-face {
+  font-family: "Geist Sans";
+  src: url("https://assets.codepen.io/605876/GeistVF.ttf") format("truetype");
+}
+
+.contact-hero-wrapper {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: black;
+  font-family: "Geist Sans", sans-serif;
+  font-weight: 80;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 1rem;
+}
+
+/* Grid background - same as password lock page */
+.contact-hero-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: 
+    linear-gradient(#CB6015 1px, transparent 1px),
+    linear-gradient(90deg, #CB6015 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+.contact-hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 800px;
+  padding: 0 1rem;
+}
+
+.contact-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  margin: 0;
+  background: linear-gradient(to bottom, white, #CB6015);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.contact-textarea {
+  field-sizing: content;
+  background: transparent;
+  padding: 1rem 0;
+  min-height: 53px;
+  border: 0;
+  resize: none;
+  width: 100%;
+  outline: 1px solid transparent;
+  background: linear-gradient(hsl(0 0% 100%), hsl(0 0% 60%));
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-attachment: fixed;
+  caret-color: hsl(0 0% 90%);
+  transition: all 0.2s;
+  line-height: 1.5;
+  font-weight: 80;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.input-controls {
+  --color: hsl(0 0% 90%);
+  --bg: hsl(0 0% 0%);
+  --active-bg: hsl(0 0% 6%);
+  --active-outline: hsl(0 0% 25%);
+  --active-control: hsl(0 0% 25%);
+  --placeholder: hsl(0 0% 40%);
+  --outline: hsl(0 0% 20%);
+  --selection: hsl(0 0% 40%);
+  
+  width: 100%;
+  max-width: 600px;
+  background: hsl(0 0% 0% / 0.65);
+  border: 2px solid var(--outline);
+  transition: outline 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: 1px solid transparent;
+  box-shadow: 0 0.5px hsl(0 0% 100% / 0.75) inset;
+  font-weight: 300;
+  padding: 1.5rem;
+  position: relative;
+  border-radius: 12px;
+  color: hsl(0 0% 92%);
+  min-height: 180px;
+  display: grid;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .contact-hero-wrapper {
+    padding: 0;
+    align-items: stretch;
+  }
+  
+  .contact-hero-content {
+    padding: 0 1.5rem;
+    gap: 1rem;
+    justify-content: center;
+    min-height: 100vh;
+    padding-top: 20vh;
+    padding-bottom: 20vh;
+  }
+  
+  .input-controls {
+    width: 100%;
+    max-width: none;
+    padding: 2rem 1.5rem;
+    min-height: 200px;
+  }
+  
+  .contact-textarea {
+    font-size: 20px;
+    padding: 1rem 0;
+    line-height: 1.4;
+  }
+  
+  .field-indicator {
+    font-size: 12px;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .actions {
+    gap: 0.75rem;
+  }
+  
+  .actions button {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .actions button svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .send-button {
+    font-size: 16px;
+    padding: 0 1.5rem !important;
+    height: 48px !important;
+  }
+  
+  .form-progress {
+    width: 100%;
+    max-width: none;
+    margin-top: 1.5rem;
+  }
+  
+  .progress-bar {
+    height: 6px;
+  }
+}
+
+/* Larger input for desktop */
+@media (min-width: 768px) {
+  .input-controls-large {
+    width: 100%;
+    max-width: 700px;
+    padding: 2.5rem;
+    min-height: 240px;
+  }
+  
+  .input-controls-large .contact-textarea {
+    font-size: 24px;
+    padding: 1.5rem 0;
+    line-height: 1.6;
+  }
+  
+  .input-controls-large .actions button {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .input-controls-large .actions button svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .input-controls-large .send-button {
+    font-size: 16px;
+    padding: 0 2rem !important;
+    height: 48px !important;
+  }
+}
+
+.input-controls:focus-within {
+  --glow-alpha: 0;
+  background: var(--active-bg);
+  outline: 1px solid var(--active-outline);
+  box-shadow: 0 0.5px hsl(0 0% 100% / 1) inset;
+}
+
+.input-controls::after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 12px;
+  background:
+    radial-gradient(100px 100px at calc(var(--x) * 1px) calc(var(--y) * 1px), hsl(20 100% 50% / 0.75), transparent);
+  background-attachment: fixed;
+  z-index: 2;
+  border: 2px solid transparent;
+  mask:
+    linear-gradient(transparent, transparent),
+    linear-gradient(white, white);
+  -webkit-mask:
+    linear-gradient(transparent, transparent),
+    linear-gradient(white, white);
+  mask-clip: padding-box, border-box;
+  -webkit-mask-clip: padding-box, border-box;
+  mask-composite: intersect;
+  -webkit-mask-composite: xor;
+  opacity: var(--glow-alpha, 1);
+  transition: opacity 0.2s;
+}
+
+/* Field indicator */
+.field-indicator {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 13px;
+  color: hsl(0 0% 40%);
+  font-family: 'Circular Std', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  justify-content: center;
+}
+
+.field-indicator span {
+  transition: all 0.3s;
+  opacity: 0.5;
+  position: relative;
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.field-indicator span:hover {
+  opacity: 0.8;
+}
+
+.field-indicator span::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.3s;
+}
+
+.field-indicator span.active {
+  color: #CB6015;
+  opacity: 1;
+  font-weight: 700;
+}
+
+.field-indicator span.active::after {
+  background: #CB6015;
+}
+
+.field-indicator span.completed {
+  color: hsl(0 0% 70%);
+  opacity: 1;
+}
+
+/* Progress bar */
+.form-progress {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
+
+.progress-bar {
+  height: 4px;
+  background: hsl(0 0% 20%);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #CB6015;
+  transition: width 0.3s ease;
+}
+
+.contact-textarea::placeholder {
+  color: hsl(0 0% 40%);
+}
+
+.contact-textarea::selection {
+  background: hsl(0 0% 40%);
+  color: hsl(0 0% 90%);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actions button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: hsl(0 0% 40%);
+  aspect-ratio: 1;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+  font-weight: 80;
+  font-family: inherit;
+}
+
+.nav-button {
+  background: hsl(0 0% 10%);
+  border: 1px solid hsl(0 0% 20%);
+}
+
+.nav-button:hover {
+  background: #CB6015;
+  border-color: #CB6015;
+  color: white;
+  transform: scale(1.05);
+}
+
+.actions button:hover, 
+.actions button:focus-visible {
+  background: hsl(0 0% 25%);
+  color: hsl(0 0% 90%);
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actions button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.send-button {
+  justify-self: end;
+  width: fit-content !important;
+  padding: 0 1rem !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  font-weight: 120;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Confirmation popup */
+.confirmation-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirmation-popup {
+  background: #181818;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  min-width: 320px;
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+}
+
+.confirmation-check {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.check-circle {
+  width: 48px;
+  height: 48px;
+  background: #1DB954;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: checkIn 0.4s ease 0.2s both;
+}
+
+.check-circle svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+  stroke-width: 3;
+}
+
+.confirmation-title {
+  color: white;
+  font-size: 24px;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+  font-family: 'Circular Std', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.confirmation-text {
+  color: #B3B3B3;
+  margin: 0;
+  font-size: 14px;
+  font-family: 'Circular Std', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+}
+
+@keyframes checkIn {
+  from { 
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    transform: scale(0);
+  }
+  to { 
+    transform: scale(1);
+  }
+}
+
+.contact-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contact-textarea::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 40%);
+  border-radius: 999px;
+}
+
+.contact-textarea::-webkit-scrollbar {
+  height: 8px;
+  width: 4px;
+  background: transparent;
+}
+
+/* Ensure the textarea resizes properly */
+@supports (field-sizing: content) {
+  .contact-textarea {
+    field-sizing: content;
+  }
+}
+
+/* Fallback for browsers that don't support field-sizing */
+@supports not (field-sizing: content) {
+  .contact-textarea {
+    min-height: 53px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+}

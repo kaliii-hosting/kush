@@ -19,7 +19,8 @@ const Accessibility = () => {
   return (
     <div className="accessibility-page">
       <main>
-        <div className="keypad">
+        <div className="keypad-container">
+          <div className="keypad">
           <div className="keypad__base">
             <img src="https://assets.codepen.io/605876/keypad-base.png?format=auto&quality=86" alt="" />
           </div>
@@ -59,6 +60,7 @@ const Accessibility = () => {
               </span>
             </span>
           </button>
+          </div>
         </div>
       </main>
     </div>

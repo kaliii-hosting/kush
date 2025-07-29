@@ -1,16 +1,19 @@
 import { usePageContent } from '../context/PageContentContext';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import DynamicSection from '../components/DynamicSection';
 import '../styles/about-animation.css';
 
 const AboutDynamic = () => {
+  const navigate = useNavigate();
   const { pageContent, loading } = usePageContent();
   const sections = pageContent?.about?.sections || [];
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const [playing, setPlaying] = useState(false);
+  const likeButtonRef = useRef(null);
   
   // Refs for Three.js objects and audio
   const sceneRef = useRef();
@@ -713,11 +716,6 @@ const AboutDynamic = () => {
           </div>
         </div>
       </div>
-
-      {/* Dynamic Content Sections - EDITABLE */}
-      {sections.filter(section => section.id !== 'hero').map((section) => (
-        <DynamicSection key={section.id} section={section} />
-      ))}
     </div>
   );
 };

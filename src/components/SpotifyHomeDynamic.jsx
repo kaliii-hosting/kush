@@ -352,9 +352,12 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
         {/* Content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center px-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
               Gold Standard Cartridges
             </h2>
+            <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
+              Premium distillate with natural terpenes. Pure, potent, and perfectly crafted for the ultimate vaping experience.
+            </p>
             <Link 
               to="/shop" 
               className="inline-block bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -619,6 +622,44 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
           </div>
         </section>
       )}
+
+      {/* Black Disposables Video Section */}
+      <section className="relative h-[50vh] w-full overflow-hidden">
+        <video 
+          className="absolute top-0 left-0 w-full h-full object-cover"
+          autoPlay 
+          muted 
+          loop 
+          playsInline
+        >
+          <source 
+            src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Videos/Horizontal%20Videos/Black%20Dspsbls.mp4" 
+            type="video/mp4" 
+          />
+          Your browser does not support the video tag.
+        </video>
+        
+        {/* Dark overlay for better text contrast */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        {/* Content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center px-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              Premium Black Disposables
+            </h2>
+            <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
+              Sleek design meets superior performance. Experience the perfect blend of style and potency.
+            </p>
+            <Link 
+              to="/shop?category=disposables" 
+              className="inline-block bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Explore Collection
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Product Modal */}
       <ProductModal 

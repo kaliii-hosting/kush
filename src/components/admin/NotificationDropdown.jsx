@@ -577,7 +577,7 @@ const NotificationDropdown = () => {
   const renderNotificationsList = () => {
     if (loading) {
       return (
-        <div className="p-8 text-center text-gray-400">
+        <div className="p-8 text-center text-gray-400 bg-[#121212]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
         </div>
       );
@@ -585,7 +585,7 @@ const NotificationDropdown = () => {
     
     if (notifications.length === 0) {
       return (
-        <div className="p-8 text-center text-gray-400">
+        <div className="p-8 text-center text-gray-400 bg-[#121212]">
           <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p>No notifications yet</p>
         </div>
@@ -657,25 +657,15 @@ const NotificationDropdown = () => {
       {/* Dropdown Menu - Desktop */}
       {showDropdown && (
         <>
-          {/* Mobile Sidebar */}
-          <div className={`md:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
-            showDropdown ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          {/* Mobile Fullscreen */}
+          <div className={`md:hidden fixed inset-0 z-[100] bg-[#121212] transition-all duration-300 ${
+            showDropdown ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-full'
           }`}>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 bg-black/50 transition-opacity duration-300"
-              onClick={() => setShowDropdown(false)} 
-            />
-            
-            {/* Sidebar - Right Side */}
-            <div className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-[#121212] shadow-2xl transform transition-transform duration-300 ease-out ${
-              showDropdown ? 'translate-x-0' : 'translate-x-full'
-            }`}>
               {/* Header */}
-              <div className="p-4 border-b border-[#282828] bg-[#181818]">
+              <div className="p-4 border-b border-[#282828] bg-[#181818] safe-area-inset-top">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-white font-bold text-lg">Notifications</h3>
+                    <h3 className="text-white font-bold text-xl">Notifications</h3>
                     {unreadCount > 0 && (
                       <span className="bg-[#1db954] text-black text-xs px-2 py-0.5 rounded-full font-bold">
                         {unreadCount} new
@@ -684,9 +674,9 @@ const NotificationDropdown = () => {
                   </div>
                   <button
                     onClick={() => setShowDropdown(false)}
-                    className="p-2 hover:bg-[#282828] rounded-full transition-colors"
+                    className="p-3 hover:bg-[#282828] rounded-full transition-colors"
                   >
-                    <X className="w-5 h-5 text-[#b3b3b3]" />
+                    <X className="w-6 h-6 text-[#b3b3b3]" />
                   </button>
                 </div>
                 {notifications.length > 0 && (
@@ -697,7 +687,7 @@ const NotificationDropdown = () => {
                         className="p-2 text-[#b3b3b3] hover:text-white hover:bg-[#282828] rounded-full transition-all"
                         title="Mark all as read"
                       >
-                        <CheckCheck className="w-4 h-4" />
+                        <CheckCheck className="w-5 h-5" />
                       </button>
                     )}
                     <button
@@ -705,17 +695,16 @@ const NotificationDropdown = () => {
                       className="p-2 text-[#b3b3b3] hover:text-white hover:bg-[#282828] rounded-full transition-all"
                       title="Clear all"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 )}
               </div>
 
               {/* Notifications List */}
-              <div className="h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden pb-safe bg-[#121212]">
                 {renderNotificationsList()}
               </div>
-            </div>
           </div>
 
           {/* Desktop Dropdown */}

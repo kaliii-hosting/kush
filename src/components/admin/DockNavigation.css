@@ -159,21 +159,16 @@
   
   .nav-bar {
     border-radius: 1rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.5rem;
     width: 100%;
   }
   
   .nav-list {
     font-size: 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    overflow: visible;
     padding: 0;
-    justify-content: flex-start;
-  }
-  
-  .nav-list::-webkit-scrollbar {
-    display: none;
+    justify-content: space-between;
+    width: 100%;
   }
   
   .nav-list {
@@ -181,28 +176,30 @@
   }
   
   .nav-item {
-    width: 4em;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
   }
   
+  /* Remove hover effects on mobile to prevent cutoff */
   .nav-item.hover {
-    margin: 0 1em;
+    margin: 0;
   }
   
   .nav-item.hover .nav-item__link {
-    transform: scale(1.5) translateY(-0.4em);
+    transform: none;
   }
   
   .nav-item.sibling-close {
-    margin: 0 0.3em;
+    margin: 0;
   }
   
   .nav-item.sibling-close .nav-item__link {
-    transform: scale(1.3) translateY(-0.2em);
+    transform: none;
   }
   
   .nav-item.sibling-far .nav-item__link {
-    transform: scale(1.1) translateY(-0.1em);
+    transform: none;
   }
   
   .nav-item__tooltip {
@@ -215,29 +212,32 @@
   .nav-list {
     font-size: 10px;
     height: 3.5em;
+    justify-content: space-between;
   }
   
   .nav-item {
-    width: 3.5em;
+    flex: 1;
+    min-width: 0;
   }
   
+  /* Remove hover effects on smaller mobile devices too */
   .nav-item.hover {
-    margin: 0 0.8em;
+    margin: 0;
   }
   
   .nav-item.hover .nav-item__link {
-    transform: scale(1.4) translateY(-0.3em);
+    transform: none;
   }
   
   .nav-item.sibling-close {
-    margin: 0 0.2em;
+    margin: 0;
   }
   
   .nav-item.sibling-close .nav-item__link {
-    transform: scale(1.2) translateY(-0.15em);
+    transform: none;
   }
   
   .nav-item.sibling-far .nav-item__link {
-    transform: scale(1.1) translateY(-0.05em);
+    transform: none;
   }
 }

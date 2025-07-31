@@ -634,7 +634,7 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="cart-slideout-container">
+    <div className={`cart-slideout-container ${isOpen ? 'cart-open' : ''}`}>
       {/* Backdrop */}
       <div 
         className={`fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300 ${
@@ -646,7 +646,7 @@ const CartSlideOut = ({ isOpen, onClose, isWholesale = false }) => {
       {/* Cart Slide-out */}
       <div 
         data-cart-slideout
-        className={`fixed right-0 top-0 h-full sm:h-[calc(100vh-5rem)] w-full sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
+        className={`fixed right-0 top-0 h-full sm:h-[calc(100vh-5rem)] w-80 max-w-[85vw] sm:w-96 bg-black border-l border-border z-[60] transform transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

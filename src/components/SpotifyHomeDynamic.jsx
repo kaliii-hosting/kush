@@ -7,6 +7,7 @@ import { useWishlist } from '../context/WishlistContext';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
 import DisclosureCards from './DisclosureCards';
+import InfiniteProductSlider from './InfiniteProductSlider';
 
 const SpotifyHomeDynamic = ({ onCartClick }) => {
   const { shopifyProducts } = useEnhancedProducts();
@@ -15,12 +16,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
-  const scrollRef = useRef(null);
-  const saleScrollRef = useRef(null);
-  const hempScrollRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  // Removed old scroll refs as we're using InfiniteProductSlider component
 
   // Time-based greeting like Spotify
   const getGreeting = () => {
@@ -143,57 +139,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
     }
   };
 
-  // Scroll functions
-  const scrollLeftBtn = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
-
-  // Mouse/Touch drag handlers for first slider
-  const handleMouseDown = (e, ref) => {
-    setIsDragging(true);
-    setStartX(e.pageX - ref.current.offsetLeft);
-    setScrollLeft(ref.current.scrollLeft);
-    ref.current.style.cursor = 'grabbing';
-  };
-
-  const handleTouchStart = (e, ref) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - ref.current.offsetLeft);
-    setScrollLeft(ref.current.scrollLeft);
-  };
-
-  const handleMouseLeave = (ref) => {
-    setIsDragging(false);
-    ref.current.style.cursor = 'grab';
-  };
-
-  const handleMouseUp = (ref) => {
-    setIsDragging(false);
-    ref.current.style.cursor = 'grab';
-  };
-
-  const handleMouseMove = (e, ref) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - ref.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed
-    ref.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleTouchMove = (e, ref) => {
-    if (!isDragging) return;
-    const x = e.touches[0].pageX - ref.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed
-    ref.current.scrollLeft = scrollLeft - walk;
-  };
+  // Removed old scroll functions as they're now handled by InfiniteProductSlider component
 
   return (
     <div className="space-y-0 -mt-4 md:mt-0">
@@ -220,7 +166,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
       {/* Spotify-themed Product Slider Section */}
       {productsToShow.length > 0 && (
         <section className="bg-gradient-to-b from-gray-900 to-black py-8">
-          <div className="max-w-[1800px] mx-auto px-4 md:px-8">
+          <div className="w-full px-4 md:px-8">
             {/* Greeting Header */}
             <div className="mb-8">
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -231,101 +177,16 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
               </p>
             </div>
 
-            {/* Products Slider */}
-            <div className="relative group">
-              {/* Scroll buttons */}
-              <button 
-                onClick={scrollLeftBtn}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronLeft className="h-5 w-5 text-white" />
-              </button>
-              <button 
-                onClick={scrollRight}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronRight className="h-5 w-5 text-white" />
-              </button>
-              
-              {/* Products container - Spotify playlist style */}
-              <div 
-                ref={scrollRef}
-                className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth pb-4 cursor-grab select-none"
-                onMouseDown={(e) => handleMouseDown(e, scrollRef)}
-                onMouseLeave={() => handleMouseLeave(scrollRef)}
-                onMouseUp={() => handleMouseUp(scrollRef)}
-                onMouseMove={(e) => handleMouseMove(e, scrollRef)}
-                onTouchStart={(e) => handleTouchStart(e, scrollRef)}
-                onTouchMove={(e) => handleTouchMove(e, scrollRef)}
-                onTouchEnd={() => handleMouseUp(scrollRef)}
-              >
-                {productsToShow.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className="group relative flex-shrink-0 w-[380px] cursor-pointer"
-                    onClick={() => handleProductClick(product)}
-                    onMouseEnter={() => setHoveredCard(product.id)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                  >
-                    <div className="relative bg-spotify-light-gray rounded-md p-2 pr-4 transition-all duration-300 hover:bg-gray-700 flex items-center gap-4">
-                      {/* Product Image */}
-                      <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded shadow-lg">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-spotify-card flex items-center justify-center">
-                            <span className="text-spotify-text-subdued text-2xl">🌿</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white text-base leading-tight truncate mb-1">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center gap-2 text-spotify-text-subdued text-sm">
-                          <span className="font-medium">${product.price}</span>
-                          {product.productType && (
-                            <>
-                              <span className="text-spotify-text-subdued/50">•</span>
-                              <span className="capitalize">{product.productType}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Hover Actions - Centered */}
-                      {hoveredCard === product.id && (
-                        <div className="absolute inset-0 bg-black/50 rounded-md flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={(e) => handleToggleWishlist(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-                          >
-                            <Heart 
-                              className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-white text-white' : 'text-white'}`}
-                            />
-                          </button>
-                          <button
-                            onClick={(e) => handleAddToCart(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title="Add to cart"
-                          >
-                            <ShoppingCart className="h-5 w-5 text-white" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Products Slider - Infinite Scroll */}
+            <InfiniteProductSlider
+              products={productsToShow}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
+              isInWishlist={isInWishlist}
+              isVerticalCard={false}
+              sliderId="good-evening"
+            />
           </div>
         </section>
       )}
@@ -371,7 +232,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
       {/* Hemp Products Slider Section */}
       {hempProducts.length > 0 && (
         <section className="bg-gradient-to-b from-gray-900 to-black py-8">
-          <div className="max-w-[1800px] mx-auto px-4 md:px-8">
+          <div className="w-full px-4 md:px-8">
             {/* Section Header */}
             <div className="mb-8">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -382,106 +243,16 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
               </p>
             </div>
 
-            {/* Products Slider */}
-            <div className="relative group">
-              {/* Scroll buttons */}
-              <button 
-                onClick={() => {
-                  if (hempScrollRef.current) {
-                    hempScrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-                  }
-                }}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronLeft className="h-5 w-5 text-white" />
-              </button>
-              <button 
-                onClick={() => {
-                  if (hempScrollRef.current) {
-                    hempScrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-                  }
-                }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronRight className="h-5 w-5 text-white" />
-              </button>
-              
-              {/* Products container - Vertical card style like sale slider */}
-              <div 
-                ref={hempScrollRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 cursor-grab select-none"
-                onMouseDown={(e) => handleMouseDown(e, hempScrollRef)}
-                onMouseLeave={() => handleMouseLeave(hempScrollRef)}
-                onMouseUp={() => handleMouseUp(hempScrollRef)}
-                onMouseMove={(e) => handleMouseMove(e, hempScrollRef)}
-                onTouchStart={(e) => handleTouchStart(e, hempScrollRef)}
-                onTouchMove={(e) => handleTouchMove(e, hempScrollRef)}
-                onTouchEnd={() => handleMouseUp(hempScrollRef)}
-              >
-                {hempProducts.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className="group relative flex-shrink-0 w-[200px] cursor-pointer"
-                    onClick={() => handleProductClick(product)}
-                    onMouseEnter={() => setHoveredCard(`hemp-${product.id}`)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                  >
-                    <div className="relative bg-spotify-light-gray rounded-lg p-4 transition-all duration-300 hover:bg-gray-700">
-                      {/* Product Image */}
-                      <div className="relative w-full aspect-square mb-4 overflow-hidden rounded-md shadow-lg">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-spotify-card flex items-center justify-center">
-                            <span className="text-spotify-text-subdued text-4xl">🌿</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Product Info */}
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-white text-sm leading-tight line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <div className="space-y-1">
-                          <span className="text-white font-semibold text-lg">${product.price}</span>
-                          {product.productType && (
-                            <p className="text-spotify-text-subdued text-xs capitalize">{product.productType}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Hover Actions - Overlay */}
-                      {hoveredCard === `hemp-${product.id}` && (
-                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={(e) => handleToggleWishlist(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-                          >
-                            <Heart 
-                              className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-white text-white' : 'text-white'}`}
-                            />
-                          </button>
-                          <button
-                            onClick={(e) => handleAddToCart(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title="Add to cart"
-                          >
-                            <ShoppingCart className="h-5 w-5 text-white" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Products Slider - Infinite Scroll */}
+            <InfiniteProductSlider
+              products={hempProducts}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
+              isInWishlist={isInWishlist}
+              isVerticalCard={true}
+              sliderId="hemp-collection"
+            />
           </div>
         </section>
       )}
@@ -492,7 +263,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
       {/* Sale Products Slider Section - Moved after Disclosure Cards */}
       {saleProductsToShow.length > 0 && (
         <section className="bg-gradient-to-b from-black to-gray-900 py-8">
-          <div className="max-w-[1800px] mx-auto px-4 md:px-8">
+          <div className="w-full px-4 md:px-8">
             {/* Section Header */}
             <div className="mb-8">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -503,122 +274,16 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
               </p>
             </div>
 
-            {/* Products Slider */}
-            <div className="relative group">
-              {/* Scroll buttons */}
-              <button 
-                onClick={() => {
-                  if (saleScrollRef.current) {
-                    saleScrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-                  }
-                }}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronLeft className="h-5 w-5 text-white" />
-              </button>
-              <button 
-                onClick={() => {
-                  if (saleScrollRef.current) {
-                    saleScrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-                  }
-                }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 shadow-xl"
-              >
-                <ChevronRight className="h-5 w-5 text-white" />
-              </button>
-              
-              {/* Products container - Vertical card style */}
-              <div 
-                ref={saleScrollRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 cursor-grab select-none"
-                onMouseDown={(e) => handleMouseDown(e, saleScrollRef)}
-                onMouseLeave={() => handleMouseLeave(saleScrollRef)}
-                onMouseUp={() => handleMouseUp(saleScrollRef)}
-                onMouseMove={(e) => handleMouseMove(e, saleScrollRef)}
-                onTouchStart={(e) => handleTouchStart(e, saleScrollRef)}
-                onTouchMove={(e) => handleTouchMove(e, saleScrollRef)}
-                onTouchEnd={() => handleMouseUp(saleScrollRef)}
-              >
-                {saleProductsToShow.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className="group relative flex-shrink-0 w-[200px] cursor-pointer"
-                    onClick={() => handleProductClick(product)}
-                    onMouseEnter={() => setHoveredCard(`sale-${product.id}`)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                  >
-                    <div className="relative bg-spotify-light-gray rounded-lg p-4 transition-all duration-300 hover:bg-gray-700">
-                      {/* Product Image */}
-                      <div className="relative w-full aspect-square mb-4 overflow-hidden rounded-md shadow-lg">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-spotify-card flex items-center justify-center">
-                            <span className="text-spotify-text-subdued text-4xl">🌿</span>
-                          </div>
-                        )}
-                        
-                        {/* Sale Badge */}
-                        {product.compareAtPrice && product.price < product.compareAtPrice && (
-                          <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded font-bold">
-                            SALE
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Product Info */}
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-white text-sm leading-tight line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <div className="space-y-1">
-                          {product.compareAtPrice && product.price < product.compareAtPrice ? (
-                            <>
-                              <div className="flex items-center gap-2">
-                                <span className="text-primary font-bold text-lg">${product.price}</span>
-                                <span className="text-spotify-text-subdued line-through text-sm">${product.compareAtPrice}</span>
-                              </div>
-                              <span className="text-primary text-xs font-bold">
-                                {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}% OFF
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-white font-semibold text-lg">${product.price}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Hover Actions - Overlay */}
-                      {hoveredCard === `sale-${product.id}` && (
-                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={(e) => handleToggleWishlist(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-                          >
-                            <Heart 
-                              className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-white text-white' : 'text-white'}`}
-                            />
-                          </button>
-                          <button
-                            onClick={(e) => handleAddToCart(product, e)}
-                            className="bg-primary hover:bg-primary-hover p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
-                            title="Add to cart"
-                          >
-                            <ShoppingCart className="h-5 w-5 text-white" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Products Slider - Infinite Scroll */}
+            <InfiniteProductSlider
+              products={saleProductsToShow}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
+              isInWishlist={isInWishlist}
+              isVerticalCard={true}
+              sliderId="sale-products"
+            />
           </div>
         </section>
       )}

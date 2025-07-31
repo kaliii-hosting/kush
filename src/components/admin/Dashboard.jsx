@@ -8,9 +8,12 @@ import {
   Eye, CheckCircle, XCircle, Clock, 
   BarChart3, PieChart, Activity, Play,
   MoreHorizontal, Download, Filter,
-  Music, FileText, Database, Receipt, RefreshCw, X, UserPlus
+  Music, FileText, Database, Receipt, RefreshCw, X, UserPlus, MessageSquare
 } from 'lucide-react';
 import { seedSampleUsers } from '../../utils/seedUsers';
+import { startUserSync } from '../../utils/syncUsersToRealtimeDB';
+import { collection, getDocs } from 'firebase/firestore';
+import { db as firestoreDb } from '../../config/firebase';
 
 const Dashboard = () => {
   const { shopifyProducts = [], firebaseProducts = [], loading: productsLoading } = useEnhancedProducts();
@@ -31,7 +34,9 @@ const Dashboard = () => {
     totalMusicTracks: 0,
     totalInvoices: 0,
     totalBlogPosts: 0,
-    storageSize: 0
+    storageSize: 0,
+    totalContactMessages: 0,
+    totalCareerApplications: 0
   });
   
   // Debug logging
@@ -51,49 +56,110 @@ const Dashboard = () => {
         // Initialize counts
         let totalUsers = 0;
         let activeUsers = 0;
+        let inactiveUsers = 0;
         let musicTracks = 0;
         let invoices = 0;
+        let contactMessages = 0;
+        let careerApplications = 0;
         
-        // Fetch users data
+        // Fetch users data - check multiple locations
         try {
           console.log('Fetching users...');
-          const usersRef = ref(realtimeDb, 'users');
-          const usersSnapshot = await get(usersRef);
+          let usersData = null;
+          let usersArray = [];
           
-          if (usersSnapshot.exists()) {
-            const usersData = usersSnapshot.val();
-            const usersArray = Object.keys(usersData).map(key => ({
+          // First try adminData/users location (where sync puts them)
+          const adminUsersRef = ref(realtimeDb, 'adminData/users');
+          const adminUsersSnapshot = await get(adminUsersRef);
+          
+          if (adminUsersSnapshot.exists()) {
+            usersData = adminUsersSnapshot.val();
+            console.log('Found users in /adminData/users');
+          } else {
+            // Try standard users location
+            console.log('No users in /adminData/users, checking /users...');
+            const usersRef = ref(realtimeDb, 'users');
+            const usersSnapshot = await get(usersRef);
+            
+            if (usersSnapshot.exists()) {
+              usersData = usersSnapshot.val();
+              console.log('Found users in /users');
+            } else {
+              // If no users in Realtime DB, fetch directly from Firestore
+              console.log('No users in Realtime DB, fetching from Firestore...');
+              try {
+                const usersCollection = collection(firestoreDb, 'users');
+                const firestoreSnapshot = await getDocs(usersCollection);
+                
+                if (!firestoreSnapshot.empty) {
+                  usersData = {};
+                  firestoreSnapshot.forEach((doc) => {
+                    usersData[doc.id] = { id: doc.id, ...doc.data() };
+                  });
+                  console.log(`Found ${firestoreSnapshot.size} users in Firestore`);
+                  
+                  // Trigger sync to populate Realtime DB
+                  startUserSync();
+                }
+              } catch (error) {
+                console.error('Error fetching from Firestore:', error);
+              }
+            }
+          }
+          
+          if (usersData) {
+            usersArray = Object.keys(usersData).map(key => ({
               id: key,
               ...usersData[key]
             }));
+            
+            // Filter out deleted and permanently inactive users
+            const activeUsersArray = usersArray.filter(user => {
+              // Exclude if marked as deleted (soft delete)
+              if (user.isDeleted === true) {
+                console.log(`Excluding deleted user: ${user.displayName || user.email}`);
+                return false;
+              }
+              // Include all others (even if temporarily offline)
+              return true;
+            });
+            
+            // Count total users (including deleted)
             totalUsers = usersArray.length;
             
-            // Enhanced active user detection
-            const now = Date.now();
-            const ACTIVE_THRESHOLD = 30 * 24 * 60 * 60 * 1000; // 30 days
+            // Count active users (not deleted)
+            activeUsers = activeUsersArray.length;
             
-            activeUsers = usersArray.filter(user => {
-              // Check multiple fields for activity status
-              return user.status === 'active' ||
-                     user.isActive === true ||
-                     (user.lastActive && (now - new Date(user.lastActive).getTime()) < ACTIVE_THRESHOLD) ||
-                     (user.lastLogin && (now - new Date(user.lastLogin).getTime()) < ACTIVE_THRESHOLD) ||
-                     (user.createdAt && (now - new Date(user.createdAt).getTime()) < ACTIVE_THRESHOLD && !user.status);
-            }).length;
+            // Count inactive/deleted users
+            inactiveUsers = usersArray.filter(user => user.isDeleted === true).length;
             
-            console.log(`Found ${totalUsers} users (${activeUsers} active)`);
-          } else {
-            console.log('No users found in database - checking auth users');
+            console.log(`Total users in DB: ${usersArray.length}`);
+            console.log(`Active users (excluding deleted): ${totalUsers}`);
+            console.log(`Currently active/online: ${activeUsers}`);
+            console.log(`Deleted users: ${usersArray.length - activeUsersArray.length}`);
             
-            // Try to fetch from Firebase Auth as fallback
-            try {
-              const { getAuth } = await import('firebase/auth');
-              const { auth } = await import('../../config/firebase');
-              // Note: This would require admin SDK in a real scenario
-              console.log('Note: Full user list requires Firebase Admin SDK');
-            } catch (authError) {
-              console.log('Auth check skipped:', authError.message);
+            // Log deleted users for debugging
+            const deletedUsers = usersArray.filter(user => user.isDeleted === true);
+            if (deletedUsers.length > 0) {
+              console.log('Deleted users:', deletedUsers.map(u => ({
+                name: u.displayName || u.email,
+                isDeleted: u.isDeleted,
+                deletedAt: u.deletedAt
+              })));
             }
+            
+            if (activeUsersArray.length > 0) {
+              console.log('Sample active user:', {
+                name: activeUsersArray[0].displayName || activeUsersArray[0].email,
+                isDeleted: activeUsersArray[0].isDeleted,
+                isOnline: activeUsersArray[0].isOnline,
+                role: activeUsersArray[0].role
+              });
+            }
+          } else {
+            console.log('No users found in any location');
+            console.log('Note: Make sure users are being synced from Firestore.');
+            console.log('Users are created in Firestore and synced to Realtime DB at /adminData/users');
           }
         } catch (error) {
           console.error('Error fetching users:', error);
@@ -136,15 +202,46 @@ const Dashboard = () => {
           console.error('Error fetching invoices:', error);
         }
 
+        // Fetch contact messages count
+        try {
+          console.log('Fetching contact messages...');
+          const messagesRef = ref(realtimeDb, 'messages');
+          const messagesSnapshot = await get(messagesRef);
+          
+          if (messagesSnapshot.exists()) {
+            contactMessages = Object.keys(messagesSnapshot.val()).length;
+            console.log(`Found ${contactMessages} contact messages`);
+          } else {
+            console.log('No contact messages found');
+          }
+        } catch (error) {
+          console.error('Error fetching contact messages:', error);
+        }
+
+        // Fetch career applications count
+        try {
+          console.log('Fetching career applications...');
+          const careerRef = ref(realtimeDb, 'career_applications');
+          const careerSnapshot = await get(careerRef);
+          
+          if (careerSnapshot.exists()) {
+            careerApplications = Object.keys(careerSnapshot.val()).length;
+            console.log(`Found ${careerApplications} career applications`);
+          } else {
+            console.log('No career applications found');
+          }
+        } catch (error) {
+          console.error('Error fetching career applications:', error);
+        }
+
         // Use blog posts from context (already fetched)
         console.log('Using blog posts from context...');
         const blogPostsCount = blogPosts?.length || 0;
         console.log(`Found ${blogPostsCount} blog posts from context`);
 
-        // Skip storage size calculation on initial load to improve performance
+        // Calculate storage size with performance optimization
         let storageSize = 0;
-        if (isRefreshing) {
-          try {
+        try {
             console.log('Fetching storage size...');
             
             // Import from supabase config
@@ -152,15 +249,15 @@ const Dashboard = () => {
             
             console.log('Using storage bucket:', STORAGE_BUCKET);
             
-            // Function to recursively get all files - limited depth for performance
+            // Function to get storage size - optimized for initial load
             const calculateTotalSize = async (path = '', depth = 0) => {
-              if (depth > 2) return 0; // Limit recursion depth
+              if (depth > 1) return 0; // Limit to 1 level deep for faster loading
               let totalSize = 0;
               
               const { data: items, error } = await supabase.storage
                 .from(STORAGE_BUCKET)
                 .list(path, {
-                  limit: 100, // Reduced limit for performance
+                  limit: 50, // Smaller limit for faster initial load
                   offset: 0
                 });
               
@@ -172,35 +269,33 @@ const Dashboard = () => {
               if (!items || items.length === 0) {
                 return 0;
               }
+            
+              // Process items in parallel for faster execution
+              const promises = items.map(async (item) => {
+                // Files have an id property, folders don't
+                if (item.id !== null && item.id !== undefined) {
+                  // It's a file
+                  return item.metadata?.size || 0;
+                } else if (depth === 0) {
+                  // Only recurse into folders at the root level
+                  const folderPath = path ? `${path}/${item.name}` : item.name;
+                  return calculateTotalSize(folderPath, depth + 1);
+                }
+                return 0;
+              });
               
-              console.log(`Found ${items.length} items in path: ${path || '/'}`);
-            
-            for (const item of items) {
-              // Files have an id property, folders don't
-              if (item.id !== null && item.id !== undefined) {
-                // It's a file
-                const size = item.metadata?.size || 0;
-                totalSize += size;
-                console.log(`File: ${item.name}, Size: ${size} bytes`);
-              } else {
-                // It's a folder, recurse into it
-                console.log(`Folder: ${item.name}`);
-                const folderPath = path ? `${path}/${item.name}` : item.name;
-                const folderSize = await calculateTotalSize(folderPath, depth + 1);
-                totalSize += folderSize;
-              }
-            }
-            
-            return totalSize;
-          };
+              const sizes = await Promise.all(promises);
+              totalSize = sizes.reduce((sum, size) => sum + size, 0);
+              
+              return totalSize;
+            };
           
             // Calculate total storage size
             storageSize = await calculateTotalSize();
             console.log(`\nTotal storage size: ${storageSize} bytes (${(storageSize / 1024 / 1024).toFixed(2)} MB)`);
             
-          } catch (error) {
-            console.error('Error calculating storage size:', error);
-          }
+        } catch (error) {
+          console.error('Error calculating storage size:', error);
         }
 
         // Log product counts
@@ -212,12 +307,14 @@ const Dashboard = () => {
           totalShopifyProducts: shopifyProducts ? shopifyProducts.length : 0,
           totalWholesaleProducts: firebaseProducts ? firebaseProducts.length : 0,
           totalUsers: totalUsers,
-          activeUsers: activeUsers,
-          inactiveUsers: totalUsers - activeUsers,
+          activeUsers: activeUsers || 0,
+          inactiveUsers: inactiveUsers || 0,
           totalMusicTracks: musicTracks,
           totalInvoices: invoices,
           totalBlogPosts: blogPostsCount,
-          storageSize: storageSize
+          storageSize: storageSize,
+          totalContactMessages: contactMessages,
+          totalCareerApplications: careerApplications
         };
         
         console.log('Setting stats:', newStats);
@@ -238,7 +335,15 @@ const Dashboard = () => {
       setRefreshing(true);
       setCardRefreshing(true);
       
-      // Add a small delay to show the animation
+      // Force restart user sync to get latest data from Firestore
+      try {
+        console.log('Restarting user sync...');
+        startUserSync();
+      } catch (error) {
+        console.error('Error restarting user sync:', error);
+      }
+      
+      // Add a small delay to show the animation and allow sync to complete
       setTimeout(async () => {
         await fetchAllStats(true);
         setTimeout(() => {
@@ -246,7 +351,7 @@ const Dashboard = () => {
           setShowToast(true);
           setTimeout(() => setShowToast(false), 3000);
         }, 300);
-      }, 100);
+      }, 500); // Increased delay to allow sync
     };
 
     // Handle seeding sample users
@@ -269,6 +374,9 @@ const Dashboard = () => {
 
     // Initial fetch - debounced to prevent multiple calls
     useEffect(() => {
+      // Start user sync when component mounts
+      startUserSync();
+      
       const timer = setTimeout(() => {
         fetchAllStats();
       }, 100);
@@ -280,10 +388,12 @@ const Dashboard = () => {
   useEffect(() => {
     console.log('Setting up real-time listeners...');
     
-    // Listen for users changes
-    const usersRef = ref(realtimeDb, 'users');
-    const unsubscribeUsers = onValue(usersRef, (snapshot) => {
-      console.log('Users data updated - Real-time event triggered');
+    // Listen for users changes - check both locations
+    let unsubscribeUsers;
+    let unsubscribeAdminUsers;
+    
+    const handleUserData = (snapshot, source) => {
+      console.log(`Users data updated from ${source} - Real-time event triggered`);
       setRealtimeActive(true);
       setTimeout(() => setRealtimeActive(false), 1000);
       
@@ -294,35 +404,20 @@ const Dashboard = () => {
           ...usersData[key]
         }));
         
+        // Count total users (including deleted)
         const totalUsers = usersArray.length;
         
-        // Count active users based on multiple criteria
-        let activeUsers = 0;
-        const now = Date.now();
-        const ACTIVE_THRESHOLD = 30 * 24 * 60 * 60 * 1000; // 30 days
+        // Filter active users (not deleted)
+        const activeUsersArray = usersArray.filter(user => user.isDeleted !== true);
+        const activeUsers = activeUsersArray.length;
         
-        usersArray.forEach(user => {
-          // Check multiple fields for activity status
-          const isActive = 
-            user.status === 'active' ||
-            user.isActive === true ||
-            (user.lastActive && (now - new Date(user.lastActive).getTime()) < ACTIVE_THRESHOLD) ||
-            (user.lastLogin && (now - new Date(user.lastLogin).getTime()) < ACTIVE_THRESHOLD) ||
-            (user.createdAt && (now - new Date(user.createdAt).getTime()) < ACTIVE_THRESHOLD && !user.status);
-          
-          if (isActive) {
-            activeUsers++;
-          }
-          
-          // Log user details for debugging
-          console.log(`User ${user.id}:`, {
-            status: user.status,
-            isActive: user.isActive,
-            lastActive: user.lastActive,
-            lastLogin: user.lastLogin,
-            computed: isActive ? 'ACTIVE' : 'INACTIVE'
-          });
-        });
+        // Count inactive/deleted users
+        const inactiveUsers = usersArray.filter(user => user.isDeleted === true).length;
+        
+        // Log for debugging
+        if (inactiveUsers > 0) {
+          console.log(`Found ${inactiveUsers} deleted/inactive users`);
+        }
         
         console.log(`Users - Total: ${totalUsers}, Active: ${activeUsers}`);
         
@@ -332,8 +427,15 @@ const Dashboard = () => {
           activeUsers,
           inactiveUsers: totalUsers - activeUsers
         }));
+      } else if (source === '/users') {
+        // If no users in /users, try adminData/users
+        console.log('No users found in /users, setting up listener for /adminData/users');
+        const adminUsersRef = ref(realtimeDb, 'adminData/users');
+        unsubscribeAdminUsers = onValue(adminUsersRef, (snapshot) => {
+          handleUserData(snapshot, '/adminData/users');
+        });
       } else {
-        console.log('No users found');
+        console.log(`No users found in ${source}`);
         setStats(prev => ({
           ...prev,
           totalUsers: 0,
@@ -341,6 +443,24 @@ const Dashboard = () => {
           inactiveUsers: 0
         }));
       }
+    };
+    
+    // Start with adminData/users location (where sync puts them)
+    const adminUsersRef = ref(realtimeDb, 'adminData/users');
+    unsubscribeAdminUsers = onValue(adminUsersRef, (snapshot) => {
+      handleUserData(snapshot, '/adminData/users');
+    });
+    
+    // Also listen to standard users location as fallback
+    const usersRef = ref(realtimeDb, 'users');
+    unsubscribeUsers = onValue(usersRef, (snapshot) => {
+      // Only use this if adminData/users is empty
+      const adminRef = ref(realtimeDb, 'adminData/users');
+      get(adminRef).then(adminSnapshot => {
+        if (!adminSnapshot.exists() && snapshot.exists()) {
+          handleUserData(snapshot, '/users');
+        }
+      });
     });
     
     // Also listen for presence data if it exists
@@ -385,11 +505,32 @@ const Dashboard = () => {
       }
     });
     
+    // Listen for contact messages changes
+    const messagesRef = ref(realtimeDb, 'messages');
+    const unsubscribeMessages = onValue(messagesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const messages = Object.keys(snapshot.val()).length;
+        setStats(prev => ({ ...prev, totalContactMessages: messages }));
+      }
+    });
+    
+    // Listen for career applications changes
+    const careerRef = ref(realtimeDb, 'career_applications');
+    const unsubscribeCareer = onValue(careerRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const applications = Object.keys(snapshot.val()).length;
+        setStats(prev => ({ ...prev, totalCareerApplications: applications }));
+      }
+    });
+    
     return () => {
-      unsubscribeUsers();
+      if (unsubscribeUsers) unsubscribeUsers();
+      if (unsubscribeAdminUsers) unsubscribeAdminUsers();
       unsubscribePresence();
       unsubscribeMusic();
       unsubscribeInvoices();
+      unsubscribeMessages();
+      unsubscribeCareer();
     };
   }, []);
   
@@ -584,6 +725,13 @@ const Dashboard = () => {
           subtitle="Published articles"
           icon={FileText}
           color="#10b981"
+        />
+        <SpotifyCard
+          title="Messages"
+          value={stats.totalContactMessages + stats.totalCareerApplications}
+          subtitle={`${stats.totalContactMessages} contact, ${stats.totalCareerApplications} career`}
+          icon={MessageSquare}
+          color="#ef4444"
         />
       </div>
     </div>

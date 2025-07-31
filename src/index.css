@@ -99,6 +99,12 @@ html, body {
   bottom: 0 !important;
   pointer-events: none;
   z-index: 55;
+  display: none; /* Hide by default */
+}
+
+/* Only show when cart is actually open */
+.cart-slideout-container.cart-open {
+  display: block;
 }
 
 .cart-slideout-container > * {
@@ -110,7 +116,7 @@ html, body {
   [data-cart-slideout] {
     /* Reset any inherited constraints */
     left: auto !important;
-    width: 100% !important;
+    /* width is now handled by the component classes */
     /* Ensure transform works properly */
     transform-origin: right center;
     /* Force GPU acceleration */
@@ -121,12 +127,12 @@ html, body {
     perspective: 1000;
   }
   
-  /* Override any parent overflow hidden on mobile */
-  body.cart-open {
+  /* Remove body locking on mobile since cart is now a side menu */
+  /* body.cart-open {
     overflow: hidden !important;
     position: fixed !important;
     width: 100% !important;
-  }
+  } */
   
   /* Ensure smooth transitions on mobile */
   [data-cart-slideout].translate-x-0 {

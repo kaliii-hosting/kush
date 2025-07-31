@@ -65,12 +65,12 @@ const BlogModal = ({ post, isOpen, onClose }) => {
     <Portal>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999]"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 z-[10000] overflow-y-auto">
         <div className="min-h-screen px-4 py-8 flex items-start justify-center">
           <div 
             className="relative bg-spotify-light-gray rounded-2xl shadow-2xl max-w-4xl w-full my-8"

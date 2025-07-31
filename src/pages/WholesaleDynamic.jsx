@@ -256,10 +256,30 @@ const WholesaleDynamic = ({ onCartClick }) => {
     return () => {
       if (mapInstanceRef.current) {
         try {
-          mapInstanceRef.current.remove();
+          // Clear all layers first
+          if (stateLayersRef.current && stateLayersRef.current.length > 0) {
+            stateLayersRef.current.forEach(layer => {
+              try {
+                if (mapInstanceRef.current && mapInstanceRef.current.hasLayer(layer)) {
+                  mapInstanceRef.current.removeLayer(layer);
+                }
+              } catch (e) {
+                console.error('Error removing layer:', e);
+              }
+            });
+            stateLayersRef.current = [];
+          }
+          
+          // Remove map instance
+          if (mapInstanceRef.current._container) {
+            mapInstanceRef.current.remove();
+          }
           mapInstanceRef.current = null;
         } catch (e) {
-          console.error('Error removing map:', e);
+          console.error('Error cleaning up map:', e);
+          // Force cleanup even if there's an error
+          mapInstanceRef.current = null;
+          stateLayersRef.current = [];
         }
       }
     };
@@ -267,25 +287,25 @@ const WholesaleDynamic = ({ onCartClick }) => {
 
   return (
     <div className="bg-black min-h-screen">
-      {/* Critical z-index override for Leaflet and smooth slider */}
+      {/* Critical z-index override for Leaflet and smooth slider - scoped to this component */}
       <style>{`
-        /* Override Leaflet's default z-index values (200-700) */
-        .leaflet-pane { z-index: 1 !important; }
-        .leaflet-tile-pane { z-index: 1 !important; }
-        .leaflet-overlay-pane { z-index: 2 !important; }
-        .leaflet-shadow-pane { z-index: 3 !important; }
-        .leaflet-marker-pane { z-index: 4 !important; }
-        .leaflet-tooltip-pane { z-index: 5 !important; }
-        .leaflet-popup-pane { z-index: 6 !important; }
-        .leaflet-control { z-index: 7 !important; }
+        /* Override Leaflet's default z-index values (200-700) - only within wholesale map */
+        .wholesale-map-section .leaflet-pane { z-index: 1 !important; }
+        .wholesale-map-section .leaflet-tile-pane { z-index: 1 !important; }
+        .wholesale-map-section .leaflet-overlay-pane { z-index: 2 !important; }
+        .wholesale-map-section .leaflet-shadow-pane { z-index: 3 !important; }
+        .wholesale-map-section .leaflet-marker-pane { z-index: 4 !important; }
+        .wholesale-map-section .leaflet-tooltip-pane { z-index: 5 !important; }
+        .wholesale-map-section .leaflet-popup-pane { z-index: 6 !important; }
+        .wholesale-map-section .leaflet-control { z-index: 7 !important; }
         
-        /* Override any inline z-index styles */
-        [style*="z-index: 200"],
-        [style*="z-index: 400"],
-        [style*="z-index: 500"],
-        [style*="z-index: 600"],
-        [style*="z-index: 650"],
-        [style*="z-index: 700"] {
+        /* Override inline z-index styles - only within wholesale map container */
+        .wholesale-map-container [style*="z-index: 200"],
+        .wholesale-map-container [style*="z-index: 400"],
+        .wholesale-map-container [style*="z-index: 500"],
+        .wholesale-map-container [style*="z-index: 600"],
+        .wholesale-map-container [style*="z-index: 650"],
+        .wholesale-map-container [style*="z-index: 700"] {
           z-index: 1 !important;
         }
         
@@ -301,7 +321,7 @@ const WholesaleDynamic = ({ onCartClick }) => {
           position: relative !important;
           z-index: 1 !important;
           isolation: isolate !important;
-          contain: strict !important;
+          contain: layout style !important;
         }
         
         /* Smooth slider transitions */
@@ -523,7 +543,7 @@ const WholesaleDynamic = ({ onCartClick }) => {
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {firebaseProducts
                 .filter(product => selectedCategory === 'all' || product.category === selectedCategory)
                 .map((product) => (

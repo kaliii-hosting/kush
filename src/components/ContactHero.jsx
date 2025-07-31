@@ -24,21 +24,7 @@ const ContactHero = () => {
     message: "Finally, what would you like to tell us?"
   };
 
-  useEffect(() => {
-    // Pointer tracking for glow effect
-    const handlePointerMove = (e) => {
-      if (inputControlsRef.current) {
-        const rect = inputControlsRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        inputControlsRef.current.style.setProperty('--x', x);
-        inputControlsRef.current.style.setProperty('--y', y);
-      }
-    };
-
-    document.addEventListener('pointermove', handlePointerMove);
-    return () => document.removeEventListener('pointermove', handlePointerMove);
-  }, []);
+  // Focus on textarea when component mounts or field changes
 
   useEffect(() => {
     // Focus textarea when field changes
@@ -116,6 +102,18 @@ const ContactHero = () => {
     <>
       <div className="contact-hero-wrapper">
         <div className="contact-hero-content">
+          {/* Animated Robot Face */}
+          <div className="robot-container">
+            <div className="ai-bot">
+              <div className="head">
+                <div className="face">
+                  <div className="eyes"> </div>
+                  <div className="mouth"> </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-4 sm:mb-6 md:mb-8 text-white px-4">
             Contact Our Team
           </h1>

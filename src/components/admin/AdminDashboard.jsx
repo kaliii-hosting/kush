@@ -4,6 +4,7 @@ import { realtimeDb } from '../../config/firebase';
 import { useNavigate } from 'react-router-dom';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
+import AdminHeader from './AdminHeader';
 import { LogOut, Package, Plus, BarChart3, Database } from 'lucide-react';
 import { seedFirebaseProducts } from '../../utils/seedFirebase';
 
@@ -244,27 +245,20 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Admin Header */}
+      <AdminHeader 
+        onLogout={handleLogout}
+      />
+      
+      {/* Main Container with padding for header */}
+      <div className="pt-16 min-h-screen" style={{ backgroundColor: '#121212' }}>
+        {/* Page Header */}
+        <header className="border-b" style={{ backgroundColor: '#181818', borderColor: '#282828' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Package className="w-8 h-8 text-green-400" />
               <h1 className="text-xl font-bold text-white">Local Inventory Management</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <img 
-                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
-                alt="Kushie Logo"
-                className="h-8 w-auto"
-              />
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <LogOut size={18} />
-                Logout
-              </button>
             </div>
           </div>
         </div>
@@ -292,7 +286,7 @@ const AdminDashboard = () => {
         
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Total</p>
@@ -301,7 +295,7 @@ const AdminDashboard = () => {
               <BarChart3 className="w-6 h-6 text-gray-600" />
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Flower</p>
@@ -310,7 +304,7 @@ const AdminDashboard = () => {
               <Package className="w-6 h-6 text-green-600" />
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Prerolls</p>
@@ -319,7 +313,7 @@ const AdminDashboard = () => {
               <Package className="w-6 h-6 text-orange-600" />
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Infused</p>
@@ -328,7 +322,7 @@ const AdminDashboard = () => {
               <Package className="w-6 h-6 text-purple-600" />
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Vaporizers</p>
@@ -337,7 +331,7 @@ const AdminDashboard = () => {
               <Package className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#282828] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-xs">Other</p>
@@ -408,6 +402,7 @@ const AdminDashboard = () => {
           onDelete={handleDeleteProduct}
         />
       </main>
+      </div>
     </div>
   );
 };

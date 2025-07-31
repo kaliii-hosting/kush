@@ -7,6 +7,32 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* CSS Variables moved to DockNavigation.css */
+
+/* Responsive main content padding */
+.admin-main-content {
+  padding-bottom: 4.5rem !important;
+  height: calc(100vh - 4rem); /* Account for header */
+}
+
+@media (max-width: 768px) {
+  .admin-main-content {
+    padding-bottom: 5rem !important;
+    min-height: calc(100vh - 4rem); /* Account for header on mobile */
+  }
+  
+  /* Fix for messages page on mobile */
+  .admin-main-content main {
+    min-height: calc(100vh - 4rem);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-main-content {
+    padding-bottom: 5rem !important;
+  }
+}
+
 /* Custom scrollbar for enterprise look */
 .admin-scrollbar::-webkit-scrollbar {
   width: 8px;
@@ -47,6 +73,11 @@
   height: 24px;
   background-color: #1db954;
   border-radius: 0 2px 2px 0;
+}
+
+/* Adjust main content for dock navigation */
+.admin-main-content {
+  padding-bottom: 7rem !important;
 }
 
 /* Professional table styles */

@@ -213,15 +213,15 @@
   position: relative !important;
 }
 
-/* Override Leaflet's default z-index values */
-.leaflet-pane { z-index: 1 !important; }
-.leaflet-tile-pane { z-index: 2 !important; }
-.leaflet-overlay-pane { z-index: 3 !important; }
-.leaflet-shadow-pane { z-index: 4 !important; }
-.leaflet-marker-pane { z-index: 5 !important; }
-.leaflet-tooltip-pane { z-index: 6 !important; }
-.leaflet-popup-pane { z-index: 7 !important; }
-.leaflet-control { z-index: 8 !important; }
+/* Override Leaflet's default z-index values - scoped to wholesale only */
+.wholesale-map-container .leaflet-pane { z-index: 1 !important; }
+.wholesale-map-container .leaflet-tile-pane { z-index: 2 !important; }
+.wholesale-map-container .leaflet-overlay-pane { z-index: 3 !important; }
+.wholesale-map-container .leaflet-shadow-pane { z-index: 4 !important; }
+.wholesale-map-container .leaflet-marker-pane { z-index: 5 !important; }
+.wholesale-map-container .leaflet-tooltip-pane { z-index: 6 !important; }
+.wholesale-map-container .leaflet-popup-pane { z-index: 7 !important; }
+.wholesale-map-container .leaflet-control { z-index: 8 !important; }
 
 /* Force map section to create new stacking context */
 section:has(.wholesale-map-container) {

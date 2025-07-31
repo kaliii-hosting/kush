@@ -17,13 +17,24 @@ export const startUserSync = () => {
       const users = {};
       
       snapshot.docs.forEach((doc) => {
-        users[doc.id] = {
-          ...doc.data(),
-          // Convert Firestore timestamps to readable format
-          createdAt: doc.data().createdAt?.toDate?.()?.getTime() || doc.data().createdAt,
-          lastLoginAt: doc.data().lastLoginAt?.toDate?.()?.getTime() || doc.data().lastLoginAt,
-          lastSeenAt: doc.data().lastSeenAt?.toDate?.()?.getTime() || doc.data().lastSeenAt,
-        };
+        const userData = doc.data();
+        
+        // Clean up the user data and handle undefined values
+        const cleanUserData = {};
+        Object.keys(userData).forEach(key => {
+          const value = userData[key];
+          // Skip undefined values completely
+          if (value !== undefined) {
+            // Handle timestamp fields specially
+            if (key === 'createdAt' || key === 'lastLoginAt' || key === 'lastSeenAt') {
+              cleanUserData[key] = value?.toDate?.()?.getTime() || value || null;
+            } else {
+              cleanUserData[key] = value;
+            }
+          }
+        });
+        
+        users[doc.id] = cleanUserData;
       });
 
       // Write to Realtime Database

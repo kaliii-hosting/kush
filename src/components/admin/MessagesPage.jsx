@@ -71,33 +71,75 @@ const format = (date, formatStr) => {
 const MessagesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [messages, setMessages] = useState([]);
+  const [careerApplications, setCareerApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [filter, setFilter] = useState('all'); // all, unread, read
+  const [messageType, setMessageType] = useState('contact'); // contact, career
+  const [isMobile, setIsMobile] = useState(() => {
+    // Initialize immediately to prevent SSR issues
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
+
+  // Handle mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
+    // Fetch contact messages
     const messagesRef = ref(realtimeDb, 'messages');
-    
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
+    const unsubscribeMessages = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const messagesArray = Object.entries(data).map(([id, message]) => ({
           id,
-          ...message
-        })).sort((a, b) => b.timestamp - a.timestamp); // Sort by newest first
+          ...message,
+          type: 'contact'
+        })).sort((a, b) => b.timestamp - a.timestamp);
         setMessages(messagesArray);
       } else {
         setMessages([]);
       }
+    });
+
+    // Fetch career applications
+    const careerRef = ref(realtimeDb, 'career_applications');
+    const unsubscribeCareer = onValue(careerRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const applicationsArray = Object.entries(data).map(([id, application]) => ({
+          id,
+          ...application,
+          type: 'career'
+        })).sort((a, b) => b.timestamp - a.timestamp);
+        setCareerApplications(applicationsArray);
+      } else {
+        setCareerApplications([]);
+      }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeMessages();
+      unsubscribeCareer();
+    };
   }, []);
 
-  const markAsRead = async (messageId) => {
+  const markAsRead = async (messageId, isCareer = false) => {
     try {
-      await update(ref(realtimeDb, `messages/${messageId}`), {
+      const path = isCareer ? `career_applications/${messageId}` : `messages/${messageId}`;
+      await update(ref(realtimeDb, path), {
         read: true,
         readAt: Date.now()
       });
@@ -106,10 +148,12 @@ const MessagesPage = () => {
     }
   };
 
-  const deleteMessage = async (messageId) => {
-    if (window.confirm('Are you sure you want to delete this message?')) {
+  const deleteMessage = async (messageId, isCareer = false) => {
+    const messageText = isCareer ? 'application' : 'message';
+    if (window.confirm(`Are you sure you want to delete this ${messageText}?`)) {
       try {
-        await remove(ref(realtimeDb, `messages/${messageId}`));
+        const path = isCareer ? `career_applications/${messageId}` : `messages/${messageId}`;
+        await remove(ref(realtimeDb, path));
         setSelectedMessage(null);
       } catch (error) {
         console.error('Error deleting message:', error);
@@ -117,7 +161,10 @@ const MessagesPage = () => {
     }
   };
 
-  const filteredMessages = messages.filter(message => {
+  // Get current message list based on type
+  const currentMessages = messageType === 'career' ? careerApplications : messages;
+
+  const filteredMessages = currentMessages.filter(message => {
     // First apply the read/unread filter
     let matchesFilter = true;
     if (filter === 'unread') matchesFilter = !message.read;
@@ -130,61 +177,110 @@ const MessagesPage = () => {
         (message.name || '').toLowerCase().includes(query) ||
         (message.email || '').toLowerCase().includes(query) ||
         (message.message || '').toLowerCase().includes(query) ||
-        (message.phone && message.phone.toLowerCase().includes(query))
+        (message.phone && message.phone.toLowerCase().includes(query)) ||
+        (message.position && message.position.toLowerCase().includes(query)) ||
+        (message.experience && message.experience.toLowerCase().includes(query))
       );
     }
     
     return matchesFilter;
   });
 
-  const unreadCount = messages.filter(m => !m.read).length;
+  const unreadContactCount = messages.filter(m => !m.read).length;
+  const unreadCareerCount = careerApplications.filter(a => !a.read).length;
+  const unreadCount = messageType === 'career' ? unreadCareerCount : unreadContactCount;
 
   const handleMessageClick = (message) => {
     setSelectedMessage(message);
     if (!message.read) {
-      markAsRead(message.id);
+      markAsRead(message.id, message.type === 'career');
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-64 bg-[#121212]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <span className="ml-4 text-white">Loading messages...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-200px)] flex flex-col">
+    <div className={`${isMobile ? 'h-screen' : 'min-h-screen lg:h-full'} w-full overflow-hidden`}>
       {/* iOS-style Messages UI */}
-      <div className="flex h-full bg-[#121212] rounded-lg overflow-hidden">
+      <div className={`flex ${isMobile ? 'h-full' : 'min-h-screen lg:h-full'} bg-[#121212] relative overflow-hidden`}>
         {/* Sidebar - Message List */}
-        <div className="w-full lg:w-96 bg-black border-r border-[#282828] flex flex-col">
+        <div className={`w-full lg:w-80 bg-black border-r border-[#282828] flex flex-col absolute lg:relative ${isMobile ? 'inset-0' : 'inset-y-0'} left-0 z-20 transition-transform duration-300 ${
+          selectedMessage && isMobile ? '-translate-x-full' : 'translate-x-0'
+        }`}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#282828]">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-white">Messages</h1>
+          <div className="px-4 py-3 border-b border-[#282828]">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-xl font-bold text-white">
+                {messageType === 'career' ? 'Career Applications' : 'Messages'}
+              </h1>
               <span className="text-sm text-[#b3b3b3]">
                 {unreadCount > 0 && `${unreadCount} unread`}
               </span>
+            </div>
+            
+            {/* Message Type Toggle */}
+            <div className="flex bg-[#282828] rounded-lg p-1 mb-3">
+              <button
+                onClick={() => {
+                  setMessageType('contact');
+                  setSelectedMessage(null);
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${
+                  messageType === 'contact'
+                    ? 'bg-white text-black'
+                    : 'text-[#b3b3b3] hover:text-white'
+                }`}
+              >
+                Contact Messages
+                {unreadContactCount > 0 && (
+                  <span className="ml-1.5 bg-[#1db954] text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {unreadContactCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setMessageType('career');
+                  setSelectedMessage(null);
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${
+                  messageType === 'career'
+                    ? 'bg-white text-black'
+                    : 'text-[#b3b3b3] hover:text-white'
+                }`}
+              >
+                Career Applications
+                {unreadCareerCount > 0 && (
+                  <span className="ml-1.5 bg-[#1db954] text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {unreadCareerCount}
+                  </span>
+                )}
+              </button>
             </div>
             
             {/* Search Bar */}
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search messages"
+                placeholder={messageType === 'career' ? 'Search applications' : 'Search messages'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#282828] text-white rounded-full px-4 py-2 pl-10 text-sm placeholder-[#b3b3b3] focus:outline-none focus:ring-2 focus:ring-white border-0"
+                className="w-full bg-[#282828] text-white rounded-full px-3 py-1.5 pl-9 text-sm placeholder-[#b3b3b3] focus:outline-none focus:ring-2 focus:ring-white border-0"
               />
-              <svg className="w-5 h-5 text-[#b3b3b3] absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[#b3b3b3] absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
 
             {/* Filter Pills */}
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-2">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -231,14 +327,14 @@ const MessagesPage = () => {
                   <div
                     key={message.id}
                     onClick={() => handleMessageClick(message)}
-                    className={`px-4 py-3 border-b border-[#282828] cursor-pointer transition-colors hover:bg-[#282828] ${
+                    className={`px-3 py-2.5 border-b border-[#282828] cursor-pointer transition-colors hover:bg-[#282828] ${
                       selectedMessage?.id === message.id ? 'bg-[#282828]' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
-                      <div className="w-12 h-12 rounded-full bg-[#282828] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold text-lg">
+                      <div className="w-10 h-10 rounded-full bg-[#282828] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-base">
                           {(message.name || 'U').charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -255,7 +351,10 @@ const MessagesPage = () => {
                           </span>
                         </div>
                         <p className="text-sm text-[#b3b3b3] truncate">
-                          {message.email || 'No email'}
+                          {message.type === 'career' && message.position ? 
+                            `${message.position} • ${message.email}` : 
+                            (message.email || 'No email')
+                          }
                         </p>
                         <p className={`text-sm mt-1 overflow-hidden ${
                           !message.read ? 'text-[#b3b3b3]' : 'text-[#6a6a6a]'
@@ -266,7 +365,10 @@ const MessagesPage = () => {
                           lineHeight: '1.25rem',
                           maxHeight: '2.5rem'
                         }}>
-                          {message.message || 'No message'}
+                          {message.type === 'career' ? 
+                            (message.experience || message.message || 'No details provided') :
+                            (message.message || 'No message')
+                          }
                         </p>
                       </div>
                       
@@ -282,21 +384,32 @@ const MessagesPage = () => {
         </div>
 
         {/* Message Detail View */}
-        <div className="flex-1 flex flex-col bg-[#121212]">
+        <div className={`flex-1 flex flex-col bg-[#121212] absolute lg:relative ${isMobile ? 'inset-0' : 'inset-0'} z-10 transition-transform duration-300 ${
+          !selectedMessage && isMobile ? 'translate-x-full' : 'translate-x-0'
+        }`}>
           {selectedMessage ? (
-            <>
+            <div className="flex flex-col h-full">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-[#282828] bg-[#181818]">
+              <div className="px-4 py-3 border-b border-[#282828] bg-[#181818]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#282828] flex items-center justify-center">
-                      <span className="text-white font-semibold">
+                    {/* Back button for mobile */}
+                    <button
+                      onClick={() => setSelectedMessage(null)}
+                      className="lg:hidden p-2 hover:bg-[#282828] rounded-lg transition-colors text-[#b3b3b3] hover:text-white"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div className="w-9 h-9 rounded-full bg-[#282828] flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
                         {(selectedMessage.name || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h2 className="font-semibold text-white">{selectedMessage.name || 'Unknown'}</h2>
-                      <p className="text-sm text-[#b3b3b3]">{selectedMessage.email || 'No email'}</p>
+                      <h2 className="font-semibold text-white text-base">{selectedMessage.name || 'Unknown'}</h2>
+                      <p className="text-xs text-[#b3b3b3]">{selectedMessage.email || 'No email'}</p>
                     </div>
                   </div>
                   
@@ -318,7 +431,7 @@ const MessagesPage = () => {
                       <EnvelopeIcon className="h-5 w-5" />
                     </a>
                     <button
-                      onClick={() => deleteMessage(selectedMessage.id)}
+                      onClick={() => deleteMessage(selectedMessage.id, selectedMessage.type === 'career')}
                       className="p-2 hover:bg-[#282828] rounded-lg transition-colors text-red-500"
                       title="Delete"
                     >
@@ -329,64 +442,118 @@ const MessagesPage = () => {
               </div>
 
               {/* Message Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 pb-20">
                 <div className="max-w-3xl mx-auto">
                   {/* Date */}
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-6">
                     <span className="text-xs text-gray-500">
                       {format(new Date(selectedMessage.timestamp), 'MMMM d, yyyy h:mm a')}
                     </span>
                   </div>
 
-                  {/* Message Bubble */}
-                  <div className="flex justify-start mb-4">
-                    <div className="max-w-[70%]">
-                      <div className="bg-[#282828] rounded-2xl px-4 py-3">
-                        <p className="text-white whitespace-pre-wrap">{selectedMessage.message || 'No message content'}</p>
+                  {/* Message/Application Content */}
+                  {selectedMessage.type === 'career' ? (
+                    <div className="space-y-4">
+                      {/* Career Application Details */}
+                      <div className="bg-[#282828] rounded-xl px-4 py-3">
+                        <h3 className="text-white font-semibold mb-3 text-base">Application Details</h3>
+                        <div className="space-y-2.5">
+                          <div>
+                            <span className="text-[#b3b3b3] text-xs">Position Applied For:</span>
+                            <p className="text-white font-medium text-sm">{selectedMessage.position || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <span className="text-[#b3b3b3] text-xs">Experience:</span>
+                            <p className="text-white whitespace-pre-wrap text-sm">{selectedMessage.experience || 'Not provided'}</p>
+                          </div>
+                          {selectedMessage.portfolio && (
+                            <div>
+                              <span className="text-[#b3b3b3] text-xs">Portfolio/LinkedIn:</span>
+                              <p className="text-white text-sm">
+                                {selectedMessage.portfolio.startsWith('http') ? (
+                                  <a href={selectedMessage.portfolio} target="_blank" rel="noopener noreferrer" 
+                                     className="text-[#1db954] hover:underline">
+                                    {selectedMessage.portfolio}
+                                  </a>
+                                ) : (
+                                  selectedMessage.portfolio
+                                )}
+                              </p>
+                            </div>
+                          )}
+                          {selectedMessage.message && (
+                            <div>
+                              <span className="text-[#b3b3b3] text-xs">Additional Message:</span>
+                              <p className="text-white whitespace-pre-wrap text-sm">{selectedMessage.message}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 ml-2">
+                      
+                      <div className="flex items-center gap-3 text-xs text-[#b3b3b3]">
                         {selectedMessage.phone && (
-                          <span className="text-xs text-[#b3b3b3]">
-                            <PhoneIcon className="inline w-3 h-3 mr-1" />
+                          <span>
+                            <PhoneIcon className="inline w-3 h-3 mr-0.5" />
                             {selectedMessage.phone}
                           </span>
                         )}
                         {selectedMessage.read && selectedMessage.readAt && (
-                          <span className="text-xs text-[#b3b3b3]">
+                          <span>
                             Read {format(new Date(selectedMessage.readAt), 'MMM d, h:mm a')}
                           </span>
                         )}
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex justify-start mb-4">
+                      <div className="max-w-[70%]">
+                        <div className="bg-[#282828] rounded-xl px-3 py-2.5">
+                          <p className="text-white whitespace-pre-wrap text-sm">{selectedMessage.message || 'No message content'}</p>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 ml-2">
+                          {selectedMessage.phone && (
+                            <span className="text-xs text-[#b3b3b3]">
+                              <PhoneIcon className="inline w-3 h-3 mr-1" />
+                              {selectedMessage.phone}
+                            </span>
+                          )}
+                          {selectedMessage.read && selectedMessage.readAt && (
+                            <span className="text-xs text-[#b3b3b3]">
+                              Read {format(new Date(selectedMessage.readAt), 'MMM d, h:mm a')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Action Bar */}
-              <div className="px-6 py-4 border-t border-[#282828] bg-[#181818]">
+              <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-[#282828] bg-[#181818] z-10">
                 <div className="flex gap-3">
                   <a
-                    href={`mailto:${selectedMessage.email}?subject=Re: Your message to Kushie&body=Hi ${selectedMessage.name || 'there'},%0D%0A%0D%0AThank you for reaching out to us.%0D%0A%0D%0A---Original Message---%0D%0A${selectedMessage.message || ''}`}
-                    className="flex-1 bg-[#1db954] hover:bg-[#1ed760] text-black font-medium py-3 px-6 rounded-full transition-colors text-center"
+                    href={`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.type === 'career' ? `Your application for ${selectedMessage.position || 'position'}` : 'Your message to Kushie'}&body=Hi ${selectedMessage.name || 'there'},%0D%0A%0D%0AThank you for ${selectedMessage.type === 'career' ? 'your interest in joining our team' : 'reaching out to us'}.%0D%0A%0D%0A${selectedMessage.type === 'career' ? `---Application Details---%0D%0APosition: ${selectedMessage.position || 'N/A'}%0D%0AExperience: ${selectedMessage.experience || 'N/A'}%0D%0APortfolio: ${selectedMessage.portfolio || 'N/A'}%0D%0AMessage: ${selectedMessage.message || 'N/A'}` : `---Original Message---%0D%0A${selectedMessage.message || ''}`}`}
+                    className="flex-1 bg-[#CB6015] hover:bg-[#E06A15] text-white font-medium py-2.5 px-5 rounded-full transition-colors text-center text-sm"
                   >
                     Reply via Email
                   </a>
                   {selectedMessage.phone && (
                     <a
                       href={`tel:${selectedMessage.phone}`}
-                      className="bg-[#282828] hover:bg-[#3e3e3e] text-white font-medium py-3 px-6 rounded-full transition-colors"
+                      className="bg-[#282828] hover:bg-[#3e3e3e] text-white font-medium py-2.5 px-5 rounded-full transition-colors text-sm"
                     >
                       Call
                     </a>
                   )}
                 </div>
               </div>
-            </>
+            </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-[#b3b3b3]">
               <div className="text-center">
-                <EnvelopeIcon className="w-16 h-16 mx-auto mb-4 text-[#6a6a6a]" />
-                <p className="text-lg">Select a message to read</p>
+                <EnvelopeIcon className="w-12 h-12 mx-auto mb-3 text-[#6a6a6a]" />
+                <p className="text-base">Select a message to read</p>
               </div>
             </div>
           )}

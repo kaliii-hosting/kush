@@ -45,7 +45,7 @@ const Blog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black relative" style={{ isolation: 'isolate' }}>
       {/* Hero Section */}
       <div className="relative h-64 md:h-80 bg-gradient-to-b from-primary/20 to-black">
         <div className="absolute inset-0 flex items-center justify-center">
@@ -77,14 +77,15 @@ const Blog = () => {
       </div>
 
       {/* Blog Posts Grid */}
-      <div className="max-w-7xl mx-auto px-4 pb-20">
+      <div className="max-w-7xl mx-auto px-4 pb-20 relative z-20">
         {filteredPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
             {filteredPosts.map((post) => (
               <article
                 key={post.id}
                 onClick={() => setSelectedPost(post)}
-                className="bg-spotify-light-gray rounded-lg overflow-hidden cursor-pointer transition-all hover:bg-spotify-card-hover hover:scale-[1.02]"
+                className="bg-spotify-light-gray rounded-lg overflow-hidden cursor-pointer transition-all hover:bg-spotify-card-hover hover:scale-[1.02] relative z-30"
+                style={{ pointerEvents: 'auto', position: 'relative' }}
               >
                 {/* Post Image */}
                 {post.imageUrl && (
@@ -108,21 +109,35 @@ const Blog = () => {
                   </p>
 
                   {/* Post Metadata */}
-                  <div className="flex items-center gap-4 text-xs text-spotify-text-subdued">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(post.createdAt)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{calculateReadTime(post.content)}</span>
-                    </div>
-                    {post.author && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs text-spotify-text-subdued">
                       <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        <span>{post.author}</span>
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(post.createdAt)}</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{calculateReadTime(post.content)}</span>
+                      </div>
+                      {post.author && (
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span>{post.author}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Read Now Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPost(post);
+                      }}
+                      className="bg-[#CB6015] hover:bg-[#E06A15] text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200 z-40 relative"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      Read Now
+                    </button>
                   </div>
                 </div>
               </article>

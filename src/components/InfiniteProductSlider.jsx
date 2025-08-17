@@ -104,7 +104,12 @@ const InfiniteProductSlider = ({
   };
 
   // Mouse/Touch handlers
+  const [dragStartX, setDragStartX] = useState(0);
+  const [hasMoved, setHasMoved] = useState(false);
+  
   const handleMouseDown = (e) => {
+    setDragStartX(e.pageX);
+    setHasMoved(false);
     setIsDragging(true);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
     setScrollLeft(scrollRef.current.scrollLeft);
@@ -112,12 +117,18 @@ const InfiniteProductSlider = ({
   };
 
   const handleTouchStart = (e) => {
+    setDragStartX(e.touches[0].pageX);
+    setHasMoved(false);
     setIsDragging(true);
     setStartX(e.touches[0].pageX - scrollRef.current.offsetLeft);
     setScrollLeft(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e) => {
+    const dragDistance = Math.abs(e.pageX - dragStartX);
+    if (dragDistance < 5) {
+      setHasMoved(false);
+    }
     setIsDragging(false);
     if (scrollRef.current) {
       scrollRef.current.style.cursor = 'grab';
@@ -127,6 +138,7 @@ const InfiniteProductSlider = ({
   const handleMouseMove = (e) => {
     if (!isDragging || !scrollRef.current) return;
     e.preventDefault();
+    setHasMoved(true);
     const x = e.pageX - scrollRef.current.offsetLeft;
     const walk = (x - startX) * 2.5; // Increased sensitivity for smoother feel
     requestAnimationFrame(() => {
@@ -138,6 +150,7 @@ const InfiniteProductSlider = ({
 
   const handleTouchMove = (e) => {
     if (!isDragging || !scrollRef.current) return;
+    setHasMoved(true);
     const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
     const walk = (x - startX) * 2.5; // Increased sensitivity for smoother feel
     requestAnimationFrame(() => {
@@ -195,7 +208,11 @@ const InfiniteProductSlider = ({
             <div
               key={uniqueKey}
               className={`slider-card ${isVerticalCard ? 'vertical' : 'horizontal'}`}
-              onClick={() => onProductClick(product)}
+              onClick={(e) => {
+                if (!e.target.closest('button') && !hasMoved) {
+                  onProductClick(product, e);
+                }
+              }}
               onMouseEnter={() => setHoveredCard(uniqueKey)}
               onMouseLeave={() => setHoveredCard(null)}
             >

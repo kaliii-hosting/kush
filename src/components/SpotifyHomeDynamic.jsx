@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Play, ShoppingCart, Heart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Play, ShoppingCart, Heart, ChevronDown, Leaf, Zap, Shirt } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
 import { useWishlist } from '../context/WishlistContext';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
-import DisclosureCards from './DisclosureCards';
 import InfiniteProductSlider from './InfiniteProductSlider';
 
 const SpotifyHomeDynamic = ({ onCartClick }) => {
+  const navigate = useNavigate();
   const { shopifyProducts } = useEnhancedProducts();
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
@@ -106,16 +106,51 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
   // Fallback to all products if no sale products found
   const saleProductsToShow = saleProducts.length > 0 ? saleProducts : shopifyProducts.slice(10, 20);
 
+  // State for featured product carousel
+  const [featuredProductIndex, setFeaturedProductIndex] = useState(0);
+  
+  // Find clothing products from sale items for hero section
+  const featuredClothingProducts = saleProducts.filter(product => {
+    // Check if it's a clothing item
+    const isClothing = 
+      product.productType?.toLowerCase().includes('apparel') ||
+      product.productType?.toLowerCase().includes('clothing') ||
+      product.productType?.toLowerCase().includes('shirt') ||
+      product.productType?.toLowerCase().includes('hoodie') ||
+      product.productType?.toLowerCase().includes('gear') ||
+      product.tags?.some(tag => 
+        typeof tag === 'string' && (
+          tag.toLowerCase().includes('apparel') ||
+          tag.toLowerCase().includes('clothing') ||
+          tag.toLowerCase().includes('shirt') ||
+          tag.toLowerCase().includes('hoodie') ||
+          tag.toLowerCase().includes('gear')
+        )
+      );
+    return isClothing;
+  });
+
+  // Use all sale products if no clothing found
+  const productsForHero = featuredClothingProducts.length > 0 ? featuredClothingProducts : saleProductsToShow;
+  const featuredClothingProduct = productsForHero[featuredProductIndex] || productsForHero[0];
+
+  // Navigate between products
+  const nextProduct = () => {
+    setFeaturedProductIndex((prev) => (prev + 1) % productsForHero.length);
+  };
+
+  const prevProduct = () => {
+    setFeaturedProductIndex((prev) => (prev - 1 + productsForHero.length) % productsForHero.length);
+  };
+
   // Handle product interactions
   const handleProductClick = (product, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    // Don't open modal if we were dragging
-    if (isDragging) return;
-    setSelectedProduct(product);
-    setShowProductModal(true);
+    // Navigate to shop page with product selected to open modal
+    navigate(`/shop?product=${product.handle || product.id}`);
   };
 
   const handleCloseModal = () => {
@@ -159,8 +194,11 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
           Your browser does not support the video tag.
         </video>
         
-        {/* Optional overlay for better contrast if needed */}
-        <div className="absolute inset-0 bg-black/10"></div>
+        {/* Cinematic gradient overlay - Spotify style */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+        
+        {/* Additional bottom fade for enhanced cinematic effect */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent"></div>
       </section>
 
       {/* Spotify-themed Product Slider Section */}
@@ -220,7 +258,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
               Premium distillate with natural terpenes. Pure, potent, and perfectly crafted for the ultimate vaping experience.
             </p>
             <Link 
-              to="/shop" 
+              to="/wholesale" 
               className="inline-block bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               Shop Now
@@ -229,38 +267,213 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
         </div>
       </section>
 
-      {/* Hemp Products Slider Section */}
-      {hempProducts.length > 0 && (
-        <section className="bg-gradient-to-b from-gray-900 to-black py-8">
-          <div className="w-full px-4 md:px-8">
-            {/* Section Header */}
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Premium Hemp Collection
-              </h2>
-              <p className="text-spotify-text-subdued text-lg">
-                Discover our curated selection of high-quality hemp products
-              </p>
-            </div>
+      {/* KUSHIE Video Text Section */}
+      <section style={{ background: 'black', padding: '2rem 0' }}>
+        <header style={{ 
+          width: '100%',
+          margin: '0 auto',
+          position: 'relative',
+          maxWidth: '1200px'
+        }}>
+          <video 
+            style={{ width: '100%' }}
+            autoPlay 
+            playsInline 
+            muted 
+            loop 
+            preload="auto"
+            poster="https://s3-us-west-2.amazonaws.com/s.cdpn.io/4273/oceanshot.jpg"
+          >
+            <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Videos/Horizontal%20Videos/CROPPED_FERRARI_1754120144105_pkl6wk4.mp4" />
+            <source src="http://thenewcode.com/assets/videos/ocean-small.mp4" />
+          </video>
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 285 80" 
+            preserveAspectRatio="xMidYMid slice"
+            style={{
+              width: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%'
+            }}
+          >
+            <defs>
+              <mask id="kushie-mask" x="0" y="0" width="100%" height="100%">
+                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                <text 
+                  x="72" 
+                  y="50" 
+                  fill="black"
+                  style={{
+                    fontFamily: 'Biko, sans-serif',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    fontSize: '38px'
+                  }}
+                >KUSHIE</text>
+              </mask>
+            </defs>
+            <rect x="0" y="0" width="100%" height="100%" fill="black" mask="url(#kushie-mask)" />
+          </svg>
+        </header>
+      </section>
 
-            {/* Products Slider - Infinite Scroll */}
-            <InfiniteProductSlider
-              products={hempProducts}
-              onProductClick={handleProductClick}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-              isInWishlist={isInWishlist}
-              isVerticalCard={true}
-              sliderId="hemp-collection"
+      {/* Premium Clothing Hero Section - Professional Animated Design */}
+      {featuredClothingProduct && (
+        <section 
+          className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden bg-black my-8 cursor-pointer"
+          onClick={(e) => {
+            // Only trigger if not clicking on buttons
+            if (!e.target.closest('button') && !e.target.closest('a')) {
+              handleProductClick(featuredClothingProduct, e);
+            }
+          }}
+        >
+          {/* Background with specific image */}
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url(https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Pictures/SHOP_BANNER_2f58ad04-18a3-4e1b-8d2a-acd93acef73d.webp)`,
+                filter: 'brightness(0.3)'
+              }}
             />
           </div>
+          
+          {/* Animated Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-primary/30" />
+          
+          {/* Content Container */}
+          <div className="relative z-10 h-full flex items-center">
+            <div className="w-full max-w-6xl mx-auto px-4 md:px-6">
+              <div className="grid grid-cols-2 gap-4 md:gap-8 items-center">
+                
+                {/* Left Content - Text and CTA */}
+                <div className="space-y-3 md:space-y-4 text-left">
+                  {/* Badge */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/20 backdrop-blur-sm rounded-full border border-primary/30 animate-pulse-subtle">
+                    <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    <span className="text-primary text-xs font-medium uppercase tracking-wider">Limited Time Offer</span>
+                  </div>
+                  
+                  {/* Main Heading */}
+                  <div className="space-y-2">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                      <span className="animate-text-reveal-1">Premium</span>{' '}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400 animate-text-reveal-2">
+                        Streetwear
+                      </span>{' '}
+                      <span className="animate-text-reveal-3">Collection</span>
+                    </h1>
+                    
+                    <p className="text-sm md:text-base text-gray-300 max-w-md animate-fade-in opacity-0 animation-delay-500">
+                      Elevate your style with our exclusive hemp-infused apparel line
+                    </p>
+                  </div>
+                  
+                  {/* Product Details */}
+                  <div className="space-y-2 animate-fade-in opacity-0 animation-delay-700">
+                    <h2 className="text-lg md:text-xl font-semibold text-white">
+                      {featuredClothingProduct.title || featuredClothingProduct.name || 'Featured Product'}
+                    </h2>
+                    
+                    {/* Price Display */}
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-xl md:text-2xl font-bold text-primary">
+                        ${featuredClothingProduct.price || '0.00'}
+                      </span>
+                      {featuredClothingProduct.compareAtPrice && (
+                        <>
+                          <span className="text-base md:text-lg text-gray-500 line-through">
+                            ${featuredClothingProduct.compareAtPrice}
+                          </span>
+                          <span className="px-2 py-1 bg-primary text-white text-xs font-bold rounded-full animate-bounce-subtle">
+                            {Math.round(((featuredClothingProduct.compareAtPrice - featuredClothingProduct.price) / featuredClothingProduct.compareAtPrice) * 100)}% OFF
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* CTA Button */}
+                  <div className="flex gap-3 animate-fade-in opacity-0 animation-delay-900">
+                    <button
+                      onClick={(e) => handleAddToCart(featuredClothingProduct, e)}
+                      className="group relative px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-full transition-all duration-300 transform hover:scale-105 overflow-hidden text-sm"
+                    >
+                      <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                      <span className="relative flex items-center justify-center gap-2">
+                        <ShoppingCart className="w-4 h-4" />
+                        Add to Cart
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Right Content - Product Image Showcase */}
+                <div className="relative h-full min-h-[300px] animate-fade-in-left opacity-0 animation-delay-300">
+                  {/* Navigation Arrows */}
+                  {productsForHero.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevProduct}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+                      >
+                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button
+                        onClick={nextProduct}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+                      >
+                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:scale-110 transition-transform" />
+                      </button>
+                    </>
+                  )}
+                  
+                  <div 
+                    className="h-full bg-gradient-to-t from-black/50 to-transparent rounded-xl overflow-hidden shadow-xl"
+                  >
+                    {(featuredClothingProduct.images?.[0]?.src || featuredClothingProduct.image || featuredClothingProduct.images?.[0]) ? (
+                      <img
+                        src={featuredClothingProduct.images?.[0]?.src || featuredClothingProduct.image || featuredClothingProduct.images?.[0]}
+                        alt={featuredClothingProduct.title || 'Featured Product'}
+                        className="w-full h-full object-contain md:object-cover transform hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.classList.add('bg-gradient-to-br', 'from-gray-800', 'to-gray-900');
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                        <div className="text-center">
+                          <Shirt className="w-24 h-24 text-gray-600 mx-auto mb-4" />
+                          <p className="text-gray-400">Product Image</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Floating Elements */}
+                  <div className="absolute -top-4 -right-4 w-24 md:w-32 h-24 md:h-32 bg-primary/20 rounded-full blur-3xl animate-float hidden lg:block"></div>
+                  <div className="absolute -bottom-8 -left-8 w-32 md:w-40 h-32 md:h-40 bg-orange-500/20 rounded-full blur-3xl animate-float-delayed hidden lg:block"></div>
+                  
+                  {/* Sale Badge */}
+                  {featuredClothingProduct.compareAtPrice && (
+                    <div className="absolute top-4 md:top-8 right-4 md:right-8 bg-primary text-white px-4 md:px-6 py-2 md:py-3 rounded-full font-bold text-sm md:text-lg shadow-2xl animate-bounce-subtle">
+                      SALE
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </section>
       )}
 
-      {/* Disclosure Cards Section */}
-      <DisclosureCards />
-
-      {/* Sale Products Slider Section - Moved after Disclosure Cards */}
+      {/* Sale Products Slider Section */}
       {saleProductsToShow.length > 0 && (
         <section className="bg-gradient-to-b from-black to-gray-900 py-8">
           <div className="w-full px-4 md:px-8">
@@ -314,10 +527,10 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
               Premium Black Disposables
             </h2>
             <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
-              Sleek design meets superior performance. Experience the perfect blend of style and potency.
+              Experience the perfect blend of style and potency.
             </p>
             <Link 
-              to="/shop?category=disposables" 
+              to="/wholesale" 
               className="inline-block bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               Explore Collection
@@ -325,6 +538,79 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
           </div>
         </div>
       </section>
+
+      {/* Apple-Style Layout Section */}
+      <section className="bg-gray-100">
+        {/* Top Hero Banner - iPhone Style */}
+        <div className="relative bg-gray-100 py-16 text-center overflow-hidden">
+          {/* Animated Neon Orange Equalizer Background */}
+          <div className="absolute inset-0 flex items-end justify-center opacity-20">
+            <div className="flex gap-1 w-full h-full items-end">
+              {[...Array(40)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-gradient-to-t from-orange-500 via-orange-400 to-transparent animate-equalizer"
+                  style={{
+                    animationDelay: `${i * 0.05}s`,
+                    height: '100%'
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          
+          <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-black mb-3">
+              Experience the Live Resin Diamonds Disposables
+            </h2>
+            <p className="text-lg md:text-xl text-gray-800/90 mb-6 max-w-2xl mx-auto">
+              Experience the Live Resin Diamonds Disposables
+            </p>
+            <div className="flex gap-4 justify-center mb-8">
+              <Link to="/shop?category=hemp" className="bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                Shop THCa
+              </Link>
+            </div>
+            <div className="relative h-[400px] overflow-hidden">
+              <img 
+                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Pictures/Orange_jack_1754117120607_6og7yp0.png" 
+                alt="Orange Jack (Sativa) DSPSBLS+ 3G"
+                className="absolute inset-0 w-full h-full object-contain"
+                style={{ transform: 'translateX(3%)' }}
+              />
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      {/* Premium Hemp Collection Slider Section */}
+      {hempProducts.length > 0 && (
+        <section className="bg-gradient-to-b from-gray-900 to-black py-8">
+          <div className="w-full px-4 md:px-8">
+            {/* Section Header */}
+            <div className="mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                Premium Hemp Collection
+              </h2>
+              <p className="text-spotify-text-subdued text-lg">
+                Discover our curated selection of high-quality hemp products
+              </p>
+            </div>
+
+            {/* Products Slider - Infinite Scroll */}
+            <InfiniteProductSlider
+              products={hempProducts}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
+              isInWishlist={isInWishlist}
+              isVerticalCard={true}
+              sliderId="hemp-collection"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Product Modal */}
       <ProductModal 

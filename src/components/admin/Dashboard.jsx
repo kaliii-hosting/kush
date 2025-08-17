@@ -551,7 +551,7 @@ const Dashboard = () => {
   // Spotify-style card component
   const SpotifyCard = ({ title, value, subtitle, icon: Icon, color = '#1db954', trend, isLoading }) => {
     return (
-      <div className={`bg-[#181818] rounded-lg p-2 sm:p-3 hover:bg-[#282828] transition-all duration-300 cursor-pointer group relative overflow-hidden ${
+      <div className={`bg-[#181818] rounded-lg p-3 sm:p-4 hover:bg-[#282828] transition-all duration-300 cursor-pointer group relative overflow-hidden h-[120px] sm:min-h-[120px] ${
         cardRefreshing ? 'animate-pulse' : ''
       }`}>
         {/* Refresh animation overlay */}
@@ -559,40 +559,47 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
         )}
         
-        <div className="flex items-start justify-between mb-1.5 sm:mb-2">
-          <div className="flex-1">
-            <p className="text-xs sm:text-sm text-[#b3b3b3] font-medium truncate pr-2">{title}</p>
-            {isLoading ? (
-              <div className="mt-2">
-                <div className="h-6 sm:h-8 w-12 sm:w-16 bg-[#282828] rounded animate-pulse" />
-              </div>
-            ) : (
-              <h3 className={`text-2xl sm:text-3xl font-bold text-white mt-0.5 transition-all duration-300 ${
-                cardRefreshing ? 'opacity-50' : 'opacity-100'
-              }`}>{value !== null && value !== undefined ? value : '0'}</h3>
-            )}
-            {subtitle && !isLoading && (
-              <p className="text-xs sm:text-sm text-[#b3b3b3] mt-0.5 line-clamp-2">{subtitle}</p>
-            )}
+        <div className="flex flex-col h-full">
+          {/* Header with title and icon */}
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs sm:text-sm text-[#b3b3b3] font-medium leading-tight flex-1 pr-2">{title}</p>
+            <div className={`p-1.5 rounded-full transition-all duration-300 flex-shrink-0 ${
+              cardRefreshing ? 'animate-spin' : ''
+            }`} style={{ backgroundColor: `${color}20` }}>
+              <Icon className="w-3 h-3 sm:w-4 sm:h-4" style={{ color }} />
+              {title === 'Total Users' && realtimeActive && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              )}
+            </div>
           </div>
-          <div className={`p-1.5 sm:p-2 rounded-full transition-all duration-300 flex-shrink-0 ${
-            cardRefreshing ? 'animate-spin' : ''
-          }`} style={{ backgroundColor: `${color}20` }}>
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
-            {title === 'Total Users' && realtimeActive && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse" />
-            )}
-          </div>
+          
+          {/* Value */}
+          {isLoading ? (
+            <div className="mb-2">
+              <div className="h-6 sm:h-8 w-12 sm:w-16 bg-[#282828] rounded animate-pulse" />
+            </div>
+          ) : (
+            <h3 className={`text-lg sm:text-2xl font-bold text-white mb-1 transition-all duration-300 leading-tight ${
+              cardRefreshing ? 'opacity-50' : 'opacity-100'
+            }`}>{value !== null && value !== undefined ? value : '0'}</h3>
+          )}
+          
+          {/* Subtitle */}
+          {subtitle && !isLoading && (
+            <p className="text-xs text-[#b3b3b3] leading-tight line-clamp-2 flex-1 overflow-hidden">{subtitle}</p>
+          )}
+          
+          {/* Trend */}
+          {trend && (
+            <div className="flex items-center gap-1 mt-2">
+              <TrendingUp className={`w-3 h-3 ${trend > 0 ? 'text-spotify-green' : 'text-red-500 rotate-180'}`} />
+              <span className={`text-xs font-medium ${trend > 0 ? 'text-spotify-green' : 'text-red-500'}`}>
+                {Math.abs(trend)}%
+              </span>
+              <span className="text-xs text-[#b3b3b3]">vs last month</span>
+            </div>
+          )}
         </div>
-        {trend && (
-          <div className="flex items-center gap-1 sm:gap-2">
-            <TrendingUp className={`w-3 h-3 sm:w-4 sm:h-4 ${trend > 0 ? 'text-spotify-green' : 'text-red-500 rotate-180'}`} />
-            <span className={`text-xs sm:text-sm font-medium ${trend > 0 ? 'text-spotify-green' : 'text-red-500'}`}>
-              {Math.abs(trend)}%
-            </span>
-            <span className="text-xs text-[#b3b3b3]">vs last month</span>
-          </div>
-        )}
       </div>
     );
   };
@@ -659,7 +666,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="relative">
           <SpotifyCard
             title="Total Users"
@@ -676,10 +683,10 @@ const Dashboard = () => {
             <button
               onClick={handleSeedUsers}
               disabled={seedingUsers}
-              className="absolute bottom-1 right-1 flex items-center gap-0.5 px-1.5 py-0.5 bg-spotify-green hover:bg-spotify-green-hover text-black text-xs font-medium rounded-full transition-colors disabled:opacity-50 z-10"
+              className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-spotify-green hover:bg-spotify-green-hover text-black text-xs font-medium rounded-full transition-colors disabled:opacity-50 z-10"
             >
               <UserPlus className="w-3 h-3" />
-              <span className="hidden sm:inline">{seedingUsers ? 'Seeding...' : 'Add Sample Users'}</span>
+              <span className="hidden sm:inline">{seedingUsers ? 'Seeding...' : 'Add Sample'}</span>
               <span className="sm:hidden">{seedingUsers ? '...' : 'Add'}</span>
             </button>
           )}

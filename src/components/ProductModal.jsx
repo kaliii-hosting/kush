@@ -465,8 +465,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
 
 
         {/* Product Information */}
-        <div className="mt-12 bg-spotify-gray rounded-xl p-6 lg:p-8">
-          {isWholesale ? (
+        {/* Only show this section for wholesale products */}
+        {isWholesale && (
+          <div className="mt-12 bg-spotify-gray rounded-xl p-6 lg:p-8">
             <>
               {/* Description Content */}
               <div className="space-y-6">
@@ -482,26 +483,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
                 </div>
               </div>
             </>
-          ) : (
-            /* Simple description for shop products */
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4">About This Product</h3>
-                <div className="text-spotify-text-subdued leading-relaxed">
-                  {product.description ? (
-                    <div dangerouslySetInnerHTML={{ __html: product.description }} />
-                  ) : (
-                    <p>Experience premium quality with this carefully curated cannabis product. Each batch is meticulously tested for purity and potency to ensure the highest standards of quality and safety.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
           
-          {/* Product Details Grid - Different for wholesale vs shop */}
+          {/* Product Details Grid - Wholesale only */}
           <div className="mt-6">
-            {isWholesale ? (
-              // Wholesale Product Details with all fields
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">Product Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
@@ -549,40 +533,9 @@ const ProductModal = ({ product, isOpen, onClose, onCartClick, isWholesale = fal
                   </div>
                 )}
               </div>
-            ) : (
-              // Regular shop product details
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4">Product Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">THC Content</span>
-                    <span className="text-white font-medium">{product.thc || '22%'}</span>
-                  </div>
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">CBD Content</span>
-                    <span className="text-white font-medium">{product.cbd || '0.5%'}</span>
-                  </div>
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">Weight</span>
-                    <span className="text-white font-medium">{product.weight || '3.5g'}</span>
-                  </div>
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">Strain Type</span>
-                    <span className="text-white font-medium">{product.strain || 'Hybrid'}</span>
-                  </div>
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">Effects</span>
-                    <span className="text-white font-medium">{product.effects || 'Relaxed, Happy, Euphoric'}</span>
-                  </div>
-                  <div className="flex justify-between py-3 border-b border-spotify-card-hover">
-                    <span className="text-spotify-text-subdued">Flavor Profile</span>
-                    <span className="text-white font-medium">{product.flavor || 'Sweet, Earthy, Citrus'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (

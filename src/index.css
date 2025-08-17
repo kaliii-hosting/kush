@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap');
 
+@font-face {
+  font-family: Biko;
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/4273/biko-black.woff");
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -267,202 +272,215 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Disclosure Cards Section Styles */
-.disclosure-section {
-  --gap: 8px;
-  --base: clamp(2rem, 8cqi, 80px);
-  --easing: linear(
-    0 0%,
-    0.1538 4.09%,
-    0.2926 8.29%,
-    0.4173 12.63%,
-    0.5282 17.12%,
-    0.6255 21.77%,
-    0.7099 26.61%,
-    0.782 31.67%,
-    0.8425 37%,
-    0.8887 42.23%,
-    0.9257 47.79%,
-    0.9543 53.78%,
-    0.9752 60.32%,
-    0.9883 67.11%,
-    0.9961 75%,
-    1 100%
-  );
-  --speed: 0.6s;
-}
-
-.disclosure-grid {
-  display: grid;
-  container-type: inline-size;
-  grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: var(--gap);
-  list-style-type: none;
-  justify-content: stretch;
-  padding: 0 2rem;
-  height: clamp(300px, 40dvh, 474px);
-  margin: 0;
-  width: 100%;
-  transition: grid-template-columns var(--speed) var(--easing);
-}
-
-@media (max-width: 768px) {
-  .disclosure-grid {
-    padding: 0 1rem;
-    height: clamp(250px, 35dvh, 400px);
+/* Premium Clothing Hero Section Animations */
+@keyframes gradient-shift {
+  0%, 100% {
+    transform: translateX(0%) translateY(0%);
+  }
+  25% {
+    transform: translateX(10%) translateY(-10%);
+  }
+  50% {
+    transform: translateX(-5%) translateY(5%);
+  }
+  75% {
+    transform: translateX(5%) translateY(-5%);
   }
 }
 
-.disclosure-item {
-  background: #181818;
-  position: relative;
-  overflow: hidden;
-  min-width: var(--base);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.disclosure-article {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-inline: calc(var(--base) * 0.5 - 9px);
-  padding-bottom: 1rem;
-  overflow: hidden;
+@keyframes fade-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.disclosure-article h3 {
-  position: absolute;
-  top: 1rem;
-  left: calc(var(--base) * 0.5);
-  transform-origin: 0 50%;
-  rotate: 90deg;
-  font-size: 1rem;
-  font-weight: 300;
-  text-transform: uppercase;
-  white-space: nowrap;
-  margin: 0;
-  color: #CB6015;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.disclosure-article svg {
-  width: 18px;
-  fill: none;
-  opacity: 1 !important;
-  color: #CB6015 !important;
+@keyframes text-reveal-1 {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.disclosure-article p {
-  font-size: 13px;
-  text-wrap: balance;
-  line-height: 1.25;
-  --opacity: 0.8;
-  margin: 0;
+@keyframes text-reveal-2 {
+  0%, 20% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.disclosure-article a {
-  position: absolute;
-  bottom: 1rem;
-  height: 18px;
-  line-height: 1;
-  color: inherit;
+@keyframes text-reveal-3 {
+  0%, 40% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.disclosure-article a span {
-  display: inline-block;
-  line-height: 18px;
-  translate: calc(var(--base) * 0.5);
-  font-weight: 500;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
-.disclosure-article a:is(:focus-visible, :hover) {
-  outline: none;
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-30px);
+  }
 }
 
-.disclosure-article a:is(:focus-visible, :hover) span {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
-.disclosure-article img {
-  position: absolute;
-  pointer-events: none;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-.disclosure-item :is(svg, h3) {
-  opacity: 1 !important;
-  transition: opacity calc(var(--speed) * 1.2) var(--easing);
+/* Animation Classes */
+.animate-gradient-shift {
+  animation: gradient-shift 20s ease-in-out infinite;
 }
 
-.disclosure-item :is(a, p) {
-  opacity: 0;
-  transition: opacity calc(var(--speed) * 1.2) var(--easing);
-  width: fit-content;
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
 }
 
-/* Ensure icons in all disclosure items are visible */
-.disclosure-item[data-active='false'] svg,
-.disclosure-item[data-active='false'] .lucide {
-  opacity: 1 !important;
-  visibility: visible !important;
+.animate-fade-in-left {
+  animation: fade-in-left 0.8s ease-out forwards;
 }
 
-.disclosure-item img {
-  filter: grayscale(1) brightness(1.5);
-  scale: 1.1;
-  transition-property: filter, scale;
-  transition-duration: calc(var(--speed) * 1.2);
-  transition-timing-function: var(--easing);
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
 }
 
-[data-active='true'] :is(a, p) {
-  opacity: var(--opacity, 1);
+.animate-text-reveal-1 {
+  animation: text-reveal-1 0.8s ease-out forwards;
 }
 
-/* Keep icons and titles always visible */
-.disclosure-item :is(h3, svg) {
-  opacity: 1 !important;
+.animate-text-reveal-2 {
+  animation: text-reveal-2 1s ease-out forwards;
 }
 
-/* Ensure Lucide icons are always visible with proper color */
-.disclosure-article .lucide {
-  opacity: 1 !important;
-  color: #CB6015 !important;
-  stroke: #CB6015 !important;
+.animate-text-reveal-3 {
+  animation: text-reveal-3 1.2s ease-out forwards;
 }
 
-/* Force all disclosure icons to be visible */
-.disclosure-item svg,
-.disclosure-article svg,
-.disclosure-item .lucide,
-.disclosure-article .lucide {
-  opacity: 1 !important;
-  visibility: visible !important;
-  color: #CB6015 !important;
-  stroke: #CB6015 !important;
-  display: block !important;
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
-[data-active='true'] :is(a, p) {
-  transition-delay: calc(var(--speed) * 0.25);
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
 }
 
-[data-active='true'] img {
-  filter: grayscale(0) brightness(1);
-  scale: 1;
-  transition-delay: calc(var(--speed) * 0.25);
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Animation Delays */
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+.animation-delay-700 {
+  animation-delay: 700ms;
+}
+
+.animation-delay-900 {
+  animation-delay: 900ms;
+}
+
+.animation-delay-1100 {
+  animation-delay: 1100ms;
+}
+
+/* Equalizer Animation */
+@keyframes equalizer {
+  0%, 100% {
+    height: 15%;
+    opacity: 0.2;
+  }
+  20% {
+    height: 75%;
+    opacity: 0.6;
+  }
+  40% {
+    height: 35%;
+    opacity: 0.4;
+  }
+  60% {
+    height: 95%;
+    opacity: 0.8;
+  }
+  80% {
+    height: 50%;
+    opacity: 0.5;
+  }
+}
+
+.animate-equalizer {
+  animation: equalizer 3s ease-in-out infinite;
+  transform-origin: bottom;
+}
 
 

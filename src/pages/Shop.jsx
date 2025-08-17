@@ -4,7 +4,7 @@ import { useCart } from '../context/ShopifyCartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useShopify } from '../context/ShopifyContext';
 import { ShoppingCart, Filter, X, Eye, Heart, Tag, AlertCircle } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProductModal from '../components/ProductModal';
 import ProductHoverActions from '../components/ProductHoverActions';
 
@@ -14,6 +14,7 @@ const Shop = ({ onCartClick }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { syncStatus, error: shopifyError } = useShopify();
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,12 +23,34 @@ const Shop = ({ onCartClick }) => {
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const [sourceFilter, setSourceFilter] = useState('all'); // all, firebase, shopify
 
-  // Get search query from URL
+  // Get search query, category, and product from URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const search = params.get('search') || '';
+    const category = params.get('category') || 'all';
+    const productParam = params.get('product');
+    
     setSearchQuery(search);
-  }, [location.search]);
+    
+    // Set selected category if it exists in the URL
+    if (category && category !== 'all') {
+      setSelectedCategory(category.toLowerCase());
+    }
+    
+    // If product parameter exists, find and show that product
+    if (productParam && shopifyProducts.length > 0) {
+      const product = shopifyProducts.find(p => 
+        p.handle === productParam || 
+        p.id === productParam ||
+        p.id === `gid://shopify/Product/${productParam}`
+      );
+      
+      if (product) {
+        setSelectedProduct(product);
+        setShowProductModal(true);
+      }
+    }
+  }, [location.search, shopifyProducts]);
 
   // Get dynamic categories from Shopify products only
   const dynamicCategories = useMemo(() => {
@@ -61,11 +84,32 @@ const Shop = ({ onCartClick }) => {
   const filteredProducts = shopifyProducts.filter(product => {
     // Filter by category
     const selectedCat = categories.find(c => c.id === selectedCategory);
-    const matchesCategory = selectedCategory === 'all' || 
+    let matchesCategory = selectedCategory === 'all' || 
       product.type === selectedCat?.originalValue || 
       product.category === selectedCat?.originalValue ||
       product.type?.toLowerCase() === selectedCategory || 
       product.category?.toLowerCase() === selectedCategory;
+    
+    // Special handling for hemp category
+    if (selectedCategory === 'hemp' && !matchesCategory) {
+      matchesCategory = 
+        product.productType?.toLowerCase().includes('hemp') ||
+        product.tags?.some(tag => typeof tag === 'string' && tag.toLowerCase().includes('hemp')) ||
+        product.vendor?.toLowerCase().includes('hemp') ||
+        product.title?.toLowerCase().includes('hemp') ||
+        product.name?.toLowerCase().includes('hemp') ||
+        product.collections?.some(collection => {
+          if (typeof collection === 'string') {
+            return collection.toLowerCase().includes('hemp');
+          } else if (collection?.title) {
+            return collection.title.toLowerCase().includes('hemp');
+          } else if (collection?.name) {
+            return collection.name.toLowerCase().includes('hemp');
+          }
+          return false;
+        }) ||
+        product.handle?.toLowerCase().includes('hemp');
+    }
     
     // Filter by search query
     const matchesSearch = !searchQuery || 
@@ -79,11 +123,33 @@ const Shop = ({ onCartClick }) => {
   const getFilteredCount = (categoryId) => {
     return shopifyProducts.filter(p => {
       const category = categories.find(c => c.id === categoryId);
-      const matchesCategory = categoryId === 'all' || 
+      let matchesCategory = categoryId === 'all' || 
         p.type === category?.originalValue || 
         p.category === category?.originalValue ||
         p.type?.toLowerCase() === categoryId || 
         p.category?.toLowerCase() === categoryId;
+      
+      // Special handling for hemp category
+      if (categoryId === 'hemp' && !matchesCategory) {
+        matchesCategory = 
+          p.productType?.toLowerCase().includes('hemp') ||
+          p.tags?.some(tag => typeof tag === 'string' && tag.toLowerCase().includes('hemp')) ||
+          p.vendor?.toLowerCase().includes('hemp') ||
+          p.title?.toLowerCase().includes('hemp') ||
+          p.name?.toLowerCase().includes('hemp') ||
+          p.collections?.some(collection => {
+            if (typeof collection === 'string') {
+              return collection.toLowerCase().includes('hemp');
+            } else if (collection?.title) {
+              return collection.title.toLowerCase().includes('hemp');
+            } else if (collection?.name) {
+              return collection.name.toLowerCase().includes('hemp');
+            }
+            return false;
+          }) ||
+          p.handle?.toLowerCase().includes('hemp');
+      }
+      
       const matchesSearch = !searchQuery || 
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -113,6 +179,14 @@ const Shop = ({ onCartClick }) => {
   const handleCloseModal = () => {
     setShowProductModal(false);
     setTimeout(() => setSelectedProduct(null), 300);
+    
+    // Remove product parameter from URL when closing modal
+    const params = new URLSearchParams(location.search);
+    if (params.has('product')) {
+      params.delete('product');
+      const newSearch = params.toString();
+      navigate(`/shop${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+    }
   };
 
   return (

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import DynamicSection from '../components/DynamicSection';
+import AboutCards from '../components/AboutCards';
 import '../styles/about-animation.css';
 
 const AboutDynamic = () => {
@@ -14,6 +15,48 @@ const AboutDynamic = () => {
   const animationRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const likeButtonRef = useRef(null);
+  const [sliderValue, setSliderValue] = useState(3);
+  const [showListSupport, setShowListSupport] = useState(true);
+  
+  // About text content
+  const aboutContent = [
+    {
+      number: "1",
+      title: "ABOUT KUSHIE",
+      subtitle: "Our Purpose",
+      text: "Relaxed lifestyle is just a kush away. Kushie Brand isn't just a marijuana brand; it's a way of life. Believing in the need for self-care and ability to unwind, Kushie Brand helps promote the relaxing and joyful qualities of marijuana while contributing to eliminate the social taboo associated with the cannabis community."
+    },
+    {
+      number: "2",
+      title: "VISION",
+      subtitle: "Creative Safe-Haven",
+      text: "Offering premier cannabis products and stylish apparel and accessories, Kushie Brand has quickly become the safe-haven for artists and creatives who value individuality and imagination. We cultivate a community focused on the creative and relaxing lifestyle associated with cannabis."
+    },
+    {
+      number: "3",
+      title: "HISTORY",
+      subtitle: "From Creative Network to Cannabis Brand",
+      text: "Kushie Brand began their journey as a creative outlet and network for photographers and videographers interested in cannabis culture. Starting with content creation for artists and musicians, they expanded into apparel and accessories before developing cannabis products. Officially born in 2014, Kushie Brands has been keeping the weed scene fresh and modern ever since."
+    },
+    {
+      number: "4",
+      title: "PRODUCTS",
+      subtitle: "Fashion Meets Cannabis",
+      text: "Beginning with fashion forward apparel and accessories, Kushie Brands has developed cannabis products to match their innovative style. From crop tops, tank tops, beanies, and snapbacks, to doobie pre-rolls and fruity Mini Krispies, Kushie Brands is devoted to making you look good and feel good."
+    },
+    {
+      number: "5",
+      title: "QUALITY",
+      subtitle: "Lab Testing Standards",
+      text: "Whether it be their artistic bend or their need to lead change, Kushie Brands aims to innovate in all aspects of the marijuana industry. This is why they proudly test all their products and hope to be a standard for other marijuana brands in the industry."
+    },
+    {
+      number: "6",
+      title: "NETWORK",
+      subtitle: "LA Community Connections",
+      text: "Hailing from the artistic mecca that is Los Angeles, Kushie Brands has become integral to both the creator and cannabis community. They work with partners like Alaf Farms for premium quality, indoor organic cannabis flower, bringing artists and medical marijuana patients the creative lifestyle they want with the relief they deserve."
+    }
+  ];
   
   // Refs for Three.js objects and audio
   const sceneRef = useRef();
@@ -661,6 +704,22 @@ const AboutDynamic = () => {
     };
   }, []);
 
+  // Check datalist support
+  useEffect(() => {
+    const checkDatalistSupport = () => {
+      const option = document.querySelector('.ruler-option');
+      if (option) {
+        const rect = option.getBoundingClientRect();
+        if (rect.width > 0) {
+          setShowListSupport(false);
+        }
+      }
+    };
+    
+    // Check after a short delay to ensure DOM is ready
+    setTimeout(checkDatalistSupport, 100);
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -697,25 +756,60 @@ const AboutDynamic = () => {
           }}
         />
         
-        <div className="content" style={{ zIndex: 30, position: 'relative', background: 'transparent' }}>
-          <div className="quote-container flex flex-col items-center justify-center h-full" style={{ background: 'transparent' }}>
+        <div className="content" style={{ 
+          zIndex: 30, 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'transparent', 
+          width: '100%', 
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden'
+        }}>
+          <div className="quote-container" style={{ 
+            background: 'transparent', 
+            padding: '0 10px',
+            width: '100%',
+            maxWidth: '90vw',
+            transform: 'scale(1.25)',
+            transformOrigin: 'center'
+          }}>
             <div className="flex flex-col items-center gap-0">
-              <p className="text-lg sm:hidden italic text-white leading-none mb-4" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+              <p className="text-lg sm:hidden italic text-white leading-none mb-2" style={{ 
+                fontFamily: 'Satoshi, sans-serif',
+                fontSize: '0.5rem'
+              }}>
                 Cultivating Consciousness
               </p>
               <img 
-                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Kushie%20Kaliii%20Logo.svg" 
+                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Kushie_White_logo_1753092351582_38ok1bd.png" 
                 alt="Kushie Logo" 
-                className="w-[70vw] h-[70vw] max-w-[20rem] max-h-[20rem] sm:w-[25rem] sm:h-[25rem] md:w-[28rem] md:h-[28rem] lg:w-[90vh] lg:h-[90vh] lg:max-w-[50rem] lg:max-h-[50rem] xl:w-[95vh] xl:h-[95vh] xl:max-w-[55rem] xl:max-h-[55rem] opacity-90 my-1"
-                style={{ filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.3))' }}
+                className="opacity-90"
+                style={{
+                  width: '100%',
+                  maxWidth: '500px',
+                  height: 'auto',
+                  objectFit: 'contain'
+                }}
               />
-              <p className="text-base sm:hidden text-center text-white leading-none mt-4" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+              <p className="text-base sm:hidden text-center text-white leading-none mt-2" style={{ 
+                fontFamily: 'Satoshi, sans-serif',
+                fontSize: '0.4rem'
+              }}>
                 Established by those who dared to dream in green
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* About Cards Section */}
+      <AboutCards aboutContent={aboutContent} />
     </div>
   );
 };

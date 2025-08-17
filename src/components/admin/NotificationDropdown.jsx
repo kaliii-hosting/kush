@@ -577,23 +577,25 @@ const NotificationDropdown = () => {
   const renderNotificationsList = () => {
     if (loading) {
       return (
-        <div className="p-8 text-center text-gray-400 bg-[#121212]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+        <div className="w-full h-full p-8 text-center text-white bg-[#121212] flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+          <p className="text-white text-lg">Loading notifications...</p>
         </div>
       );
     }
     
     if (notifications.length === 0) {
       return (
-        <div className="p-8 text-center text-gray-400 bg-[#121212]">
-          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p>No notifications yet</p>
+        <div className="w-full h-full p-8 text-center text-white bg-[#121212] flex flex-col items-center justify-center">
+          <Bell className="w-16 h-16 mb-4 opacity-50 text-gray-400" />
+          <p className="text-white text-lg">No notifications yet</p>
+          <p className="text-gray-400 text-sm mt-2">Activity will appear here</p>
         </div>
       );
     }
     
     return (
-      <div className="divide-y divide-[#282828]">
+      <div className="divide-y divide-[#282828] bg-[#121212] w-full">
         {notifications.map((notification) => {
           const config = activityConfig[notification.type] || {};
           const Icon = config.icon || Activity;
@@ -601,8 +603,8 @@ const NotificationDropdown = () => {
           return (
             <div
               key={notification.id}
-              className={`p-4 hover:bg-[#282828] transition-colors cursor-pointer ${
-                !notification.read ? 'bg-[#1a1a1a]' : ''
+              className={`p-4 hover:bg-[#282828] transition-colors cursor-pointer w-full ${
+                !notification.read ? 'bg-[#1a1a1a]' : 'bg-[#121212]'
               }`}
               onClick={() => !notification.read && markAsRead(notification.id)}
             >
@@ -659,50 +661,53 @@ const NotificationDropdown = () => {
         <>
           {/* Mobile Fullscreen */}
           <div className={`md:hidden fixed inset-0 z-[100] bg-[#121212] transition-all duration-300 ${
-            showDropdown ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-full'
+            showDropdown ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}>
-              {/* Header */}
-              <div className="p-4 border-b border-[#282828] bg-[#181818] safe-area-inset-top">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-white font-bold text-xl">Notifications</h3>
+              {/* Header - Fixed */}
+              <div className="p-4 border-b border-[#282828] bg-[#181818]">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Title & Badge */}
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <h3 className="text-white font-bold text-lg truncate">Notifications</h3>
                     {unreadCount > 0 && (
-                      <span className="bg-[#1db954] text-black text-xs px-2 py-0.5 rounded-full font-bold">
-                        {unreadCount} new
+                      <span className="bg-[#1db954] text-black text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
+                        {unreadCount}
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={() => setShowDropdown(false)}
-                    className="p-3 hover:bg-[#282828] rounded-full transition-colors"
-                  >
-                    <X className="w-6 h-6 text-[#b3b3b3]" />
-                  </button>
-                </div>
-                {notifications.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    {unreadCount > 0 && (
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {notifications.length > 0 && unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
                         className="p-2 text-[#b3b3b3] hover:text-white hover:bg-[#282828] rounded-full transition-all"
                         title="Mark all as read"
                       >
-                        <CheckCheck className="w-5 h-5" />
+                        <CheckCheck className="w-4 h-4" />
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAllNotifications}
+                        className="p-2 text-[#b3b3b3] hover:text-white hover:bg-[#282828] rounded-full transition-all"
+                        title="Clear all"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                     <button
-                      onClick={clearAllNotifications}
-                      className="p-2 text-[#b3b3b3] hover:text-white hover:bg-[#282828] rounded-full transition-all"
-                      title="Clear all"
+                      onClick={() => setShowDropdown(false)}
+                      className="p-2 hover:bg-[#282828] rounded-full transition-colors"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <X className="w-5 h-5 text-[#b3b3b3]" />
                     </button>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Notifications List */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden pb-safe bg-[#121212]">
+              {/* Notifications List - Scrollable */}
+              <div className="h-[calc(100vh-80px)] overflow-y-auto overflow-x-hidden bg-[#121212] p-0">
                 {renderNotificationsList()}
               </div>
           </div>

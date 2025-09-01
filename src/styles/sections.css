@@ -149,6 +149,9 @@
 .footer-section {
   padding-top: 0;
   padding-bottom: 0;
+  position: relative;
+  z-index: 10;
+  background: black;
 }
 
 /* Section spacing utility classes */

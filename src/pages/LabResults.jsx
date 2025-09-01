@@ -28,6 +28,11 @@ const LabResults = () => {
     { id: 19, name: 'Super Blue Dream', type: 'Live Resin Diamonds 1G', category: 'diamonds', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/LIVE%20RESIN%20DIAMONDS%201G%20-%20SUPER%20BLUE%20DREAM%20.pdf' },
     { id: 20, name: 'Grape Limeade', type: 'Live Resin Diamonds 1G', category: 'diamonds', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/LIVE%20RESIN%20DIAMONDS%201G%20-%20GRAPE%20LIMEADE.pdf' },
     { id: 21, name: 'Tropical Runtz', type: 'Live Resin Diamonds 1G', category: 'diamonds', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/LIVE%20RESIN%20DIAMONDS%201G%20-%20TROPICAL%20RUNTZ.pdf' },
+    { id: 22, name: 'Pink Starburst', type: 'Kushie Gold Distillate Pod 1G', category: 'pod', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/KUSHIE+GOLD%20DISTILLATE%20POD%201G%20-%20PINK%20STARBURST.pdf' },
+    { id: 23, name: 'Green Crack', type: 'Kushie Gold Distillate Cartridge 1G', category: 'cartridge', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/KUSHIE+GOLD%20DISTILLATE%20CARTRIDGE%201G%20-%20GREEN%20CRACK.pdf' },
+    { id: 24, name: 'Gelato', type: 'Kushie Gold Distillate Cartridge 1G', category: 'cartridge', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/KUSHIE+GOLD%20DISTILLATE%20CARTRIDGE%201G%20-%20GELATO.pdf' },
+    { id: 25, name: 'Peach Rings', type: 'Kushie Gold Distillate Pod 1G', category: 'pod', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/KUSHIE+GOLD%20DISTILLATE%20POD%201G%20-%20PEACH%20RINGS.pdf' },
+    { id: 26, name: 'Vader OG', type: 'Kushie Gold Distillate Cartridge 1G', category: 'cartridge', url: 'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Lab%20Results/KUSHIE+GOLD%20DISTILLATE%20CARTRIDGE%201G%20-%20VADER%20OG.pdf' },
   ];
 
   // Filter products based on search and category
@@ -62,18 +67,17 @@ const LabResults = () => {
             <div className="flex flex-col gap-4">
               {/* Search Input */}
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 antialiased" />
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 pl-14 pr-4 py-3 rounded-full outline-none focus:bg-white/20 transition-all duration-200"
+                  className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 px-6 py-3 rounded-full outline-none focus:bg-white/20 transition-all duration-200"
                 />
               </div>
 
               {/* Category Filter - Centered on mobile */}
-              <div className="flex gap-2 justify-center md:justify-start flex-wrap">
+              <div className="flex gap-2 justify-center flex-wrap">
                 {['all', 'cartridge', 'diamonds', 'pod'].map((category) => (
                   <button
                     key={category}

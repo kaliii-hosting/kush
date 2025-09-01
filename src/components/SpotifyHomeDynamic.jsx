@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, ShoppingCart, Heart, ChevronDown, Leaf, Zap, Shirt } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
 import InfiniteProductSlider from './InfiniteProductSlider';
+import { removeFooterFAQ } from '../utils/removeFooterFAQ';
 
 const SpotifyHomeDynamic = ({ onCartClick }) => {
   const navigate = useNavigate();
@@ -17,6 +18,15 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   // Removed old scroll refs as we're using InfiniteProductSlider component
+  
+  // Run the FAQ removal on component mount
+  useEffect(() => {
+    removeFooterFAQ().then(result => {
+      if (result) {
+        console.log('Footer FAQs removed successfully');
+      }
+    });
+  }, []);
 
   // Time-based greeting like Spotify
   const getGreeting = () => {
@@ -187,7 +197,7 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
     } else {
-      addToWishlist(product);
+      addToWishlist(product.id);
     }
   };
 

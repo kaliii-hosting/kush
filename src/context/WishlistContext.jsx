@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ref, onValue, set } from 'firebase/database';
 import { realtimeDb } from '../config/firebase';
 import { useAuth } from './AuthContext';
+import { normalizeProductId, productIdsMatch, getFirebaseSafeId } from '../utils/wishlistHelpers';
 
 const WishlistContext = createContext();
 
@@ -15,45 +16,71 @@ export const useWishlist = () => {
 
 export const WishlistProvider = ({ children }) => {
   const { user } = useAuth();
+  
+  
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  
+  // Monitor wishlistItems changes
+  useEffect(() => {
+    console.log('[WishlistContext] wishlistItems state changed to:', wishlistItems);
+    console.log('[WishlistContext] Length:', wishlistItems.length);
+    console.log('[WishlistContext] Type:', typeof wishlistItems);
+    console.log('[WishlistContext] Is Array:', Array.isArray(wishlistItems));
+    
+    if (wishlistItems.length > 0) {
+      console.log('[WishlistContext] ALERT: Items detected!');
+      console.trace('Stack trace for items:');
+    }
+  }, [wishlistItems]);
+  
 
-  // Load wishlist from Firebase
+  // Handle user state changes
   useEffect(() => {
     if (!user) {
-      setWishlistItems([]);
+      // Only set loading to false for non-signed-in users
+      // The initial state already handles localStorage
       setLoading(false);
-      return;
     }
-
-    const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}`);
-    
-    const unsubscribe = onValue(wishlistRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert object to array of product IDs
-        const items = Object.keys(data).filter(key => data[key] === true);
-        setWishlistItems(items);
-      } else {
-        setWishlistItems([]);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, [user]);
+
+  // DISABLED: Firebase loading for debugging
+  useEffect(() => {
+    console.log('[WishlistContext] Firebase loading DISABLED');
+    setLoading(false);
+  }, []);
+
+  // Save wishlist to localStorage for non-signed-in users
+  const saveToLocalStorage = (items) => {
+    localStorage.setItem('kushie_wishlist', JSON.stringify(items));
+  };
 
   // Add item to wishlist
   const addToWishlist = async (productId) => {
+    // Normalize the product ID for consistent storage
+    const normalizedId = normalizeProductId(productId);
+    
+    // Check if item is already in wishlist
+    if (isInWishlist(productId)) {
+      return true;
+    }
+    
     if (!user) {
-      // You could show a login prompt here
-      console.log('User must be logged in to add to wishlist');
-      return false;
+      // Handle non-signed-in users with localStorage
+      setWishlistItems(prevItems => {
+        const newWishlist = [...prevItems, normalizedId];
+        saveToLocalStorage(newWishlist);
+        return newWishlist;
+      });
+      return true;
     }
 
     try {
-      const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}/${productId}`);
-      await set(wishlistRef, true);
+      // For Firebase, use a safe key but store the normalized ID as value
+      const firebaseKey = getFirebaseSafeId(normalizedId);
+      const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}/${firebaseKey}`);
+      await set(wishlistRef, normalizedId); // Store the normalized ID as the value
       return true;
     } catch (error) {
       console.error('Error adding to wishlist:', error);
@@ -63,10 +90,22 @@ export const WishlistProvider = ({ children }) => {
 
   // Remove item from wishlist
   const removeFromWishlist = async (productId) => {
-    if (!user) return false;
+    const normalizedId = normalizeProductId(productId);
+    
+    if (!user) {
+      // Handle non-signed-in users with localStorage
+      setWishlistItems(prevItems => {
+        const newWishlist = prevItems.filter(id => !productIdsMatch(id, normalizedId));
+        saveToLocalStorage(newWishlist);
+        return newWishlist;
+      });
+      return true;
+    }
 
     try {
-      const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}/${productId}`);
+      // For Firebase, use a safe key
+      const firebaseKey = getFirebaseSafeId(normalizedId);
+      const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}/${firebaseKey}`);
       await set(wishlistRef, null);
       return true;
     } catch (error) {
@@ -86,7 +125,8 @@ export const WishlistProvider = ({ children }) => {
 
   // Check if item is in wishlist
   const isInWishlist = (productId) => {
-    return wishlistItems.includes(productId);
+    const normalizedId = normalizeProductId(productId);
+    return wishlistItems.some(item => productIdsMatch(item, normalizedId));
   };
 
   // Get wishlist count
@@ -96,7 +136,12 @@ export const WishlistProvider = ({ children }) => {
 
   // Clear wishlist
   const clearWishlist = async () => {
-    if (!user) return false;
+    if (!user) {
+      // Handle non-signed-in users with localStorage
+      setWishlistItems([]);
+      localStorage.removeItem('kushie_wishlist');
+      return true;
+    }
 
     try {
       const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}`);
@@ -108,9 +153,39 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
+  // Migrate localStorage wishlist to Firebase when user signs in
+  // DISABLED FOR DEBUGGING
+  /*
+  useEffect(() => {
+    if (user && wishlistItems.length === 0) {
+      const storedWishlist = localStorage.getItem('kushie_wishlist');
+      if (storedWishlist) {
+        try {
+          const items = JSON.parse(storedWishlist);
+          if (items.length > 0) {
+            // Migrate items to Firebase
+            items.forEach(async (productId) => {
+              const normalizedId = normalizeProductId(productId);
+              const firebaseKey = getFirebaseSafeId(normalizedId);
+              const wishlistRef = ref(realtimeDb, `wishlists/${user.uid}/${firebaseKey}`);
+              await set(wishlistRef, normalizedId);
+            });
+            // Clear localStorage after migration
+            localStorage.removeItem('kushie_wishlist');
+          }
+        } catch (error) {
+          console.error('Error migrating wishlist:', error);
+        }
+      }
+    }
+  }, [user]);
+  */
+
   const value = {
-    wishlistItems,
+    wishlistItems: wishlistItems,
     loading,
+    isWishlistOpen,
+    setIsWishlistOpen,
     addToWishlist,
     removeFromWishlist,
     toggleWishlist,

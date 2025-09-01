@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Play, ShoppingCart, TrendingUp, Sparkles, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';
 

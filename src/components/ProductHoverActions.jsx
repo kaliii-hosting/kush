@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Check } from 'lucide-react';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 
 const ProductHoverActions = ({ product, isHovered, onProductClick }) => {
   const { addToCart, cart } = useCart();
@@ -30,6 +30,7 @@ const ProductHoverActions = ({ product, isHovered, onProductClick }) => {
     // Store the action before toggling
     const wasInWishlist = inWishlist;
     setWishlistAction(wasInWishlist ? 'removed' : 'added');
+    
     
     toggleWishlist(product.id);
     setShowWishlistFeedback(true);

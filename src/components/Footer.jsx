@@ -35,9 +35,60 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main footer content */}
         <div className="py-12 lg:py-16">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
+          {/* Mobile Logo - Centered and Bigger */}
+          <div className="block md:hidden mb-8">
+            <Link to="/" className="flex justify-center mb-4">
+              <img 
+                src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"
+                alt="Kushie Logo"
+                className="h-12 w-auto"
+              />
+            </Link>
+            <p className="text-sm text-gray-400 text-center mb-6">
+              Premium cannabis products delivered with quality and care.
+            </p>
+            {/* Social links - centered on mobile */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors"
+                  aria-label={social.label}
+                >
+                  {social.icon}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile - All columns in one row */}
+          <div className="grid grid-cols-3 gap-4 md:hidden">
+            {Object.entries(footerLinks).map(([category, links]) => (
+              <div key={category}>
+                <h3 className="text-xs font-semibold text-white mb-3">{category}</h3>
+                <ul className="space-y-2">
+                  {links.map((link) => (
+                    <li key={link.name}>
+                      <Link
+                        to={link.href}
+                        className="text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Layout - Keep original */}
+          <div className="hidden md:grid md:grid-cols-4 lg:gap-12 gap-8">
             {/* Logo and description */}
-            <div className="col-span-2 md:col-span-1">
+            <div className="md:col-span-1">
               <Link to="/" className="flex items-center mb-4">
                 <img 
                   src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"

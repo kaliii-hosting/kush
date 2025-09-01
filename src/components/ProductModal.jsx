@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Minus, ShoppingCart, Heart, Share2, TrendingUp, Award, Shield, ChevronLeft, ChevronRight, Star, Check, Truck, Clock, RotateCcw, BookmarkCheck, Tag } from 'lucide-react';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { Link } from 'react-router-dom';
 import CartSlideOut from './CartSlideOut';

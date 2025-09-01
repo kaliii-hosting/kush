@@ -3,19 +3,23 @@ import { Outlet, useLocation } from 'react-router-dom';
 import SpotifyTopBar from './SpotifyTopBar';
 import SpotifyPlayerBar from './SpotifyPlayerBar';
 import CartSlideOut from './CartSlideOut';
+import WishlistSlideout from './WishlistSlideout';
 import GlobalFooter from './GlobalFooter';
 
 const SpotifyLayout = ({ children }) => {
   const location = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   
   const handleCartOpen = () => setIsCartOpen(true);
   const handleCartClose = () => setIsCartOpen(false);
+  const handleWishlistOpen = () => setIsWishlistOpen(true);
+  const handleWishlistClose = () => setIsWishlistOpen(false);
   
   return (
     <div className="h-screen flex flex-col bg-black overflow-hidden max-w-full relative">
       {/* Top bar */}
-      <SpotifyTopBar onCartClick={handleCartOpen} />
+      <SpotifyTopBar onCartClick={handleCartOpen} onWishlistClick={handleWishlistOpen} />
       
       {/* Main content area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
@@ -33,6 +37,9 @@ const SpotifyLayout = ({ children }) => {
       
       {/* Cart Slide-out */}
       <CartSlideOut isOpen={isCartOpen} onClose={handleCartClose} />
+      
+      {/* Wishlist Slide-out */}
+      <WishlistSlideout isOpen={isWishlistOpen} onClose={handleWishlistClose} />
     </div>
   );
 };

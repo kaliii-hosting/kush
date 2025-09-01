@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import './MerchProductSlider.css';
 
 const MerchProductSlider = ({ onCartClick }) => {
@@ -166,7 +166,7 @@ const MerchProductSlider = ({ onCartClick }) => {
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
     } else {
-      addToWishlist(product);
+      addToWishlist(product.id);
     }
   };
 

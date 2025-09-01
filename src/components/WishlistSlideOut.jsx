@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
 import { X, Heart, ShoppingCart } from 'lucide-react';
-import { useWishlist } from '../context/WishlistContext';
-import { useProducts } from '../context/ProductsContext';
+import { useWishlist } from '../context/WishlistContextNew';
+import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
 import { Link } from 'react-router-dom';
+import { normalizeProductId, productIdsMatch } from '../utils/wishlistHelpers';
 
-const WishlistSlideOut = ({ isOpen, onClose }) => {
+const WishlistSlideout = ({ isOpen, onClose }) => {
   const { wishlistItems, removeFromWishlist } = useWishlist();
-  const { products } = useProducts();
+  const { products: enhancedProducts, loading: productsLoading } = useEnhancedProducts();
   const { addToCart } = useCart();
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Use the combined products from EnhancedProductsContext
+  // which already includes both Firebase and Shopify products
+  const allProducts = enhancedProducts || [];
 
   useEffect(() => {
     if (isOpen) {
@@ -22,10 +27,20 @@ const WishlistSlideOut = ({ isOpen, onClose }) => {
 
   if (!isVisible) return null;
 
-  // Get wishlist products
-  const wishlistProducts = products.filter(product => 
-    wishlistItems.includes(product.id)
-  );
+  // Get wishlist products - handle different ID formats
+  const wishlistProducts = allProducts.filter(product => {
+    // Check if product ID is in wishlist using the helper function
+    const productNormalizedId = normalizeProductId(product.id);
+    const isInWishlist = wishlistItems.some(wishlistId => {
+      const matched = productIdsMatch(wishlistId, product.id) || 
+                     productIdsMatch(wishlistId, productNormalizedId) ||
+                     (product.shopifyId && productIdsMatch(wishlistId, product.shopifyId));
+      
+      return matched;
+    });
+    
+    return isInWishlist;
+  });
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -97,9 +112,9 @@ const WishlistSlideOut = ({ isOpen, onClose }) => {
                     <div className="flex gap-4">
                       {/* Product Image */}
                       <div className="w-20 h-20 bg-gray-dark rounded-md overflow-hidden flex-shrink-0">
-                        {product.imageUrl && (
+                        {(product.imageUrl || product.image) && (
                           <img 
-                            src={product.imageUrl} 
+                            src={product.imageUrl || product.image} 
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
@@ -145,22 +160,13 @@ const WishlistSlideOut = ({ isOpen, onClose }) => {
                 <span className="text-red-500 text-2xl font-black">{itemCount}</span>
               </div>
               
-              <div className="space-y-3">
-                <Link
-                  to="/wishlist"
-                  onClick={onClose}
-                  className="block w-full text-center bg-red-500 text-white font-bold py-4 rounded-full hover:bg-red-600 transition-colors"
-                >
-                  View Full Wishlist
-                </Link>
-                <Link
-                  to="/shop"
-                  onClick={onClose}
-                  className="block w-full text-center text-white font-bold py-4 rounded-full border-2 border-white hover:bg-white/10 transition-colors"
-                >
-                  Continue Shopping
-                </Link>
-              </div>
+              <Link
+                to="/shop"
+                onClick={onClose}
+                className="block w-full text-center text-white font-bold py-4 rounded-full border-2 border-white hover:bg-white/10 transition-colors"
+              >
+                Continue Shopping
+              </Link>
             </div>
           )}
         </div>
@@ -169,4 +175,4 @@ const WishlistSlideOut = ({ isOpen, onClose }) => {
   );
 };
 
-export default WishlistSlideOut;
+export default WishlistSlideout;

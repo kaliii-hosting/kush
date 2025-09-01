@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';

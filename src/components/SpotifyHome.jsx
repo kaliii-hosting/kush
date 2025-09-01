@@ -3,7 +3,7 @@ import { Play, MoreHorizontal, ShoppingCart, TrendingUp, Sparkles, Award, Heart,
 import { useProducts } from '../context/ProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
 import { usePageContent } from '../context/PageContentContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import { useState, useRef } from 'react';
 import ProductModal from './ProductModal';
 import ProductHoverActions from './ProductHoverActions';

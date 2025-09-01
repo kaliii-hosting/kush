@@ -1,9 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, ExternalLink } from 'lucide-react';
 import { usePageContent } from '../context/PageContentContext';
 import { useLogos } from '../context/LogosContext';
+import { ref, push } from 'firebase/database';
+import { realtimeDb } from '../config/firebase';
+import NotificationToast from './NotificationToast';
 
 const GlobalFooter = () => {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const currentYear = new Date().getFullYear();
   const { pageContent } = usePageContent();
   const { logos } = useLogos();
@@ -79,6 +86,39 @@ const GlobalFooter = () => {
     youtube: Youtube,
   };
 
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Save to Firebase messages with newsletter flag
+      await push(ref(realtimeDb, 'messages'), {
+        name: 'Newsletter Subscriber',
+        email: email,
+        message: 'Newsletter subscription',
+        phone: '',
+        timestamp: Date.now(),
+        read: false,
+        isNewsletter: true
+      });
+
+      // Show success toast
+      setShowToast(true);
+      setEmail('');
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      alert('Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <footer className="footer-section bg-black border-t border-spotify-light-gray">
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
@@ -88,17 +128,21 @@ const GlobalFooter = () => {
           <div className="mb-12 text-center">
             <h3 className="text-2xl font-bold text-white mb-2">{newsletter.title}</h3>
             <p className="text-spotify-text-subdued mb-6">{newsletter.description}</p>
-            <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={handleNewsletterSubmit}>
               <input
                 type="email"
                 placeholder={newsletter.placeholder}
-                className="flex-1 bg-spotify-light-gray text-white px-6 py-3 rounded-full placeholder-spotify-text-subdued focus:outline-none focus:ring-2 focus:ring-primary"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                className="flex-1 bg-spotify-light-gray text-white px-6 py-3 rounded-full placeholder-spotify-text-subdued focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               />
               <button
                 type="submit"
-                className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full transition-colors"
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {newsletter.buttonText}
+                {isSubmitting ? 'Subscribing...' : newsletter.buttonText}
               </button>
             </form>
           </div>
@@ -107,8 +151,61 @@ const GlobalFooter = () => {
         {/* Divider */}
         <div className="mb-12 border-t border-spotify-light-gray" />
         
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+        {/* Mobile Logo Section - Centered and Bigger */}
+        <div className="block md:hidden mb-8 text-center">
+          <Link to="/" className="inline-block mb-4">
+            <img 
+              src={logos?.footer?.url || "https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/logos/Logo%20Kushie%20(W-SVG).svg"} 
+              alt={logos?.footer?.alt || "Kushie Logo"} 
+              className="h-16 w-auto mx-auto"
+            />
+          </Link>
+          <p className="text-sm text-spotify-text-subdued mb-6 px-4">
+            Premium cannabis products delivered with care. Quality, consistency, and customer satisfaction are our priorities.
+          </p>
+          {/* Mobile Social Links - Centered */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            {socialLinks.map((social, index) => {
+              const Icon = socialIcons[social.platform] || socialIcons.facebook;
+              return (
+                <a
+                  key={index}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-spotify-light-gray text-spotify-text-subdued hover:bg-spotify-card-hover hover:text-white transition-all"
+                  aria-label={social.platform}
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mobile Footer Content - All columns in one row */}
+        <div className="grid grid-cols-4 gap-4 md:hidden mb-8">
+          {columns.map((column) => (
+            <div key={column.id}>
+              <h3 className="text-xs font-semibold text-white mb-3">{column.title}</h3>
+              <ul className="space-y-2">
+                {column.links?.map((link, index) => (
+                  <li key={index}>
+                    <Link 
+                      to={link.url} 
+                      className="text-xs text-spotify-text-subdued hover:text-white transition-colors block"
+                    >
+                      {link.text}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Footer Content */}
+        <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-6 gap-8">
           {/* Logo and Company Info */}
           <div className="col-span-2">
             <Link to="/" className="inline-block mb-6">
@@ -173,8 +270,8 @@ const GlobalFooter = () => {
 
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Social Links */}
-          <div className="flex items-center gap-4">
+          {/* Social Links - Desktop Only (already shown above on mobile) */}
+          <div className="hidden md:flex items-center gap-4">
             {socialLinks.map((social, index) => {
               const Icon = socialIcons[social.platform] || socialIcons.facebook;
               return (
@@ -219,6 +316,13 @@ const GlobalFooter = () => {
           </p>
         </div>
       </div>
+      
+      {/* Notification Toast */}
+      <NotificationToast 
+        show={showToast} 
+        message="Subscribed!" 
+        onClose={() => setShowToast(false)} 
+      />
     </footer>
   );
 };

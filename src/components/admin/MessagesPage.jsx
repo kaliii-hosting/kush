@@ -37,6 +37,12 @@ const CheckIcon = ({ className }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
   </svg>
 );
+
+const NewsletterIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 9v.906a2.25 2.25 0 01-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 001.183 1.981l6.478 3.488m8.839 0l6.03-3.249m-6.03 3.249v6.375m0-6.375l-8.839 0m8.839 0l-6.03-3.249m0 0L5.25 9V4.236c0-.696.318-1.35.861-1.779l5.889-4.65a2.25 2.25 0 012.502 0l5.889 4.65c.543.43.861 1.083.861 1.779V9l-6.03 3.249" />
+  </svg>
+);
 // Simple date formatting function
 const format = (date, formatStr) => {
   const d = new Date(date);
@@ -329,14 +335,28 @@ const MessagesPage = () => {
                     onClick={() => handleMessageClick(message)}
                     className={`px-3 py-2.5 border-b border-[#282828] cursor-pointer transition-colors hover:bg-[#282828] ${
                       selectedMessage?.id === message.id ? 'bg-[#282828]' : ''
-                    }`}
+                    } ${message.isNewsletter ? 'relative' : ''}`}
                   >
-                    <div className="flex items-start gap-3">
+                    {/* Newsletter Banner */}
+                    {message.isNewsletter && (
+                      <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-600 to-green-500 px-3 py-1 flex items-center gap-2">
+                        <NewsletterIcon className="w-4 h-4 text-white" />
+                        <span className="text-xs font-semibold text-white">Newsletter Subscriber</span>
+                      </div>
+                    )}
+                    
+                    <div className={`flex items-start gap-3 ${message.isNewsletter ? 'mt-7' : ''}`}>
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-[#282828] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold text-base">
-                          {(message.name || 'U').charAt(0).toUpperCase()}
-                        </span>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.isNewsletter ? 'bg-green-600' : 'bg-[#282828]'
+                      }`}>
+                        {message.isNewsletter ? (
+                          <NewsletterIcon className="w-5 h-5 text-white" />
+                        ) : (
+                          <span className="text-white font-semibold text-base">
+                            {(message.name || 'U').charAt(0).toUpperCase()}
+                          </span>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -351,9 +371,12 @@ const MessagesPage = () => {
                           </span>
                         </div>
                         <p className="text-sm text-[#b3b3b3] truncate">
-                          {message.type === 'career' && message.position ? 
-                            `${message.position} • ${message.email}` : 
-                            (message.email || 'No email')
+                          {message.isNewsletter ? 
+                            `Newsletter • ${message.email}` :
+                            (message.type === 'career' && message.position ? 
+                              `${message.position} • ${message.email}` : 
+                              (message.email || 'No email')
+                            )
                           }
                         </p>
                         <p className={`text-sm mt-1 overflow-hidden ${
@@ -402,10 +425,16 @@ const MessagesPage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </button>
-                    <div className="w-9 h-9 rounded-full bg-[#282828] flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        {(selectedMessage.name || 'U').charAt(0).toUpperCase()}
-                      </span>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                      selectedMessage.isNewsletter ? 'bg-green-600' : 'bg-[#282828]'
+                    }`}>
+                      {selectedMessage.isNewsletter ? (
+                        <NewsletterIcon className="w-5 h-5 text-white" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">
+                          {(selectedMessage.name || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <h2 className="font-semibold text-white text-base">{selectedMessage.name || 'Unknown'}</h2>
@@ -451,6 +480,19 @@ const MessagesPage = () => {
                     </span>
                   </div>
 
+                  {/* Newsletter Subscription Banner */}
+                  {selectedMessage.isNewsletter && (
+                    <div className="mb-6 bg-gradient-to-r from-green-600 to-green-500 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <NewsletterIcon className="w-6 h-6 text-white" />
+                        <div>
+                          <h3 className="text-white font-semibold">Newsletter Subscription</h3>
+                          <p className="text-green-100 text-sm">This user subscribed to your newsletter</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Message/Application Content */}
                   {selectedMessage.type === 'career' ? (
                     <div className="space-y-4">

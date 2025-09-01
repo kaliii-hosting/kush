@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
 import { useCart } from '../context/ShopifyCartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { useWishlist } from '../context/WishlistContextNew';
 import { useShopify } from '../context/ShopifyContext';
 import { usePageContent } from '../context/PageContentContext';
 import { ShoppingCart, Filter, X, Eye, Heart, Tag, AlertCircle } from 'lucide-react';
@@ -218,7 +218,7 @@ const ShopDynamic = ({ onCartClick }) => {
 
   const handleToggleWishlist = (product, e) => {
     e.stopPropagation();
-    toggleWishlist(product);
+    toggleWishlist(product.id);
   };
 
   const handleProductClick = (product) => {

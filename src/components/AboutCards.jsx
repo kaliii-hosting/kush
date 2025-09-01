@@ -1,46 +1,34 @@
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import '../styles/AboutCards.css';
-
 const AboutCards = ({ aboutContent }) => {
-  const [openIndex, setOpenIndex] = useState(-1);
-
-  const toggleAccordion = (index) => {
-    setOpenIndex(openIndex === index ? -1 : index);
-  };
-
   return (
-    <div className="about-accordion-container">
-      <div className="about-accordion-wrapper">
-        <div className="accordion-items">
-          {aboutContent.map((item, index) => (
-            <div 
-              key={index} 
-              className={`accordion-item ${openIndex === index ? 'active' : ''}`}
-            >
-              <button
-                className="accordion-header"
-                onClick={() => toggleAccordion(index)}
-              >
-                <div className="accordion-header-content">
-                  <h3 className="accordion-title">{item.title}</h3>
-                  <p className="accordion-subtitle">{item.subtitle}</p>
-                </div>
-                <ChevronDown 
-                  className={`accordion-icon ${openIndex === index ? 'rotate' : ''}`}
-                  size={24}
-                />
-              </button>
+    <div className="bg-gradient-to-b from-gray-900 to-black">
+      {aboutContent.map((item, index) => (
+        <div 
+          key={index}
+          className="w-screen relative bg-gradient-to-b from-gray-900 to-black border-b border-gray-800 last:border-b-0"
+        >
+          <div className="max-w-5xl mx-auto px-4 md:px-6 py-12 md:py-16">
+            {/* Article Header - matching blog post expanded view */}
+            <div className="mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                {item.title}
+              </h1>
               
-              <div className={`accordion-body ${openIndex === index ? 'open' : ''}`}>
-                <div className="accordion-content">
-                  <p>{item.text}</p>
-                </div>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 pb-8 border-b border-gray-800">
+                <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-medium">
+                  {item.subtitle}
+                </span>
               </div>
             </div>
-          ))}
+
+            {/* Article Content - matching blog post style */}
+            <div className="prose prose-invert max-w-none">
+              <div className="text-gray-300 leading-relaxed whitespace-pre-wrap text-lg md:text-xl">
+                {item.text}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 };

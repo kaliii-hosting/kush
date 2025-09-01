@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Music, Plus, Edit2, Trash2, Play, Pause, Upload, X, AlertCircle } from 'lucide-react';
+import { Music, Plus, Edit2, Trash2, Play, Pause, Upload, X, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMusic } from '../../context/MusicContext';
 
 const MusicManagement = () => {
   const { tracks, currentTrack, isPlaying, addTrack, updateTrack, deleteTrack, playTrack, pauseTrack } = useMusic();
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [editingTrack, setEditingTrack] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -53,11 +53,9 @@ const MusicManagement = () => {
 
       if (result) {
         setSuccess(editingTrack ? 'Track updated successfully!' : 'Track added successfully!');
-        setTimeout(() => {
-          setShowAddModal(false);
-          resetForm();
-          setSuccess('');
-        }, 1500);
+        resetForm();
+        setShowAddForm(false);
+        setTimeout(() => setSuccess(''), 3000);
       } else {
         setError('Failed to save track. Please try again.');
       }
@@ -77,7 +75,7 @@ const MusicManagement = () => {
       duration: track.duration || '',
       lyrics: track.lyrics || ''
     });
-    setShowAddModal(true);
+    setShowAddForm(true);
   };
 
   const handleDelete = async (trackId) => {
@@ -100,6 +98,11 @@ const MusicManagement = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleCancelForm = () => {
+    setShowAddForm(false);
+    resetForm();
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
@@ -108,27 +111,205 @@ const MusicManagement = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Music Management</h1>
           <p className="text-gray-400">Manage tracks for the music player</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowAddModal(true);
-          }}
-          className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold px-4 py-2 rounded-full transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Add Track
-        </button>
+        {!showAddForm && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowAddForm(true);
+            }}
+            className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold px-4 py-2 rounded-full transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Add Track
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
-      {success && !showAddModal && (
+      {success && (
         <div className="mb-6 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-green-400">
           {success}
         </div>
       )}
-      {error && !showAddModal && (
+      {error && !showAddForm && (
         <div className="mb-6 p-4 bg-red-600/20 border border-red-600/50 rounded-lg text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Inline Add/Edit Form */}
+      {showAddForm && (
+        <div className="bg-spotify-light-gray rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-white">
+              {editingTrack ? 'Edit Track' : 'Add New Track'}
+            </h2>
+            <button
+              onClick={handleCancelForm}
+              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+            >
+              <X className="h-5 w-5 text-white" />
+            </button>
+          </div>
+
+          {/* Error in form */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-600/20 border border-red-600/50 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Track Title *
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="Enter track title"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Artist *
+                </label>
+                <input
+                  type="text"
+                  value={formData.artist}
+                  onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                  className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="Enter artist name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Album
+              </label>
+              <input
+                type="text"
+                value={formData.album}
+                onChange={(e) => setFormData({ ...formData, album: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                placeholder="Enter album name (optional)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Audio URL *
+              </label>
+              <div className="relative">
+                <input
+                  type="url"
+                  value={formData.audioUrl}
+                  onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
+                  className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="https://example.com/track.mp3"
+                  required
+                />
+                <Music className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Cover Image URL
+              </label>
+              <div className="relative">
+                <input
+                  type="url"
+                  value={formData.coverUrl}
+                  onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })}
+                  className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="https://example.com/cover.jpg"
+                />
+                <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Duration (in seconds)
+              </label>
+              <input
+                type="number"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                placeholder="e.g., 180 for 3:00"
+                min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Lyrics (Optional)
+              </label>
+              <textarea
+                value={formData.lyrics}
+                onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-vertical"
+                placeholder="Enter song lyrics..."
+                rows="6"
+              />
+            </div>
+
+            {/* Preview */}
+            {(formData.coverUrl || formData.title) && (
+              <div className="bg-spotify-gray rounded-lg p-4 flex items-center gap-4">
+                <div className="w-16 h-16 bg-black rounded-lg overflow-hidden flex-shrink-0">
+                  {formData.coverUrl ? (
+                    <img 
+                      src={formData.coverUrl} 
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Music className="h-8 w-8 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-white font-semibold">{formData.title || 'Track Title'}</h4>
+                  <p className="text-gray-400 text-sm">
+                    {formData.artist || 'Artist'} {formData.album && `• ${formData.album}`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Form Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                className="flex-1 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold py-3 rounded-full transition-colors"
+              >
+                {editingTrack ? 'Update Track' : 'Add Track'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelForm}
+                className="flex-1 bg-spotify-gray hover:bg-spotify-card-hover text-white font-bold py-3 rounded-full transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -214,195 +395,6 @@ const MusicManagement = () => {
           </div>
         )}
       </div>
-
-      {/* Add/Edit Modal */}
-      {showAddModal && (
-        <>
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50" onClick={() => setShowAddModal(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-spotify-light-gray rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    {editingTrack ? 'Edit Track' : 'Add New Track'}
-                  </h2>
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
-                  >
-                    <X className="h-5 w-5 text-white" />
-                  </button>
-                </div>
-
-                {/* Error/Success in modal */}
-                {error && (
-                  <div className="mb-4 p-4 bg-red-600/20 border border-red-600/50 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-red-400">{error}</p>
-                  </div>
-                )}
-                {success && (
-                  <div className="mb-4 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-green-400">
-                    {success}
-                  </div>
-                )}
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Track Title *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="Enter track title"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Artist *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.artist}
-                        onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
-                        className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="Enter artist name"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Album
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.album}
-                      onChange={(e) => setFormData({ ...formData, album: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                      placeholder="Enter album name (optional)"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Audio URL *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        value={formData.audioUrl}
-                        onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
-                        className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="https://example.com/track.mp3"
-                        required
-                      />
-                      <Music className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Cover Image URL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        value={formData.coverUrl}
-                        onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })}
-                        className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="https://example.com/cover.jpg"
-                      />
-                      <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Duration (in seconds)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                      placeholder="e.g., 180 for 3:00"
-                      min="1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Lyrics (Optional)
-                    </label>
-                    <textarea
-                      value={formData.lyrics}
-                      onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-vertical"
-                      placeholder="Enter song lyrics..."
-                      rows="6"
-                    />
-                  </div>
-
-                  {/* Preview */}
-                  {(formData.coverUrl || formData.title) && (
-                    <div className="bg-spotify-gray rounded-lg p-4 flex items-center gap-4">
-                      <div className="w-16 h-16 bg-black rounded-lg overflow-hidden flex-shrink-0">
-                        {formData.coverUrl ? (
-                          <img 
-                            src={formData.coverUrl} 
-                            alt="Cover preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Music className="h-8 w-8 text-gray-600" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold">{formData.title || 'Track Title'}</h4>
-                        <p className="text-gray-400 text-sm">
-                          {formData.artist || 'Artist'} {formData.album && `• ${formData.album}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Form Actions */}
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="submit"
-                      className="flex-1 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold py-3 rounded-full transition-colors"
-                    >
-                      {editingTrack ? 'Update Track' : 'Add Track'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="flex-1 bg-spotify-gray hover:bg-spotify-card-hover text-white font-bold py-3 rounded-full transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 };

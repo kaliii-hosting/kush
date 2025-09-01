@@ -184,8 +184,6 @@ const defaultPageContent = {
             title: 'Company',
             links: [
               { text: 'About Us', url: '/about' },
-              { text: 'Careers', url: '/careers' },
-              { text: 'Press', url: '/press' },
               { text: 'Blog', url: '/blog' }
             ]
           },
@@ -204,19 +202,16 @@ const defaultPageContent = {
             title: 'Support',
             links: [
               { text: 'Contact Us', url: '/contact' },
-              { text: 'FAQs', url: '/faqs' },
-              { text: 'Shipping Info', url: '/shipping' },
-              { text: 'Returns', url: '/returns' }
+              { text: 'Careers', url: '/careers' }
             ]
           },
           {
             id: 'legal',
             title: 'Legal',
             links: [
-              { text: 'Privacy Policy', url: '/privacy' },
-              { text: 'Terms of Service', url: '/terms' },
-              { text: 'Lab Results', url: '/lab-results' },
-              { text: 'Compliance', url: '/compliance' }
+              { text: 'Privacy Policy', url: '/privacy-policy' },
+              { text: 'Terms of Service', url: '/terms-of-service' },
+              { text: 'Lab Results', url: '/lab-results' }
             ]
           }
         ],

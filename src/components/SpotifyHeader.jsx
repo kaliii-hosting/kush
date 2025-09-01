@@ -23,6 +23,7 @@ const SpotifyHeader = () => {
     { name: 'Shop', href: '/shop' },
     { name: 'About', href: '/about' },
     { name: 'Wholesale', href: '/wholesale' },
+    { name: 'Lab Results', href: '/lab-results' },
     { name: 'Contact', href: '/contact' },
   ];
 

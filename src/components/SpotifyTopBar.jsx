@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart, Settings, User2, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, User, ChevronDown, ShoppingCart, Menu, X, LogOut, Heart, Settings, User2, Package } from 'lucide-react';
 import { useCart } from '../context/ShopifyCartContext';
 import { useWholesaleCart } from '../context/WholesaleCartContext';
-import { useProducts } from '../context/ProductsContext';
 import { useAuth } from '../context/AuthContext';
 import { useBlog } from '../context/BlogContext';
 import { useLogos } from '../context/LogosContext';
@@ -20,19 +19,13 @@ const SpotifyTopBar = ({ onCartClick }) => {
   const wholesaleCart = useWholesaleCart();
   const cartCount = isWholesalePage ? wholesaleCart.cartCount : shopifyCart.cartCount;
   
-  const { products } = useProducts();
   const { user, userData, logout } = useAuth();
   const { posts } = useBlog();
   const { logos } = useLogos();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
-  const searchRef = useRef(null);
-  const searchButtonRef = useRef(null);
   // cartCount is now available directly from useCart
 
   const navLinks = [
@@ -40,6 +33,7 @@ const SpotifyTopBar = ({ onCartClick }) => {
     { path: '/shop', label: 'Shop' },
     { path: '/wholesale', label: 'Wholesale' },
     { path: '/about', label: 'About' },
+    { path: '/lab-results', label: 'Lab Results' },
     { path: '/contact', label: 'Contact' },
   ];
 
@@ -49,88 +43,11 @@ const SpotifyTopBar = ({ onCartClick }) => {
     return false;
   };
 
-  // Handle search
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      ).slice(0, 5); // Show max 5 predictions
-      setSearchResults(filtered);
-    } else {
-      setSearchResults([]);
-    }
-  }, [searchQuery, products]);
-
-  // Close search when pressing Escape key
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        setShowSearch(false);
-        setSearchQuery('');
-        setSearchResults([]);
-      }
-    };
-
-    if (showSearch) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [showSearch]);
-
-  // Close search when clicking outside
-  useEffect(() => {
-    if (!showSearch) return;
-
-    const handleClickOutside = (event) => {
-      const searchContainer = document.getElementById('search-container');
-      const searchContainerMobile = document.getElementById('search-container-mobile');
-      const searchButton = document.getElementById('search-button');
-      const searchButtonMobile = document.getElementById('search-button-mobile');
-      
-      // Check if any search elements exist
-      const isInSearchContainer = searchContainer && searchContainer.contains(event.target);
-      const isInSearchContainerMobile = searchContainerMobile && searchContainerMobile.contains(event.target);
-      const isInSearchButton = searchButton && searchButton.contains(event.target);
-      const isInSearchButtonMobile = searchButtonMobile && searchButtonMobile.contains(event.target);
-      
-      // If click is outside all search-related elements, close search
-      if (!isInSearchContainer && !isInSearchContainerMobile && !isInSearchButton && !isInSearchButtonMobile) {
-        setShowSearch(false);
-        setSearchQuery('');
-        setSearchResults([]);
-      }
-    };
-
-    // Add event listener after a short delay to avoid immediate closing
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [showSearch]);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
-      setShowSearch(false);
-      setSearchQuery('');
-      setSearchResults([]);
-    }
-  };
-
   return (
     <>
     <header className="bg-black/95 backdrop-blur-md sticky top-0 z-50 border-b border-border">
       <div className="px-4 md:px-8 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between relative">
           {/* Left side - Logo and Navigation */}
           <div className="flex items-center gap-8">
             {/* Logo */}
@@ -173,67 +90,8 @@ const SpotifyTopBar = ({ onCartClick }) => {
             </nav>
           </div>
 
-          {/* Center - Search bar (show when search is active) */}
-          {showSearch && (
-            <div id="search-container" ref={searchRef} className="hidden md:block absolute left-1/2 -translate-x-1/2 w-full max-w-md z-50">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <div className="flex items-center bg-spotify-light-gray rounded-full px-4 py-2 border border-spotify-card-hover">
-                  <Search className="h-4 w-4 text-text-secondary mr-3" />
-                  <input
-                    type="text"
-                    placeholder="What do you want to find?"
-                    className="bg-transparent text-white placeholder-text-secondary outline-none flex-1 text-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                
-                {/* Search predictions dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full mt-2 w-full bg-spotify-light-gray rounded-lg shadow-xl border border-spotify-card-hover overflow-hidden">
-                    {searchResults.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={`/shop?search=${encodeURIComponent(product.name)}`}
-                        onClick={() => {
-                          setShowSearch(false);
-                          setSearchQuery('');
-                          setSearchResults([]);
-                        }}
-                        className="flex items-center gap-3 p-3 hover:bg-spotify-card-hover transition-colors"
-                      >
-                        {product.imageUrl && (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <h4 className="text-white text-sm font-semibold">{product.name}</h4>
-                          <p className="text-text-secondary text-xs">${product.price}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </form>
-            </div>
-          )}
-
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-
-            {/* Search button - Desktop only */}
-            <button 
-              id="search-button"
-              ref={searchButtonRef}
-              onClick={() => setShowSearch(!showSearch)}
-              className="hidden md:block text-primary font-bold text-sm px-6 py-2 hover:text-primary-hover hover:scale-105 transition-transform"
-            >
-              Search
-            </button>
 
             {/* Shop button - Desktop only */}
             <Link to="/shop" className="hidden md:flex bg-primary text-white font-bold text-sm px-4 py-2 rounded-full hover:bg-primary-hover hover:scale-105 transition-transform items-center gap-2">
@@ -365,71 +223,12 @@ const SpotifyTopBar = ({ onCartClick }) => {
                 </Link>
               ))}
               <div className="border-t border-border mt-2 pt-2">
-                <button 
-                  id="search-button-mobile"
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    setShowSearch(true);
-                  }}
-                  className="block text-primary font-bold text-lg py-2 px-4 w-full text-left hover:bg-gray-dark rounded-md"
-                >
-                  Search
-                </button>
                 <Link to="/shop" className="block bg-primary text-white font-bold text-lg py-2 px-4 w-full rounded-md mt-2 hover:bg-primary-hover text-center">
                   Shop
                 </Link>
               </div>
             </div>
           </nav>
-        )}
-
-        {/* Mobile Search */}
-        {showSearch && (
-          <div id="search-container-mobile" className="lg:hidden mt-4 pb-4 border-t border-border pt-4">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <div className="flex items-center bg-spotify-light-gray rounded-full px-4 py-2 border border-spotify-card-hover">
-                <Search className="h-4 w-4 text-text-secondary mr-3" />
-                <input
-                  type="text"
-                  placeholder="What do you want to find?"
-                  className="bg-transparent text-white placeholder-text-secondary outline-none flex-1 text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              
-              {/* Search predictions dropdown */}
-              {searchResults.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-spotify-light-gray rounded-lg shadow-xl border border-spotify-card-hover overflow-hidden z-50">
-                  {searchResults.map((product) => (
-                    <Link
-                      key={product.id}
-                      to={`/shop?search=${encodeURIComponent(product.name)}`}
-                      onClick={() => {
-                        setShowSearch(false);
-                        setSearchQuery('');
-                        setSearchResults([]);
-                      }}
-                      className="flex items-center gap-3 p-3 hover:bg-spotify-card-hover transition-colors"
-                    >
-                      {product.imageUrl && (
-                        <img 
-                          src={product.imageUrl} 
-                          alt={product.name}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h4 className="text-white text-sm font-semibold">{product.name}</h4>
-                        <p className="text-text-secondary text-xs">${product.price}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </form>
-          </div>
         )}
       </div>
     </header>

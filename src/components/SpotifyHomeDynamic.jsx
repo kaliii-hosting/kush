@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, ShoppingCart, Heart, ChevronDown, Leaf, Zap, Shirt } from 'lucide-react';
 import { useEnhancedProducts } from '../context/EnhancedProductsContext';
@@ -108,6 +108,23 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
 
   // State for featured product carousel
   const [featuredProductIndex, setFeaturedProductIndex] = useState(0);
+  
+  // State for poster image slider
+  const [posterSliderIndex, setPosterSliderIndex] = useState(0);
+  const posterImages = [
+    'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Posters/flower%20poster%202.jpg',
+    'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Posters/dspsbls%20poster.jpg',
+    'https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Posters/flower%20poster.jpg'
+  ];
+  
+  // Auto-advance poster slider
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPosterSliderIndex((prev) => (prev + 1) % posterImages.length);
+    }, 4000); // Change image every 4 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Find clothing products from sale items for hero section
   const featuredClothingProducts = saleProducts.filter(product => {
@@ -267,63 +284,26 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
         </div>
       </section>
 
-      {/* KUSHIE Video Text Section */}
-      <section style={{ background: 'black', padding: '2rem 0' }}>
-        <header style={{ 
-          width: '100%',
-          margin: '0 auto',
-          position: 'relative',
-          maxWidth: '1200px'
-        }}>
-          <video 
-            style={{ width: '100%' }}
-            autoPlay 
-            playsInline 
-            muted 
-            loop 
-            preload="auto"
-            poster="https://s3-us-west-2.amazonaws.com/s.cdpn.io/4273/oceanshot.jpg"
-          >
-            <source src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Videos/Horizontal%20Videos/CROPPED_FERRARI_1754120144105_pkl6wk4.mp4" />
-            <source src="http://thenewcode.com/assets/videos/ocean-small.mp4" />
-          </video>
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 285 80" 
-            preserveAspectRatio="xMidYMid slice"
-            style={{
-              width: '100%',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '100%'
-            }}
-          >
-            <defs>
-              <mask id="kushie-mask" x="0" y="0" width="100%" height="100%">
-                <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                <text 
-                  x="72" 
-                  y="50" 
-                  fill="black"
-                  style={{
-                    fontFamily: 'Biko, sans-serif',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    fontSize: '38px'
-                  }}
-                >KUSHIE</text>
-              </mask>
-            </defs>
-            <rect x="0" y="0" width="100%" height="100%" fill="black" mask="url(#kushie-mask)" />
-          </svg>
-        </header>
+      {/* Disposables Poster Image Section */}
+      <section className="relative bg-black py-8" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+        <img 
+          src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Posters/dspsbls%20poster2.jpg"
+          alt="Premium Disposables Collection"
+          style={{
+            display: 'block',
+            width: '100%',
+            height: 'auto',
+            maxHeight: '100vh',
+            objectFit: 'contain',
+            backgroundColor: 'black'
+          }}
+        />
       </section>
 
       {/* Premium Clothing Hero Section - Professional Animated Design */}
       {featuredClothingProduct && (
         <section 
-          className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden bg-black my-8 cursor-pointer"
+          className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden bg-black py-8 cursor-pointer"
           onClick={(e) => {
             // Only trigger if not clicking on buttons
             if (!e.target.closest('button') && !e.target.closest('a')) {
@@ -501,48 +481,26 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
         </section>
       )}
 
-      {/* Black Disposables Video Section */}
-      <section className="relative h-[50vh] w-full overflow-hidden">
-        <video 
-          className="absolute top-0 left-0 w-full h-full object-cover"
-          autoPlay 
-          muted 
-          loop 
-          playsInline
-        >
-          <source 
-            src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Videos/Horizontal%20Videos/Black%20Dspsbls.mp4" 
-            type="video/mp4" 
-          />
-          Your browser does not support the video tag.
-        </video>
-        
-        {/* Dark overlay for better text contrast */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        
-        {/* Content */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
-              Premium Black Disposables
-            </h2>
-            <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
-              Experience the perfect blend of style and potency.
-            </p>
-            <Link 
-              to="/wholesale" 
-              className="inline-block bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              Explore Collection
-            </Link>
-          </div>
-        </div>
+      {/* Live Resin Poster Image Section */}
+      <section className="relative bg-black py-8" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+        <img 
+          src="https://fchtwxunzmkzbnibqbwl.supabase.co/storage/v1/object/public/kushie01/Posters/live%20resin%20poster.jpg"
+          alt="Live Resin Collection"
+          style={{
+            display: 'block',
+            width: '100%',
+            height: 'auto',
+            maxHeight: '100vh',
+            objectFit: 'contain',
+            backgroundColor: 'black'
+          }}
+        />
       </section>
 
       {/* Apple-Style Layout Section */}
-      <section className="bg-gray-100">
+      <section className="bg-gray-100 py-8">
         {/* Top Hero Banner - iPhone Style */}
-        <div className="relative bg-gray-100 py-16 text-center overflow-hidden">
+        <div className="relative bg-gray-100 py-8 md:py-16 text-center overflow-hidden">
           {/* Animated Neon Orange Equalizer Background */}
           <div className="absolute inset-0 flex items-end justify-center opacity-20">
             <div className="flex gap-1 w-full h-full items-end">
@@ -611,6 +569,66 @@ const SpotifyHomeDynamic = ({ onCartClick }) => {
           </div>
         </section>
       )}
+
+      {/* Auto-Looped Poster Image Slider Section */}
+      <section className="relative bg-black overflow-hidden py-8" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+        <div className="relative w-full">
+          {/* Image Container with Transition */}
+          {posterImages.map((image, index) => (
+            <div
+              key={index}
+              className={`transition-opacity duration-1000 ${
+                index === posterSliderIndex ? 'opacity-100' : 'opacity-0 absolute inset-0'
+              }`}
+            >
+              <img 
+                src={image}
+                alt={`Collection Poster ${index + 1}`}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: '100vh',
+                  objectFit: 'contain',
+                  backgroundColor: 'black'
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Slide Indicators */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+          {posterImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setPosterSliderIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === posterSliderIndex 
+                  ? 'bg-white w-8' 
+                  : 'bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+        
+        {/* Navigation Arrows */}
+        <button
+          onClick={() => setPosterSliderIndex((prev) => (prev - 1 + posterImages.length) % posterImages.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+          aria-label="Previous image"
+        >
+          <ChevronLeft className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+        </button>
+        <button
+          onClick={() => setPosterSliderIndex((prev) => (prev + 1) % posterImages.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+          aria-label="Next image"
+        >
+          <ChevronRight className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+        </button>
+      </section>
 
       {/* Product Modal */}
       <ProductModal 

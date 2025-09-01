@@ -4,7 +4,7 @@ import { useBlog } from '../../context/BlogContext';
 
 const BlogManagement = () => {
   const { posts, addPost, updatePost, deletePost, togglePostVisibility } = useBlog();
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -59,7 +59,7 @@ const BlogManagement = () => {
       if (result) {
         setSuccess(editingPost ? 'Post updated successfully!' : 'Post created successfully!');
         setTimeout(() => {
-          setShowAddModal(false);
+          setShowForm(false);
           resetForm();
           setSuccess('');
         }, 1500);
@@ -82,7 +82,7 @@ const BlogManagement = () => {
       tags: post.tags ? post.tags.join(', ') : '',
       author: post.author || ''
     });
-    setShowAddModal(true);
+    setShowForm(true);
   };
 
   const handleDelete = async (postId) => {
@@ -122,39 +122,224 @@ const BlogManagement = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Blog Management</h1>
           <p className="text-gray-400">Create and manage blog posts</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowAddModal(true);
-          }}
-          className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold px-4 py-2 rounded-full transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          New Post
-        </button>
+        {!showForm && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold px-4 py-2 rounded-full transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            New Post
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
-      {success && !showAddModal && (
+      {success && !showForm && (
         <div className="mb-6 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-green-400">
           {success}
         </div>
       )}
-      {error && !showAddModal && (
+      {error && !showForm && (
         <div className="mb-6 p-4 bg-red-600/20 border border-red-600/50 rounded-lg text-red-400">
           {error}
         </div>
       )}
 
+      {/* Inline Form */}
+      {showForm && (
+        <div className="bg-spotify-light-gray rounded-2xl shadow-xl mb-8 p-6">
+          {/* Form Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {editingPost ? 'Edit Post' : 'Create New Post'}
+            </h2>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                resetForm();
+              }}
+              className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
+            >
+              <X className="h-5 w-5 text-white" />
+            </button>
+          </div>
+
+          {/* Error/Success in form */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-600/20 border border-red-600/50 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-green-400">
+              {success}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Post Title *
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                placeholder="Enter post title"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Author *
+                </label>
+                <input
+                  type="text"
+                  value={formData.author}
+                  onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                  className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="Author name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="e.g., News, Education, Product"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Excerpt
+              </label>
+              <textarea
+                value={formData.excerpt}
+                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-none"
+                placeholder="Brief summary of the post (optional)"
+                rows="2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Content *
+              </label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-none"
+                placeholder="Write your post content..."
+                rows="8"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Featured Image URL
+              </label>
+              <div className="relative">
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                  placeholder="https://example.com/image.jpg"
+                />
+                <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Tags
+              </label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
+                placeholder="Separate tags with commas (e.g., cannabis, health, lifestyle)"
+              />
+            </div>
+
+            {/* Preview */}
+            {(formData.imageUrl || formData.title) && (
+              <div className="bg-spotify-gray rounded-lg p-4">
+                <h4 className="text-white font-semibold mb-3">Preview</h4>
+                <div className="flex gap-4">
+                  {formData.imageUrl && (
+                    <div className="w-32 h-20 bg-black rounded overflow-hidden flex-shrink-0">
+                      <img 
+                        src={formData.imageUrl} 
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h5 className="text-white font-semibold mb-1">{formData.title || 'Post Title'}</h5>
+                    <p className="text-gray-400 text-sm line-clamp-2">
+                      {formData.excerpt || formData.content || 'Post excerpt or content preview...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                className="flex-1 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold py-3 rounded-full transition-colors"
+              >
+                {editingPost ? 'Update Post' : 'Create Post'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+                className="flex-1 bg-spotify-gray hover:bg-spotify-card-hover text-white font-bold py-3 rounded-full transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Posts Grid */}
       <div className="bg-spotify-light-gray rounded-xl p-6">
-        {posts.length === 0 ? (
+        {posts.length === 0 && !showForm ? (
           <div className="text-center py-12">
             <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400 text-lg">No blog posts yet</p>
             <p className="text-gray-500 mt-2">Click "New Post" to create your first article</p>
           </div>
-        ) : (
+        ) : (!showForm || posts.length > 0) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
               <div
@@ -241,192 +426,8 @@ const BlogManagement = () => {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
-
-      {/* Add/Edit Modal */}
-      {showAddModal && (
-        <>
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50" onClick={() => setShowAddModal(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-spotify-light-gray rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    {editingPost ? 'Edit Post' : 'Create New Post'}
-                  </h2>
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="p-2 hover:bg-spotify-card-hover rounded-full transition-colors"
-                  >
-                    <X className="h-5 w-5 text-white" />
-                  </button>
-                </div>
-
-                {/* Error/Success in modal */}
-                {error && (
-                  <div className="mb-4 p-4 bg-red-600/20 border border-red-600/50 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-red-400">{error}</p>
-                  </div>
-                )}
-                {success && (
-                  <div className="mb-4 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-green-400">
-                    {success}
-                  </div>
-                )}
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Post Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                      placeholder="Enter post title"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Author *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.author}
-                        onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                        className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="Author name"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="e.g., News, Education, Product"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Excerpt
-                    </label>
-                    <textarea
-                      value={formData.excerpt}
-                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-none"
-                      placeholder="Brief summary of the post (optional)"
-                      rows="2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Content *
-                    </label>
-                    <textarea
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none resize-none"
-                      placeholder="Write your post content..."
-                      rows="8"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Featured Image URL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        value={formData.imageUrl}
-                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                        className="w-full bg-spotify-gray text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                      <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Tags
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      className="w-full bg-spotify-gray text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-spotify-green outline-none"
-                      placeholder="Separate tags with commas (e.g., cannabis, health, lifestyle)"
-                    />
-                  </div>
-
-                  {/* Preview */}
-                  {(formData.imageUrl || formData.title) && (
-                    <div className="bg-spotify-gray rounded-lg p-4">
-                      <h4 className="text-white font-semibold mb-3">Preview</h4>
-                      <div className="flex gap-4">
-                        {formData.imageUrl && (
-                          <div className="w-32 h-20 bg-black rounded overflow-hidden flex-shrink-0">
-                            <img 
-                              src={formData.imageUrl} 
-                              alt="Preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h5 className="text-white font-semibold mb-1">{formData.title || 'Post Title'}</h5>
-                          <p className="text-gray-400 text-sm line-clamp-2">
-                            {formData.excerpt || formData.content || 'Post excerpt or content preview...'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Form Actions */}
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="submit"
-                      className="flex-1 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold py-3 rounded-full transition-colors"
-                    >
-                      {editingPost ? 'Update Post' : 'Create Post'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="flex-1 bg-spotify-gray hover:bg-spotify-card-hover text-white font-bold py-3 rounded-full transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 };

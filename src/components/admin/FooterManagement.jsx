@@ -53,19 +53,22 @@ const FooterManagement = () => {
   const saveChanges = async () => {
     if (!editingField || !tempData) return;
 
-    let updates = {};
+    // Create a complete footer section object with all existing data
+    let updatedFooter = { ...footerSection };
+    
     if (editingField === 'newsletter') {
-      updates.newsletter = tempData;
+      updatedFooter.newsletter = tempData;
     } else if (editingField === 'columns') {
-      updates.columns = tempData;
+      updatedFooter.columns = tempData;
     } else if (editingField === 'socialLinks') {
-      updates.socialLinks = tempData;
+      updatedFooter.socialLinks = tempData;
     } else if (editingField === 'bottom') {
-      updates.copyright = tempData.copyright;
-      updates.bottomLinks = tempData.bottomLinks;
+      updatedFooter.copyright = tempData.copyright;
+      updatedFooter.bottomLinks = tempData.bottomLinks;
     }
 
-    const success = await updateSection('home', footerSection.id, updates);
+    // Pass the complete updated footer section
+    const success = await updateSection('home', footerSection.id, updatedFooter);
     if (success) {
       setSuccessMessage('Footer updated successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -79,12 +82,18 @@ const FooterManagement = () => {
   const handleReset = async () => {
     if (window.confirm('This will reset the footer to default content. Are you sure?')) {
       const defaultFooter = defaultPageContent.home.sections.find(s => s.type === 'footer');
-      const success = await updateSection('home', footerSection.id, defaultFooter);
-      if (success) {
-        setSuccessMessage('Footer reset to defaults successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
+      if (defaultFooter) {
+        // Ensure we're passing the complete footer object
+        const success = await updateSection('home', footerSection.id, defaultFooter);
+        if (success) {
+          setSuccessMessage('Footer reset to defaults successfully!');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+          setErrorMessage('Failed to reset footer.');
+          setTimeout(() => setErrorMessage(''), 3000);
+        }
       } else {
-        setErrorMessage('Failed to reset footer.');
+        setErrorMessage('Default footer configuration not found.');
         setTimeout(() => setErrorMessage(''), 3000);
       }
     }

@@ -50,6 +50,9 @@ const Underage = lazy(() => import('./pages/Underage'))
 const Sales = lazy(() => import('./pages/Sales'))
 const Careers = lazy(() => import('./pages/Careers'))
 const Accessibility = lazy(() => import('./pages/Accessibility'))
+const LabResults = lazy(() => import('./pages/LabResults'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('./pages/TermsOfService'))
 
 
 function App() {
@@ -146,11 +149,14 @@ function App() {
                         } />
                         <Route path="/contact" element={<ContactDynamic />} />
                         <Route path="/blog" element={<Blog />} />
+                        <Route path="/lab-results" element={<LabResults />} />
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/account" element={<Account />} />
                         <Route path="/underage" element={<Underage />} />
                         <Route path="/accessibility" element={<Accessibility />} />
                         <Route path="/careers" element={<Careers />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/terms-of-service" element={<TermsOfService />} />
                       </Routes>
                     </Suspense>
                   </SpotifyLayout>
